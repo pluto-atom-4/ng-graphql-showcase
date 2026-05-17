@@ -1,29 +1,33 @@
+# Angular GraphQL Playgournd
+
 Research the best practice on Full Stack project to developer an application using Angular, C#, SQL Server to manage the long running manufacture workflow with the three core entities including Build, Parts, and Test Run.
 
-**Architecture & State Management**
+## Architecture & State Management
 
 * **Decoupled Architecture:** Build Angular for presentation, C# Web API for business logic, and SQL Server for persistence.
 * **Asynchronous Processing:** Use a dedicated background service to manage long-running manufacturing tasks without blocking APIs.
 * **State Machine Engine:** Integrate Stateless or MassTransit State Machine in C# to enforce strict workflow transitions.
 * **Event-Driven Updates:** Implement SignalR to push real-time factory floor progress updates to the Angular frontend. [[1](https://medium.com/neogrid/applying-solid-principle-with-c-20b00f6879f6), [2](https://www.linkedin.com/pulse/top-100-full-stack-developer-interview-questions-answers-codecrux-1wksc), [3](https://medium.com/%40vemurivi/interview-experience-senior-net-angular-full-stack-engineer-contract-position-248057739755), [4](https://community.sap.com/t5/technology-blog-posts-by-sap/design-studio-performance-best-practices/ba-p/13148901), [5](https://msmcoretech.com/blogs/angular-with-csharp-web-applications)]
 
-Database Design (SQL Server)
+## Database Design (SQL Server)
 
+```text
 [Build] 1 ------ \* [Parts] 1 | \* [Test Run]
+```
 
 * **Build Table:** Tracks the main asset. Include BuildID (PK), SerialNumber, Status (e.g., Draft, Assembling, Testing, Complete), and RowVersion (timestamp).
 * **Parts Table:** Tracks components. Include PartID (PK), BuildID (FK), PartNumber, and InstallationTimestamp.
 * **Concurrency Control:** Use RowVersion columns in SQL Server to implement optimistic concurrency during simultaneous factory floor updates.
 * **Indexing Strategy:** Create non-clustered indexes on foreign keys (BuildID) and high-query columns (Status) to optimize dashboard loading. [[1](https://www.dbaservices.com.au/blog/sql-server-performance-best-practices-for-developers)]
 
-Backend Development (C# / .NET)
+## Backend Development (C# / .NET)
 
 * **CQRS Pattern:** Use MediatR to separate read operations (dashboards) from write operations (state changes).
 * **Long-Running Tasks:** Offload heavy test simulations or hardware communication to .NET IHostedService or Azure Functions.
 * **Idempotent Commands:** Design API endpoints to safely handle duplicate requests from network drops using unique transaction IDs.
 * **Resilience Policies:** Implement Polly to handle transient SQL Server connectivity issues or hardware communication timeouts. [[1](https://dip-mazumder.medium.com/mastering-high-concurrency-with-cqrs-independent-scaling-of-reads-and-writes-in-microservices-f3a53e5a6353), [2](https://medium.com/c-sharp-programming/designing-high-performance-asp-net-core-apis-10-battle-tested-patterns-from-real-world-projects-2f749ae2db9c), [3](https://medium.com/%40sajidhahuzair19/mastering-crud-operations-with-clean-architecture-and-mediatr-a-4-layer-approach-in-net-8-74d419be7c2c), [4](https://www.youtube.com/watch?v=sr4hHp8Rdig), [5](https://medium.com/%40mikopos/5-minutes-dev-story-idempotency-in-apis-building-reliable-systems-the-fun-way-070d2949571f)]
 
-Frontend Development (Angular)
+## Frontend Development (Angular)
 
 * **State Management:** Deploy @ngrx/store to manage the global state of active builds, parts allocations, and live test runs.
 * **Reactive UI:** Use RxJS operators like switchMap and shareReplay to manage streaming SignalR updates cleanly.
@@ -33,7 +37,7 @@ Frontend Development (Angular)
 * PartsInventoryComponent: Scan and link parts to a build.
 * TestRunnerComponent: Real-time progress bars and log viewers.
 
-Audit & Traceability
+## Audit & Traceability
 
 * **History Logging:** Create a WorkflowAuditLog table in SQL Server to capture every status change, timestamp, and operator identity.
 * **Saga Pattern:** Use a saga orchestrator to automatically roll back linked operations if a parts allocation fails midway. [[1](https://medium.com/%40Adem_Korkmaz/robust-transaction-management-in-net-core-3e16bab1a6f9)]
@@ -48,11 +52,13 @@ Maintaining end-to-end type safety prevents runtime misalignment between your SQ
 
 Here is the best practice architectural blueprint and the industry-standard frameworks used to implement a unified type safety pipeline.
 
-End-to-End Type Safety Blueprint
+## End-to-End Type Safety Blueprint
 
+```text
 [ SQL Server Schema ] │ (EF Core Scaffolding / Migrations) ▼ [ C# Entity Models ] ──(AutoMapper / LINQ)──► [ C# API DTOs ] │ (OpenAPI / NSwag / TypeGen) ▼ [ Angular TS Types & Client ]
+```
 
-1. Database to C# Backend Layer
+## 1. Database to C# Backend Layer
 
 To ensure that your C# backend explicitly reflects the exact schema, data types, and nullability constraints of your database, use **Entity Framework Core (EF Core)**. [[1](https://medium.com/%40mehboob_/understanding-entity-framework-core-in-c-61213b181395), [2](https://www.learnentityframeworkcore.com/)]
 
@@ -61,32 +67,37 @@ To ensure that your C# backend explicitly reflects the exact schema, data types,
 * **Nullability Alignment:** Enable <Nullable>enable</Nullable> in your C# .csproj file. This forces the generated C# entity properties to respect the NULL or NOT NULL status of your database columns (e.g., int? vs int).
 * **Compile-Time Query Safety:** Write all database interactions using **LINQ (Language Integrated Query)** instead of raw SQL strings. This guarantees that your data queries are completely validated at compile time.
 
-1. C# Internal Boundary Layer (Entities to DTOs)
+## 2. C# Internal Boundary Layer (Entities to DTOs)
 
 Never expose your raw database entities directly to the frontend. Instead, map them to **Data Transfer Objects (DTOs)** optimized for the API contract. [[1](https://www.reddit.com/r/dotnet/comments/1pq6xvx/how_do_you_keep_data_valid_as_its_passed_through/), [2](https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/models-data/validating-with-a-service-layer-cs), [3](https://blog.devgenius.io/core-principles-of-frontend-backend-architecture-every-professional-software-engineer-should-know-3999dbb4ca5f), [4](https://sapient.pro/blog/microservices-best-practices)]
 
 * **Framework Option A: AutoMapper:** Automatically maps property names and types from Entities to DTOs, validating missing or misaligned types during application startup configurations.
 * **Framework Option B: Mapperly:** A source-generator framework that builds strongly typed mapping code at compile-time, running significantly faster than reflection-based mappers.. [[1](https://blog.stackademic.com/efficient-data-transfer-in-rest-apis-a-deep-dive-into-the-dto-pattern-with-spring-boot-and-mysql-df2bdf1ece74)]
 
-1. C# Backend to Angular Frontend Layer [[1](https://community.webshinetech.com/t/integrating-angular-frontend-with-c-backend-best-practices/2446)]
+## 3. C# Backend to Angular Frontend Layer
+
+### References
+[[1](https://community.webshinetech.com/t/integrating-angular-frontend-with-c-backend-best-practices/2446)]
 
 The most critical point of failure occurs at the API boundary. To eliminate manual interface writing in Angular, automate code-generation directly from your C# API contracts. [[1](https://alex-klaus.com/marry-csharp-typescript/), [2](https://medium.com/%40falvarezpinto/best-practices-in-fullstack-development-bridging-frontend-and-backend-d0bfc28b978c), [3](https://github.com/amrohan/CS2TS), [4](https://stackoverflow.com/questions/68731145/is-there-anyway-we-can-automatically-get-generated-typescript-classes-from-vb-ne)]
 
-Option A: OpenAPI / Swagger Tooling (Industry Standard) [[1](https://blog.magnusmontin.net/2020/04/03/custom-data-types-in-asp-net-core-web-apis/)]
+### Option A: OpenAPI / Swagger Tooling (Industry Standard)
+
+**References:** [[1](https://blog.magnusmontin.net/2020/04/03/custom-data-types-in-asp-net-core-web-apis/)]
 
 Expose your backend schema definitions via an **OpenAPI / Swagger spec**, then ingest that specification into your frontend to generate type-safe Angular clients. [[1](https://www.reddit.com/r/dotnet/comments/1lxrws3/what_technology_do_you_recommend_for_generating/), [2](https://www.djamware.com/post/build-a-web-app-with-aspnet-core-80-web-api-and-angular-20-using-sql-server), [3](https://www.reddit.com/r/typescript/comments/1cjvvln/best_practices_for_sharing_types_between_backend/), [4](https://dev.to/jordanhall/the-need-for-typesafety-httpclient-and-http-resource-40gi), [5](https://chrlschn.dev/blog/2023/10/end-to-end-type-safety-with-dotnet7-webapis-typescript-openapi/)]
 
 * **Backend Framework:** Integrate **Swashbuckle.AspNetCore** or **NSwag.AspNetCore** into your C# Web API to auto-generate a swagger.json file on every successful backend compilation.
 * **Frontend Framework:** Use **OpenAPI Generator CLI** or **NSwagStudio** in your Angular codebase. Running a single command parses the backend JSON and instantly outputs **TypeSafe Angular Services** (pre-configured with HttpClient) and **TypeScript Interfaces** matching your C# DTOs.
 
-Option B: Code-First TypeScript Reflection
+### Option B: Code-First TypeScript Reflection
 
 If you choose not to use OpenAPI/Swagger protocols, you can generate TypeScript models directly from compiled C# assemblies. [[1](https://alex-klaus.com/marry-csharp-typescript/), [2](https://typegen.readthedocs.io/en/latest/overview.html)]
 
 * **Framework Tooling:** Use **TypeGen** or [TSTypeGen](https://github.com/avensia-oss/tstypegen).
 * **How it works:** Decorate your C# DTO classes with a [ExportTsInterface] attribute. A build step parses your C# code and writes mirror-image .ts files straight into your Angular /models
 
-Summary of Recommended Stack Tools
+## Summary of Recommended Stack Tools
 
 Layer Boundary [[1](https://strapi.io/blog/code-first-vs-database-first), [2](https://www.reddit.com/r/typescript/comments/1cjvvln/best_practices_for_sharing_types_between_backend/), [3](https://www.reddit.com/r/dotnet/comments/1lxrws3/what_technology_do_you_recommend_for_generating/), [4](https://typegen.readthedocs.io/en/latest/overview.html)] Recommended Framework / Tool Core Benefit
 
@@ -109,6 +120,7 @@ First, ensure your C# Web API project automatically generates a swagger.json fil
 
 Add the NSwag CLI tool package to your C# Web API project (.csproj):
 
+```xml
 <ItemGroup>
 
 <PackageReference Include="NSwag.MSBuild" Version="14.\*">
@@ -120,14 +132,17 @@ Add the NSwag CLI tool package to your C# Web API project (.csproj):
 </PackageReference>
 
 </ItemGroup>
+```
 
 Add an MSBuild target to the bottom of your .csproj file. This tells the compiler to extract the Swagger document immediately after a successful local compilation:
 
+```xml
 <Target Name="GenerateOpenApiSpec" AfterTargets="Build">
 
 <Exec Command="$(NSwagExe\_Net80) webapi2openapi /assembly:$(OutputPath)$(AssemblyName).dll /output:$(ProjectDir)swagger.json" />
 
 </Target>
+```
 
 *(Note: Replace $(NSwagExe\_Net80) with your target .NET framework version variables, such as \_Net90 or \_Net100 depending on your current SDK).*
 
@@ -141,11 +156,13 @@ npm install @openapitools/openapi-generator-cli --save-dev
 
 Add a custom script to your Angular project's package.json file pointing directly to the relative path of the C# project's swagger.json:
 
+```json
 "scripts": {
 
 "generate:api": "openapi-generator-cli generate -i ../BackendProject/swagger.json -g typescript-angular -o src/app/api/generated"
 
 }
+```
 
 1. Wire Up the "Automatic Local Build" Automation
 
@@ -153,6 +170,7 @@ To fulfill the requirement that everything must happen automatically during a lo
 
 Update your C# Web API .csproj file to invoke the npm script immediately after the Swagger file is written:
 
+```xml
 <Target Name="GenerateAngularClient" AfterTargets="GenerateOpenApiSpec">
 
 <!-- Ensure node modules are installed, or skip if assuming local developer machine is setup -->
@@ -160,6 +178,7 @@ Update your C# Web API .csproj file to invoke the npm script immediately after t
 <Exec Command="npm run generate:api" WorkingDirectory="$(ProjectDir)../FrontendProject" />
 
 </Target>
+```
 
 Developer Workflow Experience
 
@@ -178,7 +197,9 @@ Re-assess the architecture. I like to use Hot Chocolate (ChilliCream) for API la
 
 **Revised Architecture Blueprint**
 
+```text
 [ Angular UI (Apollo / Urql) ] │ ▲ │ │ (GraphQL Queries / Mutations) ▼ │ (GraphQL Subscriptions via WebSockets / SSE) [ Hot Chocolate GraphQL Gateway ] │ ▼ (Executes Commands / Queries) [ Elsa Workflow Engine v3 ] │ ▼ (EF Core Persistence) [ SQL Server Database ]
+```
 
 Integrating **Hot Chocolate** and **Elsa Workflows v3** shifts your system from a traditional REST/CQRS structure to an **Event-Driven Graph Architecture**. Elsa handles the long-running manufacturing logic, while Hot Chocolate acts as a unified data gateway and real-time event publisher.
 
@@ -190,6 +211,7 @@ Elsa v3 is deeply modular. You can define your manufacturing workflows using C# 
 
 public class RunTestSimulation : Activity
 
+```csharp
 {
 
 // Elsa automatically handles input/output type binding
@@ -211,6 +233,7 @@ TestPassed.Set(context, true);
 }
 
 }
+```
 
 * **Engine Ingestion:** Inject Elsa’s IWorkflowRuntime or IWorkflowDispatcher directly into your application services to trigger or resume workflows from API inputs.
 
@@ -224,7 +247,9 @@ Hot Chocolate exposes your Elsa workflows and domain data to Angular as a unifie
 
 // Inside a C# service or custom Elsa activity:
 
+```csharp
 await eventSender.SendAsync($"BuildStatus:{buildId}", updatedBuildStatus);
+```
 
 1. API Gateway & Real-Time Streaming (Hot Chocolate)
 
@@ -234,9 +259,11 @@ Hot Chocolate exposes your Elsa workflows and domain data to Angular as a unifie
 * **Subscriptions for Real-Time UI:** Instead of setting up SignalR, use Hot Chocolate **Subscriptions** driven by ITopicEventSender.
 * **Event Interception:** Use Elsa Workflow **Triggers** or **Bookmarks**. When a long-running manufacturing step completes inside Elsa, fire an application event that Hot Chocolate broadcasts down to Angular via WebSockets or Server-Sent Events (SSE).
 
+```csharp
 // Inside a C# service or custom Elsa activity:
 
 await eventSender.SendAsync($"BuildStatus:{buildId}", updatedBuildStatus);
+```
 
 1. Frontend Layer (Angular)
 
@@ -247,15 +274,19 @@ End-to-End Type Safety Pipeline (Revised for GraphQL)
 
 Because you changed the API layer to GraphQL, your local build type-safety pipeline updates to an industry-standard schema-first generation toolset.
 
+```text
 [ SQL Server Schema ] ──► [ C# Entities ] ──► [ Hot Chocolate Schema ] │ (Auto-emitted on Build) ▼ [ Angular Type-Safe Services ] ◄── (GraphQL Codegen) ◄── [ schema.graphql
+```
 
 Step 1: Export GraphQL Schema on Local C# Build
 
 Configure Hot Chocolate to write your full GraphQL schema to disk every time your C# backend project builds. Add this snippet inside your backend execution path or a custom CLI command wrapper:
 
+```csharp
 // Program.cs or a build utility script
 
 await app.Services.GetRequiredService<ISchemaExecutor>().Schema.ToString().WriteAllTextAsync("schema.graphql");
+```
 
 Step 2: Generate Angular Clients via GraphQL Codegen
 
@@ -270,7 +301,11 @@ In a monorepo, your Angular app can listen for updates to schema.graphql.
 
 Now that we have shifted to a GraphQL and workflow-engine setup, would you like to see **how to model the relationship between Elsa's execution context and your domain tables**, or **how to write an Angular subscription query** to listen to the live factory steps?
 
-Great! Evaluate the trade-offs when we choose the architecture [ Angular UI (Apollo / Urql) ] │ ▲ │ │ (GraphQL Queries / Mutations) ▼ │ [GraphQL Subscriptions via WebSockets / SSE]( Hot Chocolate GraphQL Gateway ) │ ▼ [Executes Commands / Queries]( Elsa Workflow Engine v3 ) │ ▼ [EF Core Persistence]( SQL Server Database )
+Great! Evaluate the trade-offs when we choose the architecture 
+
+```text
+[ Angular UI (Apollo / Urql) ] │ ▲ │ │ (GraphQL Queries / Mutations) ▼ │ [GraphQL Subscriptions via WebSockets / SSE]( Hot Chocolate GraphQL Gateway ) │ ▼ [Executes Commands / Queries]( Elsa Workflow Engine v3 ) │ ▼ [EF Core Persistence]( SQL Server Database )
+```
 
 Evaluating this architecture for a manufacturing system reveals clear tensions between **high-velocity operational visibility** and the **architectural complexity** required to sustain it.
 
@@ -315,7 +350,7 @@ Here is the objective trade-off analysis for this specific stack.
 * **Database Bloat:** Long-running workflows generate a massive volume of execution log data. If your factory handles thousands of builds, Elsa’s tables (Elsa\_WorkflowInstances and execution logs) will grow exponentially, potentially degrading SQL Server performance if not aggressively indexed or pruned.
 * **Tight Coupling Constraint:** Using EF Core persistence tightly couples Elsa’s internal engine storage schemas to your core database engine. Migration scripts or schema updates bundled with Elsa framework upgrades can risk locking or impacting your primary transactional manufacturing tables during deployments.
 
-Summary Matrix for Decision Making
+## Summary Matrix for Decision Making
 
 Vector Status Architectural Impact
 
@@ -340,6 +375,7 @@ A. Bypass the Cache for Real-Time Steaming
 
 Do not pipe high-frequency operational logs or rapid telemetry into Apollo's normalized cache. Use the **no-cache fetch policy** for subscriptions.
 
+```typescript
 this.apollo.subscribe({
 
 query: LIVE\_TEST\_RUN\_STREAM,
@@ -355,11 +391,13 @@ fetchPolicy: 'no-cache' // Bypasses cache normalization completely
 this.localState.updateTelemetry(data.testRunMetric);
 
 });
+```
 
 B. Handle Rapid Updates via RxJS Buffering
 
 Instead of forcing Angular to repaint the UI on every single websocket packet, use RxJS operators to buffer and batch updates on the frontend.
 
+```typescript
 import { bufferTime, filter } from 'rxjs/operators';
 
 this.liveMetricsSubscription$.pipe(
@@ -375,6 +413,7 @@ filter(updates => updates.length > 0)
 this.renderGrid(batchedUpdates);
 
 });
+```
 
 C. Optimize Angular Rendering (OnPush & trackBy)
 
@@ -388,8 +427,8 @@ A. Batch Queries with Hot Chocolate DataLoaders
 
 DataLoaders are the primary defense against N+1 performance bottlenecks. They intercept separate lookup requests inside a single execution loop, batch the IDs, and fetch them from SQL Server in a single, clean IN query. [[1](https://www.statsig.com/perspectives/optimizing-api-performance-with-graphql), [2](https://chillicream.com/blog/2024/08/30/hot-chocolate-14/), [3](https://developer.sage.com/sageactive/concepts/dataloader)]
 
+```csharp
 // 1. Define a batched DataLoader
-
 public class PartsByBuildIdDataLoader : BatchDataLoader<Guid, List<Part>>
 
 {
@@ -439,11 +478,13 @@ PartsByBuildIdDataLoader dataLoader,
 CancellationToken ct) => await dataLoader.LoadAsync(build.Id, ct);
 
 }
+```
 
 B. Deploy Auto-Projections with Entity Framework Core
 
 To prevent over-fetching columns from SQL Server (e.g., pulling massive manufacturing binary data when the UI only asked for a PartNumber), use Hot Chocolate's native **[UseProjection]** middleware. This automatically rewrites incoming GraphQL selection fields directly into a highly efficient EF Core database .Select() expression. [[1](https://oneuptime.com/blog/post/2026-01-25-hot-chocolate-graphql-dotnet/view), [2](https://dev.to/chakewitz/building-graphql-apis-with-c-and-hot-chocolate-4n4g)]
 
+```csharp
 [UseDbContext(typeof(AppDbContext))]
 
 [UseProjection] // Automatically converts the GraphQL Query AST into SQL column selections
@@ -453,11 +494,13 @@ To prevent over-fetching columns from SQL Server (e.g., pulling massive manufact
 [UseSorting]
 
 public IQueryable<Build> GetBuilds([ScopedService] AppDbContext db) => db.Builds;
+```
 
 C. Enforce Query Complexity and Depth Safety Limits [[1](https://oneuptime.com/blog/post/2026-02-16-graphql-apis-hot-chocolate-aspnet-core-azure/view)]
 
 To prevent front-end engineers or malicious actors from writing deeply recursive queries that crash your API gateway, enforce strict architectural limits in Program.cs: [[1](https://oneuptime.com/blog/post/2026-02-16-graphql-apis-hot-chocolate-aspnet-core-azure/view)]
 
+```csharp
 builder.Services.AddGraphQLServer()
 
 .AddQueryType<Query>()
@@ -473,6 +516,7 @@ opt.Complexity.DefaultResolverComplexity = 5; // Weighs explicit data resolvers 
 })
 
 .AddMaxExecutionDepthRule(5); // Instantly rejects queries nested deeper than 5 layers
+```
 
 To tailor these performance fixes directly to your development cycle, let me know:
 
@@ -491,6 +535,7 @@ A. The Generic Command Dispatcher Pattern
 
 Instead of writing explicit C# service handlers for every mutation, create a generic, strongly typed gateway mutation schema. Use an internal C# mediator layer to deserialize arguments dynamically into Elsa workflow triggers.
 
+```csharp
 // 1. Create a unified, generic payload input for your manufacturing actions
 
 public record TriggerWorkflowInput(
@@ -548,6 +593,7 @@ return new WorkflowExecutionResult(result.WorkflowInstanceId, result.Status.ToSt
 }
 
 }
+```
 
 B. Dynamic Schema Stitching (Optional)
 
@@ -572,6 +618,7 @@ Elsa v3 natively supports explicit definition versioning (Version 1, Version 2).
 2. **Route new assets to the new version:** Configure your Hot Chocolate mutation to fetch and start the latest published version (vLatest) only for *newly initialized* Builds.
 3. **Code-level Backward Compatibility:** If an explicit structural modification is unavoidable, implement standard C# polymorphic JSON deserialization options or explicit version mapping inside your custom Elsa activities:
 
+```
 public class VerifyPartsActivity : Activity
 
 {
@@ -603,6 +650,7 @@ else
 }
 
 }
+```
 
 C. Database Isolation with Liquibase or Flyway for Schema Migration
 
@@ -621,7 +669,10 @@ Here is the architectural impact, performance tuning strategies, and implementat
 
 Architectural Shift: EF Core vs. Dapper
 
+```text
 [ EF Core Model ] ──► Auto-generates Change Tracking, Magic Joins, & [ Dapper Model ] ──► Raw SQL strings executed directly, mapping rows to native C# records.
+
+```
 
 While EF Core abstracts database interactions, Dapper gives you complete control over raw SQL execution. This maximizes raw throughput and minimizes CPU/Memory overhead—critical traits for fast-paced factory floors.
 
@@ -632,6 +683,7 @@ Because Dapper does not feature an automatic code generator or migration engine,
 * **Database-First Schema Mirroring:** Use a tool like **Dapper.FastCrud** or **SqlMetal / DbUp** to manage your schema scripts.
 * **Compile-Time Verification with C# 11/12 Raw String Literals:** Write your SQL directly inside C# files using string interpolation and block text. Use standard C# record types to capture query shapes perfectly:
 
+```csharp
 public record BuildDto(Guid Id, string SerialNumber, string Status, byte[] RowVersion);
 
 public async Task<IEnumerable<BuildDto>> GetActiveBuildsAsync(IDbConnection db)
@@ -651,6 +703,7 @@ WHERE Status != 'Complete'
 return await db.QueryAsync<BuildDto>(sql);
 
 }
+```
 
 1. Solving Query Complexity & Performance (Hot Chocolate Backend)
 
@@ -660,6 +713,7 @@ A. Explicit Hot Chocolate Resolvers with Dapper
 
 You cannot use [UseProjection] or [UseFiltering] globally with a simple IQueryable when using Dapper. Instead, explicitly handle child entity retrieval via DataLoaders powered by Dapper's fast parameter binding.
 
+```csharp
 public class PartsByBuildIdDataLoader : BatchDataLoader<Guid, List<PartDto>>
 
 {
@@ -689,6 +743,7 @@ return parts.GroupBy(p => p.BuildId).ToDictionary(g => g.Key, g => g.ToList());
 }
 
 }
+```
 
 B. Dapper Multi-Mapping for Dense Graph Queries
 
@@ -696,7 +751,9 @@ If a dashboard component requests a nested tree grid structure (Build + its acti
 
 const string sql = """ SELECT b.*, t.* FROM Builds b LEFT JOIN TestRuns t ON b.BuildID = t.BuildID """;
 
+```csharp
 var buildMap = new Dictionary<Guid, BuildDto>(); await connection.QueryAsync<BuildDto, TestRunDto, BuildDto>(sql, (build, testRun) => { if (!buildMap.TryGetValue(build.Id, out var existingBuild)) { existingBuild = build with { TestRuns = new List() }; buildMap.Add(existingBuild.Id, existingBuild); } if (testRun != null) existingBuild.TestRuns.Add(testRun); return existingBuild; }, splitOn: "TestRunID");
+```
 
 1. Solving Elsa Workflow v3 Isolation
 
@@ -786,7 +843,9 @@ Cool. Show the architecture blue print for the hybrid solution
 
 **High-Level Architecture Blueprint**
 
+```text
 ┌──────────────────────────────────────────────┐ │ Angular UI (Apollo / Urql) │ └──────────────────────┬───────────────────────┘ │ ▲ GraphQL Queries & Mutations │ │ Real-time Subscriptions ▼ │ (WebSockets / SSE) ┌──────────────────────────────────────────────┐ │ Hot Chocolate GraphQL Gateway │ └──────────────────────┬───────────────────────┘ │ Enforces Projections, │ Dispatches High-Frequency Filters & DataLoaders │ Telemetry / Dense Audits ▼ ┌──────────────────────────────────────────────┐ │ ASP.NET Core Core Service │ └──────────────┬────────────────┬──────────────┘ │ │ Domain Orchestration / │ │ High-Velocity Direct SQL Elsa State Automation │ │ Execution (Bypass Change Tracker) ▼ ▼ ┌──────────────────────┐┌──────────────────────┐ │ Entity Framework ││ │ │ Core Context ││ Dapper Engine │ └──────────────┬───────┘└───────┬──────────────┘ │ │ │ │ Shares Connection & Native │ │ Local ADO.NET Transaction ORM Queries │ │ (DbConnection / DbTransaction) ▼ ▼ ┌──────────────────────────────────────────────┐ │ Microsoft SQL Server │ │ (Domain Tables + Elsa Workflow States) │ └──────────────────────────────────────────────┘
+```
 
 Execution & Integration Strategies
 
@@ -794,6 +853,7 @@ Execution & Integration Strategies
 
 To prevent data inconsistency or deadlocks on the manufacturing floor, Dapper and EF Core must execute inside the same transactional boundary when updating the same asset. You can pass EF Core's active connection and transaction directly to Dapper.
 
+```csharp
 public async Task ExecuteComplexAssemblyStepAsync(Guid buildId, PartPlacementDto placement)
 
 {
@@ -861,11 +921,13 @@ throw;
 }
 
 }
+```
 
 1. Optimized No-Tracking Read Context for Hot Chocolate
 
 To maximize GraphQL query performance and match Dapper's speed on data dashboards, configure your primary EF Core context to turn off change tracking by default.
 
+```csharp
 public class FactoryDbContext : DbContext
 
 {
@@ -887,6 +949,7 @@ public DbSet<Part> Parts => Set<Part>();
 public DbSet<TestRun> TestRuns => Set<TestRun>();
 
 }
+```
 
 1. Streamlined Data Flow Mechanics
 
@@ -940,7 +1003,9 @@ Dapper: High-Velocity Escape Hatch
 
 To ensure data integrity on the factory floor, both data frameworks operate under a strict shared transaction rule.
 
+```text
 [ EF Core Initiates Connection ] ──► Opens Local SqlTransaction │ ▼ (Extracts raw DbConnection / DbTransaction) [ Dapper Reuses Handles ] ──────────► Executes High-Velocity Transacted SQL │ ▼ [ Complete Lifecycle ] ─────────────► Single Atomic Commit / Rollback in SQL Server
+```
 
 Shared Execution Context Pattern
 
@@ -955,6 +1020,7 @@ When a workflow mutation alters a manufacturing record while logging high-volume
 
 To keep your code organized and maintain type safety across the stack during local builds, use this monorepo directory layout:
 
+```text
 /manufacturing-monorepo
 
 ├── /backend
@@ -1010,6 +1076,7 @@ To keep your code organized and maintain type safety across the stack during loc
 │ ├── package.json # Manages graphql-codegen configurations
 
 │ ├── codegen.ts # Build-watcher rule for front-end client generation
+```
 
 To help configure the infrastructure for this deployment, let me know:
 
@@ -1036,7 +1103,7 @@ Here is the objective trade-off analysis to help you determine if this hybrid mo
 * **Intricate Transaction Management:** When an operation spans both ORMs, you cannot rely on EF Core’s automatic .SaveChangesAsync() to wrap your logic. You must explicitly open an ADO.NET connection, begin a transaction via EF Core, extract the underlying DbTransaction handle, and explicitly pass it into Dapper commands. Forgetting to pass the transaction handle will cause immediate database deadlocks.
 * **Increased Code Footprint:** The /DapperQueries folder adds a significant amount of boilerplate code to your monorepo. You will be writing, reviewing, and maintaining raw SQL files, mapping logic, and manual index strategies that a pure EF Core approach would have abstracted away.
 
-Summary Matrix: Hybrid Architecture vs. Singular Choices
+## Summary Matrix: Hybrid Architecture vs. Singular Choices
 
 Metric Pure EF Core Stack Pure Dapper Stack Recommended Hybrid Stack
 
