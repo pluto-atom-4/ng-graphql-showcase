@@ -122,15 +122,10 @@ Add the NSwag CLI tool package to your C# Web API project (.csproj):
 
 ```xml
 <ItemGroup>
-
-<PackageReference Include="NSwag.MSBuild" Version="14.\*">
-
+<PackageReference Include="NSwag.MSBuild" Version="14.*">
 <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-
 <PrivateAssets>all</PrivateAssets>
-
 </PackageReference>
-
 </ItemGroup>
 ```
 
@@ -138,9 +133,7 @@ Add an MSBuild target to the bottom of your .csproj file. This tells the compile
 
 ```xml
 <Target Name="GenerateOpenApiSpec" AfterTargets="Build">
-
-<Exec Command="$(NSwagExe\_Net80) webapi2openapi /assembly:$(OutputPath)$(AssemblyName).dll /output:$(ProjectDir)swagger.json" />
-
+  <Exec Command="$(NSwagExe_Net80) webapi2openapi /assembly:$(OutputPath)$(AssemblyName).dll /output:$(ProjectDir)swagger.json" />
 </Target>
 ```
 
@@ -172,11 +165,8 @@ Update your C# Web API .csproj file to invoke the npm script immediately after t
 
 ```xml
 <Target Name="GenerateAngularClient" AfterTargets="GenerateOpenApiSpec">
-
 <!-- Ensure node modules are installed, or skip if assuming local developer machine is setup -->
-
 <Exec Command="npm run generate:api" WorkingDirectory="$(ProjectDir)../FrontendProject" />
-
 </Target>
 ```
 
@@ -213,25 +203,16 @@ public class RunTestSimulation : Activity
 
 ```csharp
 {
+  // Elsa automatically handles input/output type binding
+  [Input] public Input<Guid> BuildId { get; set; } = default!;
+  [Output] public Output<bool> TestPassed { get; set; } = default!;
 
-// Elsa automatically handles input/output type binding
-
-[Input] public Input<Guid> BuildId { get; set; } = default!;
-
-[Output] public Output<bool> TestPassed { get; set; } = default!;
-
-protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
-
-{
-
-Guid id = BuildId.Get(context);
-
-// Execute long-running test logic here...
-
-TestPassed.Set(context, true);
-
-}
-
+  protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
+  {
+    Guid id = BuildId.Get(context);
+    // Execute long-running test logic here...
+    TestPassed.Set(context, true);
+  }
 }
 ```
 
@@ -261,7 +242,6 @@ Hot Chocolate exposes your Elsa workflows and domain data to Angular as a unifie
 
 ```csharp
 // Inside a C# service or custom Elsa activity:
-
 await eventSender.SendAsync($"BuildStatus:{buildId}", updatedBuildStatus);
 ```
 
@@ -377,19 +357,12 @@ Do not pipe high-frequency operational logs or rapid telemetry into Apollo's nor
 
 ```typescript
 this.apollo.subscribe({
-
-query: LIVE\_TEST\_RUN\_STREAM,
-
-variables: { buildId },
-
-fetchPolicy: 'no-cache' // Bypasses cache normalization completely
-
+  query: LIVE_TEST_RUN_STREAM,
+  variables: { buildId },
+  fetchPolicy: 'no-cache' // Bypasses cache normalization completely
 }).subscribe(({ data }) => {
-
-// Push raw data straight to your high-performance UI components
-
-this.localState.updateTelemetry(data.testRunMetric);
-
+  // Push raw data straight to your high-performance UI components
+  this.localState.updateTelemetry(data.testRunMetric);
 });
 ```
 
@@ -401,17 +374,11 @@ Instead of forcing Angular to repaint the UI on every single websocket packet, u
 import { bufferTime, filter } from 'rxjs/operators';
 
 this.liveMetricsSubscription$.pipe(
-
-bufferTime(250), // Group all updates received in a 250ms window
-
-filter(updates => updates.length > 0)
-
+  bufferTime(250), // Group all updates received in a 250ms window
+  filter(updates => updates.length > 0)
 ).subscribe(batchedUpdates => {
-
-// Update your Angular Data Grid exactly 4 times a second instead of 100
-
-this.renderGrid(batchedUpdates);
-
+  // Update your Angular Data Grid exactly 4 times a second instead of 100
+  this.renderGrid(batchedUpdates);
 });
 ```
 
@@ -430,53 +397,32 @@ DataLoaders are the primary defense against N+1 performance bottlenecks. They in
 ```csharp
 // 1. Define a batched DataLoader
 public class PartsByBuildIdDataLoader : BatchDataLoader<Guid, List<Part>>
-
 {
+  private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-private readonly IDbContextFactory<AppDbContext> \_dbFactory;
+  public PartsByBuildIdDataLoader(
+    IDbContextFactory<AppDbContext> dbFactory,
+    IBatchScheduler batchScheduler) : base(batchScheduler) => _dbFactory = dbFactory;
 
-public PartsByBuildIdDataLoader(
-
-IDbContextFactory<AppDbContext> dbFactory,
-
-IBatchScheduler batchScheduler) : base(batchScheduler) => \_dbFactory = dbFactory;
-
-protected override async Task<IReadOnlyDictionary<Guid, List<Part>>> LoadBatchAsync(
-
-IReadOnlyList<Guid> keys, CancellationToken cancellationToken)
-
-{
-
-await using var db = \_dbFactory.CreateDbContext();
-
-var parts = await db.Parts
-
-.Where(p => keys.Contains(p.BuildId))
-
-.ToListAsync(cancellationToken);
-
-return parts.GroupBy(p => p.BuildId).ToDictionary(g => g.Key, g => g.ToList());
-
-}
-
+  protected override async Task<IReadOnlyDictionary<Guid, List<Part>>> LoadBatchAsync(
+    IReadOnlyList<Guid> keys, CancellationToken cancellationToken)
+  {
+    await using var db = _dbFactory.CreateDbContext();
+    var parts = await db.Parts
+      .Where(p => keys.Contains(p.BuildId))
+      .ToListAsync(cancellationToken);
+    return parts.GroupBy(p => p.BuildId).ToDictionary(g => g.Key, g => g.ToList());
+  }
 }
 
 // 2. Consume it cleanly in your GraphQL Build Resolver
-
 [ExtendObjectType(typeof(Build))]
-
 public class BuildResolvers
-
 {
-
-public async Task<List<Part>> GetPartsAsync(
-
-[Parent] Build build,
-
-PartsByBuildIdDataLoader dataLoader,
-
-CancellationToken ct) => await dataLoader.LoadAsync(build.Id, ct);
-
+  public async Task<List<Part>> GetPartsAsync(
+    [Parent] Build build,
+    PartsByBuildIdDataLoader dataLoader,
+    CancellationToken ct) => await dataLoader.LoadAsync(build.Id, ct);
 }
 ```
 
@@ -486,13 +432,9 @@ To prevent over-fetching columns from SQL Server (e.g., pulling massive manufact
 
 ```csharp
 [UseDbContext(typeof(AppDbContext))]
-
 [UseProjection] // Automatically converts the GraphQL Query AST into SQL column selections
-
 [UseFiltering]
-
 [UseSorting]
-
 public IQueryable<Build> GetBuilds([ScopedService] AppDbContext db) => db.Builds;
 ```
 
@@ -502,20 +444,13 @@ To prevent front-end engineers or malicious actors from writing deeply recursive
 
 ```csharp
 builder.Services.AddGraphQLServer()
-
-.AddQueryType<Query>()
-
-.ModifyRequestOptions(opt =>
-
-{
-
-opt.Complexity.ApplyDefaults = true; // Sets baseline weights for queries
-
-opt.Complexity.DefaultResolverComplexity = 5; // Weighs explicit data resolvers heavier
-
-})
-
-.AddMaxExecutionDepthRule(5); // Instantly rejects queries nested deeper than 5 layers
+  .AddQueryType<Query>()
+  .ModifyRequestOptions(opt =>
+  {
+    opt.Complexity.ApplyDefaults = true; // Sets baseline weights for queries
+    opt.Complexity.DefaultResolverComplexity = 5; // Weighs explicit data resolvers heavier
+  })
+  .AddMaxExecutionDepthRule(5); // Instantly rejects queries nested deeper than 5 layers
 ```
 
 To tailor these performance fixes directly to your development cycle, let me know:
@@ -687,21 +622,13 @@ Because Dapper does not feature an automatic code generator or migration engine,
 public record BuildDto(Guid Id, string SerialNumber, string Status, byte[] RowVersion);
 
 public async Task<IEnumerable<BuildDto>> GetActiveBuildsAsync(IDbConnection db)
-
 {
-
-const string sql = """
-
-SELECT BuildID AS Id, SerialNumber, Status, RowVersion
-
-FROM Builds
-
-WHERE Status != 'Complete'
-
-""";
-
-return await db.QueryAsync<BuildDto>(sql);
-
+  const string sql = """
+    SELECT BuildID AS Id, SerialNumber, Status, RowVersion
+    FROM Builds
+    WHERE Status != 'Complete'
+  """;
+  return await db.QueryAsync<BuildDto>(sql);
 }
 ```
 
@@ -715,33 +642,21 @@ You cannot use [UseProjection] or [UseFiltering] globally with a simple IQueryab
 
 ```csharp
 public class PartsByBuildIdDataLoader : BatchDataLoader<Guid, List<PartDto>>
-
 {
+  private readonly string _connectionString;
 
-private readonly string \_connectionString;
+  public PartsByBuildIdDataLoader(string connectionString, IBatchScheduler batchScheduler)
+    : base(batchScheduler) => _connectionString = connectionString;
 
-public PartsByBuildIdDataLoader(string connectionString, IBatchScheduler batchScheduler)
-
-: base(batchScheduler) => \_connectionString = connectionString;
-
-protected override async Task<IReadOnlyDictionary<Guid, List<PartDto>>> LoadBatchAsync(
-
-IReadOnlyList<Guid> keys, CancellationToken cancellationToken)
-
-{
-
-using var connection = new SqlConnection(\_connectionString);
-
-// Use Dapper's native array binding for clean 'IN' queries
-
-const string sql = "SELECT \* FROM Parts WHERE BuildId IN @Ids";
-
-var parts = await connection.QueryAsync<PartDto>(sql, new { Ids = keys });
-
-return parts.GroupBy(p => p.BuildId).ToDictionary(g => g.Key, g => g.ToList());
-
-}
-
+  protected override async Task<IReadOnlyDictionary<Guid, List<PartDto>>> LoadBatchAsync(
+    IReadOnlyList<Guid> keys, CancellationToken cancellationToken)
+  {
+    using var connection = new SqlConnection(_connectionString);
+    // Use Dapper's native array binding for clean 'IN' queries
+    const string sql = "SELECT * FROM Parts WHERE BuildId IN @Ids";
+    var parts = await connection.QueryAsync<PartDto>(sql, new { Ids = keys });
+    return parts.GroupBy(p => p.BuildId).ToDictionary(g => g.Key, g => g.ToList());
+  }
 }
 ```
 
@@ -749,10 +664,20 @@ B. Dapper Multi-Mapping for Dense Graph Queries
 
 If a dashboard component requests a nested tree grid structure (Build + its active Test Run), use Dapper's **Multi-Mapping** feature to query both tables in a single SQL connection stream, preventing nested database trips.
 
-const string sql = """ SELECT b.*, t.* FROM Builds b LEFT JOIN TestRuns t ON b.BuildID = t.BuildID """;
+const string sql = """
+  SELECT b.*, t.* FROM Builds b LEFT JOIN TestRuns t ON b.BuildID = t.BuildID
+""";
 
 ```csharp
-var buildMap = new Dictionary<Guid, BuildDto>(); await connection.QueryAsync<BuildDto, TestRunDto, BuildDto>(sql, (build, testRun) => { if (!buildMap.TryGetValue(build.Id, out var existingBuild)) { existingBuild = build with { TestRuns = new List() }; buildMap.Add(existingBuild.Id, existingBuild); } if (testRun != null) existingBuild.TestRuns.Add(testRun); return existingBuild; }, splitOn: "TestRunID");
+var buildMap = new Dictionary<Guid, BuildDto>();
+await connection.QueryAsync<BuildDto, TestRunDto, BuildDto>(sql, (build, testRun) => {
+  if (!buildMap.TryGetValue(build.Id, out var existingBuild)) {
+    existingBuild = build with { TestRuns = new List() };
+    buildMap.Add(existingBuild.Id, existingBuild);
+  }
+  if (testRun != null) existingBuild.TestRuns.Add(testRun);
+  return existingBuild;
+}, splitOn: "TestRunID");
 ```
 
 1. Solving Elsa Workflow v3 Isolation
@@ -855,71 +780,42 @@ To prevent data inconsistency or deadlocks on the manufacturing floor, Dapper an
 
 ```csharp
 public async Task ExecuteComplexAssemblyStepAsync(Guid buildId, PartPlacementDto placement)
-
 {
+  using var context = await _contextFactory.CreateDbContextAsync();
+  using var transaction = await context.Database.BeginTransactionAsync();
+  try
+  {
+    // 1. EF Core handles domain state progression and Elsa integration
+    var build = await context.Builds.FindAsync(buildId);
+    build.Status = "Assembling";
+    build.LastUpdated = DateTime.UtcNow;
 
-using var context = await \_contextFactory.CreateDbContextAsync();
+    // 2. Escape hatch: Use Dapper for high-speed batch inserts of raw parts metrics
+    // Extract the raw underlying ADO.NET connection and transaction
+    var dbConnection = context.Database.GetDbConnection();
+    var dbTransaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
-using var transaction = await context.Database.BeginTransactionAsync();
+    const string sql = """
+      INSERT INTO PartsLog (Id, BuildId, Barcode, ProcessedTimestamp)
+      VALUES (@Id, @BuildId, @Barcode, @Timestamp)
+    """;
 
-try
+    await dbConnection.ExecuteAsync(sql, new {
+      Id = Guid.NewGuid(),
+      BuildId = buildId,
+      Barcode = placement.Barcode,
+      Timestamp = DateTime.UtcNow
+    }, transaction: dbTransaction);
 
-{
-
-// 1. EF Core handles domain state progression and Elsa integration
-
-var build = await context.Builds.FindAsync(buildId);
-
-build.Status = "Assembling";
-
-build.LastUpdated = DateTime.UtcNow;
-
-// 2. Escape hatch: Use Dapper for high-speed batch inserts of raw parts metrics
-
-// Extract the raw underlying ADO.NET connection and transaction
-
-var dbConnection = context.Database.GetDbConnection();
-
-var dbTransaction = context.Database.CurrentTransaction?.GetDbTransaction();
-
-const string sql = """
-
-INSERT INTO PartsLog (Id, BuildId, Barcode, ProcessedTimestamp)
-
-VALUES (@Id, @BuildId, @Barcode, @Timestamp)
-
-""";
-
-await dbConnection.ExecuteAsync(sql, new {
-
-Id = Guid.NewGuid(),
-
-BuildId = buildId,
-
-Barcode = placement.Barcode,
-
-Timestamp = DateTime.UtcNow
-
-}, transaction: dbTransaction);
-
-// Commit both tracking and raw SQL steps safely together
-
-await context.SaveChangesAsync();
-
-await transaction.CommitAsync();
-
-}
-
-catch
-
-{
-
-await transaction.RollbackAsync();
-
-throw;
-
-}
-
+    // Commit both tracking and raw SQL steps safely together
+    await context.SaveChangesAsync();
+    await transaction.CommitAsync();
+  }
+  catch
+  {
+    await transaction.RollbackAsync();
+    throw;
+  }
 }
 ```
 
@@ -929,25 +825,16 @@ To maximize GraphQL query performance and match Dapper's speed on data dashboard
 
 ```csharp
 public class FactoryDbContext : DbContext
-
 {
+  public FactoryDbContext(DbContextOptions<FactoryDbContext> options) : base(options)
+  {
+    // Globally turns off change tracking overhead for raw dashboard streaming
+    ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+  }
 
-public FactoryDbContext(DbContextOptions<FactoryDbContext> options) : base(options)
-
-{
-
-// Globally turns off change tracking overhead for raw dashboard streaming
-
-ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-
-}
-
-public DbSet<Build> Builds => Set<Build>();
-
-public DbSet<Part> Parts => Set<Part>();
-
-public DbSet<TestRun> TestRuns => Set<TestRun>();
-
+  public DbSet<Build> Builds => Set<Build>();
+  public DbSet<Part> Parts => Set<Part>();
+  public DbSet<TestRun> TestRuns => Set<TestRun>();
 }
 ```
 
