@@ -1,0 +1,42 @@
+# IDE and Editor
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+*.code-workspace
+
+# Build outputs
+bin/
+obj/
+dist/
+build/
+.nx/
+
+# Dependencies
+node_modules/
+.angular/
+
+# Environment and Local Config
+.env
+.env.local
+*.local
+.claude/settings.local.json
+
+# Database
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
