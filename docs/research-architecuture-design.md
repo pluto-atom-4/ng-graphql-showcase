@@ -150,10 +150,10 @@ npm install @openapitools/openapi-generator-cli --save-dev
 Add a custom script to your Angular project's package.json file pointing directly to the relative path of the C# project's swagger.json:
 
 ```json
-"scripts": {
-
-"generate:api": "openapi-generator-cli generate -i ../BackendProject/swagger.json -g typescript-angular -o src/app/api/generated"
-
+{
+  "scripts": {
+    "generate:api": "openapi-generator-cli generate -i ../BackendProject/swagger.json -g typescript-angular -o src/app/api/generated"
+  }
 }
 ```
 
@@ -165,8 +165,8 @@ Update your C# Web API .csproj file to invoke the npm script immediately after t
 
 ```xml
 <Target Name="GenerateAngularClient" AfterTargets="GenerateOpenApiSpec">
-<!-- Ensure node modules are installed, or skip if assuming local developer machine is setup -->
-<Exec Command="npm run generate:api" WorkingDirectory="$(ProjectDir)../FrontendProject" />
+  <!-- Ensure node modules are installed, or skip if assuming local developer machine is setup -->
+  <Exec Command="npm run generate:api" WorkingDirectory="$(ProjectDir)../FrontendProject" />
 </Target>
 ```
 
@@ -264,7 +264,6 @@ Configure Hot Chocolate to write your full GraphQL schema to disk every time you
 
 ```csharp
 // Program.cs or a build utility script
-
 await app.Services.GetRequiredService<ISchemaExecutor>().Schema.ToString().WriteAllTextAsync("schema.graphql");
 ```
 
@@ -472,63 +471,38 @@ Instead of writing explicit C# service handlers for every mutation, create a gen
 
 ```csharp
 // 1. Create a unified, generic payload input for your manufacturing actions
-
 public record TriggerWorkflowInput(
-
 string WorkflowDefinitionId,
-
 string CorrelationId, // Maps directly to your BuildID
-
 string TriggerName,
-
 List<KeyValuePair<string, object>> Variables
-
 );
 
 // 2. Build a single, highly reusable GraphQL Mutation Resolver
-
 public class WorkflowMutations
-
 {
-
 public async Task<WorkflowExecutionResult> TriggerManufacturingStepAsync(
-
 TriggerWorkflowInput input,
-
 [Service] IWorkflowRuntime workflowRuntime,
-
 CancellationToken ct)
-
 {
-
 // Convert the key-value dictionary variables cleanly into Elsa's internal dictionary
-
 var inputDictionary = input.Variables.ToDictionary(v => v.Key, v => v.Value);
-
 var request = new StartWorkflowRuntimeRequest
-
 {
-
 WorkflowDefinitionId = input.WorkflowDefinitionId,
-
 CorrelationId = input.CorrelationId,
-
 Input = inputDictionary,
-
 TriggerName = input.TriggerName
-
 };
 
 // Directly invoke Elsa engine without intermediary 'bridge' classes
-
 var result = await workflowRuntime.StartWorkflowAsync(request, ct);
-
 return new WorkflowExecutionResult(result.WorkflowInstanceId, result.Status.ToString());
-
 }
-
 }
 ```
+
 
 B. Dynamic Schema Stitching (Optional)
 
