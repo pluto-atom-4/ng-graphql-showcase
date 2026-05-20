@@ -310,11 +310,102 @@ jobs:
 
 ---
 
+## Secret Scanning & Push Protection
+
+### How It Works
+
+GitHub **Secret Scanning** automatically detects hardcoded credentials and prevents them from being committed:
+
+1. **Push Protection** — Blocks pushes containing detected secrets (prevents leaks)
+2. **Post-Detection Scanning** — Scans repository history for existing secrets
+3. **Alert Dashboard** — Notifies via GitHub Security tab if secrets are found
+
+### Detected Patterns
+
+GitHub Secret Scanning detects:
+- AWS credentials (`AKIA...` patterns)
+- GitHub personal access tokens (`ghp_...` patterns)
+- Private SSH keys and certificates
+- Database connection strings with passwords
+- OAuth tokens and API keys
+- Azure storage account keys
+- And many more service-specific patterns
+
+### Enabling Secret Scanning
+
+**Using GitHub CLI:**
+```bash
+gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
+```
+
+**Result:**
+- Secret Scanning: Enabled (detects credentials in code)
+- Push Protection: Enabled (blocks risky pushes)
+
+### Handling Blocked Pushes
+
+If you accidentally try to push code containing a detected secret:
+
+```bash
+# GitHub will block the push with:
+# "Push rejected by secret scanning. Resolve the secret and re-push your changes."
+
+# 1. Remove the secret from your code
+git add -A
+
+# 2. Amend your commit (if not yet pushed)
+git commit --amend --no-edit
+
+# 3. Try pushing again
+git push origin your-branch
+```
+
+### Exempting False Positives
+
+Some patterns might be detected as secrets when they're actually examples or documentation:
+
+1. **Contact GitHub Support** to report false positives
+2. **Document the reason** in PR comments
+3. **Reference legitimate usage** (e.g., documentation, testing patterns)
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Push rejected but I don't see a secret | Run `git diff HEAD` to review recent changes; check for test credentials or API keys in comments |
+| Accidental secret already in history | Repository owner needs to use `git filter-branch` or BFG Repo-Cleaner to remove; then force-push |
+| Push override needed (not recommended) | Use `git push --no-verify` (bypasses ALL safety checks) |
+| Need to whitelist a pattern | Contact GitHub Support with reasoning and pattern details |
+
+### Best Practices
+
+✅ **Do:**
+- Keep `.env.local.example` with placeholder values (example only, no real secrets)
+- Use `.env` or `.env.local` (in `.gitignore`) for actual credentials
+- Use GitHub Secrets for CI/CD credentials, not environment files
+- Reference `.env.local.example` in CONTRIBUTING.md for setup
+
+❌ **Don't:**
+- Commit API keys, tokens, or passwords to any branch
+- Use `--no-verify` to bypass secret scanning (defeats the purpose)
+- Store secrets in configuration files tracked by git
+- Commit `.env` files or credential files
+
+### Related Documentation
+
+For Phase 2 security implementation details, see:
+- **[docs/implementation-planning/task-1-github-cli-guide.md](./implementation-planning/task-1-github-cli-guide.md)** — Complete GitHub CLI guide
+- **[SECURITY.md](../SECURITY.md)** — Vulnerability reporting and security policy
+
+---
+
 ## Related Documentation
 
 - **[README.md](../README.md)** — Project overview and quickstart
 - **[docs/SETUP.md](./SETUP.md)** — Local development setup
 - **[CLAUDE.md](../CLAUDE.md)** — Full development guide with architecture details
+- **[SECURITY.md](../SECURITY.md)** — Security policy and vulnerability reporting
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** — Development workflow and code standards
 
 ---
 
