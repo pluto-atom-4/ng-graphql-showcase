@@ -11,7 +11,6 @@ This guide explains the **AI Code Review GitHub Action** that automatically appr
 The AI Code Review workflow activates when:
 - A new PR is **opened**
 - New **commits are pushed** to an existing PR (synchronize event)
-- A PR is **reopened** (after being closed)
 
 ---
 
@@ -23,15 +22,14 @@ A PR is **automatically approved** if ALL of the following conditions are met:
 |-----------|--------|
 | PR created by `pluto-atom-4` | ✅ Required |
 | PR is NOT in draft status | ✅ Required |
-| PR title does NOT contain `[skip-review]` | ✅ Required |
 
-**If any condition fails**, auto-approval is skipped (external PR, draft, or explicit skip).
+**If any condition fails**, auto-approval is skipped (external PR or draft).
 
 ---
 
 ## Step-by-Step Workflow
 
-### Step 1: Validate Author
+### Step 1: Job Condition Gate
 
 **Condition Check:**
 ```yaml
@@ -40,129 +38,72 @@ if: github.actor == 'pluto-atom-4' && github.event.pull_request.draft == false
 
 - Verifies that the PR creator is the repository owner
 - Confirms the PR is not in draft status
-- Skips all remaining steps if either condition fails
+- Skips the entire job if either condition fails
+- This is the **first and primary security check**
 
 **Output:**
 ```
-🔐 Author Validation:
-  Expected Owner: pluto-atom-4
-  PR Author: pluto-atom-4
-  ✅ Author is repository owner - eligible for auto-approval
+Job skipped for external contributors
+OR
+Job runs for pluto-atom-4 non-draft PRs
 ```
 
-### Step 2: Log PR Metadata
+### Step 2: Checkout Repository
 
-**Logged Information:**
-- PR number
-- PR author/creator
-- Draft status (true/false)
-- Event type (opened, synchronize, reopened)
-- Timestamp (ISO 8601)
-- PR title
-- Branch information (source → target)
-- File change count
+**Action:** `actions/checkout@v4`
+
+- Fetches the full repository history (`fetch-depth: 0`)
+- Allows access to repository context and metadata
+- Prepares environment for subsequent steps
+
+### Step 3: Check CI Status (Optional)
+
+**Script Step** (Information logging)
+
+```javascript
+const pr = context.payload.pull_request;
+console.log('PR: ' + pr.number);
+console.log('Author: ' + pr.user.login);
+console.log('Draft: ' + pr.draft);
+```
+
+**Purpose:** Log PR metadata to workflow logs for debugging/audit trail
 
 **Output Example:**
 ```
-📋 Pull Request Metadata:
-  PR Number: #11
-  Author: pluto-atom-4
-  Draft Status: false
-  Event Type: opened
-  Timestamp: 2026-05-19T17:25:00Z
-  Title: feat: Implement minimal docker-compose setup (Issue #10)
-  Branch: feat/docker-compose-setup → main
+PR: 11
+Author: pluto-atom-4
+Draft: false
 ```
 
-### Step 3: Check for [skip-review] Tag
-
-**Purpose:** Allow explicit opt-out of auto-approval for complex PRs requiring manual review.
-
-**How to Skip Auto-Approval:**
-1. Add `[skip-review]` tag to PR title
-2. Create/update PR
-3. Workflow detects tag and skips approval
-
-**Examples:**
-```
-✅ Auto-approve: feat: Add new feature
-❌ Skip approval: feat: Add new feature [skip-review]
-```
-
-### Step 4: Check Changed Files
-
-**Information Gathered:**
-- Count of changed files
-- List of file paths (visible in workflow logs)
-- Diff statistics
-
-**Purpose:** Provide context for review and logging.
-
-### Step 5: Validate Code Quality
-
-**Checks Performed:**
-- ✅ Author verified (solo developer)
-- ✅ Not a draft PR
-- ✅ File changes detected
-- ℹ️ CI/CD checks run separately (linting, tests, builds)
-
-**Note:** This step is informational; full CI/CD validation runs in separate GitHub Actions workflows.
-
-### Step 6: Create Approval Review
+### Step 4: Approve PR
 
 **GitHub API Call:**
 ```javascript
 github.rest.pulls.createReview({
-  owner: repo.owner,
-  repo: repo.repo,
-  pull_number: pr.number,
+  owner: context.repo.owner,
+  repo: context.repo.repo,
+  pull_number: context.issue.number,
   event: 'APPROVE',
-  body: reviewBody
+  body: '✅ AI Code Review Approved\n\nAll CI checks must pass before merge:\n- Type checking\n- Build\n- Tests\n\nReady for manual merge when CI passes.'
 })
 ```
 
-**Approval Message Includes:**
+**Approval Message:**
 ```
 ✅ AI Code Review Approved
 
-**PR Details:**
-- Number: #11
-- Author: pluto-atom-4 (repository owner)
-- Title: feat: Implement minimal docker-compose setup
-- Branch: feat/docker-compose-setup → main
-- Files Changed: 7
+All CI checks must pass before merge:
+- Type checking
+- Build
+- Tests
 
-**Quality Checks:**
-✅ Solo developer verification passed
-✅ Not a draft PR
-✅ Branch strategy validated
-
-**Important:**
-- ⚠️ All CI checks must pass before merge
-- 📝 Manual code review may still be needed
-- 🔄 Ready for manual merge when CI passes
+Ready for manual merge when CI passes.
 ```
 
-### Step 7: Log Approval Summary
-
-**Final Status Report:**
-- ✅ Auto-approval completed (if approved)
-- ⏭️ Auto-approval skipped (if skipped)
-- Reason for skip (if applicable)
-
-**Example Output:**
-```
-📊 Approval Summary:
-  PR Author: pluto-atom-4
-  Expected Owner: pluto-atom-4
-  Author Matches: true
-  Is Draft: false
-  Skip Review Flag: false
-
-✅ RESULT: Auto-approval completed successfully
-   This PR was auto-approved by the solo developer workflow
-   CI checks and manual review may still be required
-```
+**Uses:**
+- `${{ secrets.BOT_TOKEN }}` — GitHub token for API access (requires setup in repository secrets)
+- Calls GitHub REST API to create approval review
 
 ---
 
@@ -171,6 +112,7 @@ github.rest.pulls.createReview({
 ### 1. PR Receives Approval Review ✅
 - The PR shows a green checkmark in the review section
 - Approval is visible in the PR timeline
+- Approval message explains CI requirements
 
 ### 2. CI/CD Checks Still Run 🔄
 **All automated checks must pass:**
@@ -191,64 +133,30 @@ Once CI checks pass, the PR is ready for manual merge via GitHub UI:
 
 ---
 
-## Skip Auto-Approval
-
-### When to Use [skip-review]
-
-Add `[skip-review]` to the PR title if:
-- Complex architectural changes requiring manual review
-- Significant refactoring with subtle behavior changes
-- Security-related changes
-- Database schema modifications
-- API contract changes
-
-### How to Skip
-
-**Create PR with [skip-review] tag:**
-```bash
-gh pr create --title "feat: Complex change [skip-review]"
-```
-
-**Or update existing PR title:**
-1. Open PR on GitHub
-2. Click edit on title
-3. Add `[skip-review]` at the end
-4. Save changes
-
-**Workflow Response:**
-```
-⏭️  RESULT: Auto-approval skipped
-   Reason: [skip-review] tag detected in PR title
-```
-
----
-
 ## Error Handling & Fallback
 
 ### If Approval Fails
 
-If the GitHub API call to create a review fails:
+If the GitHub API call to create a review fails (e.g., insufficient permissions, network error):
 
 1. **Workflow logs the error** — Full error message captured
-2. **Workflow does NOT fail** — Continues to completion
+2. **No retry mechanism** — Single attempt
 3. **PR remains open** — Can be manually approved/merged
-4. **No blocking issues** — Developer can investigate logs
+4. **Developer can investigate** — Check workflow logs for details
 
-**Example Error Handling:**
-```
-❌ Error creating approval review: Resource not accessible by integration
-   Details: Insufficient permissions to approve pull request
-   ⚠️ Workflow continues despite review creation failure
-```
+**Common Issues:**
+- `BOT_TOKEN` not configured in repository secrets
+- `BOT_TOKEN` has insufficient permissions
+- Network or GitHub API unavailability
 
 ### Debugging Tips
 
 Check workflow logs if auto-approval doesn't occur:
 
 1. Navigate to **GitHub → Actions → AI Code Review**
-2. Click the failed/skipped workflow run
+2. Click the specific workflow run
 3. Expand the step logs
-4. Look for error messages or skip reasons
+4. Look for error messages in "Approve PR" step
 
 ---
 
@@ -258,8 +166,8 @@ Check workflow logs if auto-approval doesn't occur:
 
 - ✅ **Only approves PRs from `pluto-atom-4`** — Prevents external abuse
 - ✅ **Skips draft PRs** — Incomplete work not accidentally approved
-- ✅ **Uses GITHUB_TOKEN** — Automatic, no external secrets required
-- ✅ **Logs all decisions** — Audit trail for every approval/skip
+- ✅ **Uses BOT_TOKEN** — Explicit token with defined permissions
+- ✅ **Logs all decisions** — Audit trail for every workflow run
 
 ### CI Still Required
 
@@ -270,6 +178,21 @@ Check workflow logs if auto-approval doesn't occur:
 - ❌ Build failures
 
 All CI checks must pass before merge.
+
+### BOT_TOKEN Setup
+
+To use this workflow:
+
+1. **Create a personal access token** (or use an app token)
+2. **Add to repository secrets:**
+   - Go to Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `BOT_TOKEN`
+   - Value: Your personal access token
+3. **Ensure token has permissions:**
+   - `repo` (full control of private repositories)
+   - `workflow` (for GitHub Actions)
+   - `pull-requests:write` (to create reviews)
 
 ---
 
@@ -292,31 +215,31 @@ gh pr create --base main --head feat/docker-compose-setup \
 ### AI Code Review Workflow Runs:
 
 ```
-✅ Step 1: Checkout Repository
-✅ Step 2: Log PR Metadata
-   PR #11 | Author: pluto-atom-4 | Draft: false | Title: feat: ...
+✅ Step 1: Job Condition Check
+   Actor: pluto-atom-4 ✅
+   Draft: false ✅
+   → Job proceeds
 
-✅ Step 3: Check Changed Files
-   Files changed: 7
+✅ Step 2: Checkout Repository
+   Repository ready
 
-✅ Step 4: Validate Code Quality
-   Author verified ✅ | Not draft ✅ | Files detected ✅
+✅ Step 3: Check CI Status
+   PR: 11
+   Author: pluto-atom-4
+   Draft: false
 
-✅ Step 5: Create Approval Review
-   Submitting approval review to GitHub API...
-   Review ID: PR_kwDOL5bNs84ABCDE
-   Status: APPROVED
-   URL: https://github.com/.../pull/11#pullrequestreview-...
+✅ Step 4: Approve PR
+   Creating approval review...
+   Review created successfully
+   Message: ✅ AI Code Review Approved...
 
-✅ Step 6: Log Approval Summary
-   RESULT: Auto-approval completed successfully
-   This PR was auto-approved by the solo developer workflow
+WORKFLOW COMPLETE ✅
 ```
 
 ### Then:
 
 1. **CI/CD runs** — All checks must pass
-2. **Developer reviews logs** — Ensures nothing unusual
+2. **Developer reviews logs** — Ensures approval was created
 3. **Manual merge** — Developer merges via GitHub UI
 4. **Branch deleted** — Cleanup
 
@@ -325,13 +248,16 @@ gh pr create --base main --head feat/docker-compose-setup \
 ## FAQ
 
 ### Q: Why auto-approve if CI must still pass?
-**A:** Auto-approval confirms the PR structure is valid (owner-created, not draft). CI ensures code quality. Both are needed.
+**A:** Auto-approval confirms the PR structure is valid (owner-created, not draft). CI ensures code quality. Both provide different validation layers.
 
 ### Q: Can external contributors use this?
 **A:** No. The workflow explicitly checks `github.actor == 'pluto-atom-4'`. Only the owner is auto-approved.
 
 ### Q: What if I want manual review of my own PR?
-**A:** Add `[skip-review]` to the title. The workflow skips approval, allowing manual review.
+**A:** Currently, all non-draft PRs from pluto-atom-4 are auto-approved. To skip, you could:
+1. Create PR in draft mode
+2. Request review via GitHub UI
+3. Un-draft when ready
 
 ### Q: Does auto-approval bypass tests?
 **A:** No. Auto-approval and CI checks are independent. CI still runs and must pass before merge.
@@ -348,6 +274,13 @@ gh pr create --base main --head feat/docker-compose-setup \
 2. Click "Dismiss review" on the approval
 3. This removes the approval without deleting the review
 
+### Q: What if BOT_TOKEN is not configured?
+**A:** The workflow will fail at the "Approve PR" step with:
+```
+Error: Token required but not supplied
+```
+Configure the token in repository secrets to fix.
+
 ---
 
 ## Workflow File Reference
@@ -358,7 +291,7 @@ gh pr create --base main --head feat/docker-compose-setup \
 ```yaml
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
 
 permissions:
   contents: read
@@ -371,19 +304,21 @@ jobs:
 
 **Customization:**
 - **Change owner:** Edit `github.actor == 'pluto-atom-4'`
-- **Change branches:** Add `branches: [main, develop]` to `on.pull_request`
-- **Change events:** Modify `types: [opened, synchronize, reopened]`
+- **Add branch filter:** Add `branches: [main]` to `on.pull_request`
+- **Add PR events:** Add `reopened` to `types: [opened, synchronize, reopened]`
+- **Change token:** Replace `${{ secrets.BOT_TOKEN }}` with token name
 
 ---
 
 ## Related Documentation
 
-- **[CONTRIBUTING.md](../CONTRIBUTING.md)** — Full contribution guidelines
-- **[README.md](../README.md)** — Project overview
+- **[README.md](../README.md)** — Project overview and quickstart
 - **[docs/SETUP.md](./SETUP.md)** — Local development setup
+- **[CLAUDE.md](../CLAUDE.md)** — Full development guide with architecture details
 
 ---
 
 **Last Updated:** 2026-05-19  
 **Status:** Active  
 **Owner:** Pluto Atom (@pluto-atom-4)
+**Token:** Requires `BOT_TOKEN` configured in repository secrets
