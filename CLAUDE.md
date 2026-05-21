@@ -266,22 +266,24 @@ VS Code is feasible but lacks the integrated database tools and C# debugging dep
 ## GitHub Copilot CLI Compatibility
 
 This project is configured to work seamlessly with GitHub Copilot CLI:
-- `.claude/settings.json` defines permissions and hooks
+- `.claude/settings.json` defines permissions and hooks for Claude Code sessions
 - `CLAUDE.md` (this file) is automatically loaded in every session
-- User-level skills are available in the project context
+- Skills are available through two distinct systems (see below)
 
-To use GitHub Copilot CLI in this directory:
-```bash
-gh copilot explain "command"  # Ask questions about code/commands
-gh copilot suggest "write a test for..."  # Get code suggestions
-```
+### Two-System Skill Architecture
 
----
+GitHub Copilot CLI and Claude Code use **separate skill delivery mechanisms**:
 
-## User-Level Skills
+| System | Skill Source | Configuration | Installation |
+|--------|--------------|----------------|--------------|
+| **Claude Code** | Configured in settings | `.claude/settings.json` (skillOverrides) | Auto-loaded ✅ |
+| **GitHub Copilot CLI** | Plugin marketplace | GitHub repository + `copilot.yml` | `gh copilot -- plugin install` |
 
-The following user-level skills are available in all sessions within this project:
+### Claude Code Skills (Auto-Loaded)
 
+Available automatically in Claude Code sessions:
+
+- `factory-app-session-blog` — Document full-stack monorepo work as portfolio-ready blog posts. Extracts architectural patterns (type-safety pipeline, DataLoaders, shared transactions, Elsa workflows) and synthesizes professional gists.
 - `fix-github-issues` — Automated GitHub issue fixing workflow
 - `example-skills:session-blog-to-gist` — Convert session work into a blog post
 - `example-skills:push-feature-branch` — Create feature branch, commit, push to remote
@@ -290,6 +292,41 @@ The following user-level skills are available in all sessions within this projec
 - `secure-github-repo` — GitHub repository security hardening
 
 Invoke any skill via `/skill-name` in your Claude Code session.
+
+### GitHub Copilot CLI Skills (Plugin Installation Required)
+
+To use skills in GitHub Copilot CLI (`gh copilot`), install the plugin:
+
+```bash
+# Install the factory-app plugin
+gh copilot -- plugin install pluto-atom-4/copilot-plugin-factory-app
+
+# Verify installation
+gh copilot -- plugin list
+
+# Use in interactive session
+gh copilot -i "Use the factory-app-session-blog skill to document this work"
+
+# Or in non-interactive mode
+gh copilot -p "Document this session" --allow-all-tools
+```
+
+For more information on GitHub Copilot CLI plugins, see:
+- [CLI Plugin Documentation](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-cli-plugins)
+- [Plugin Repository](https://github.com/pluto-atom-4/copilot-plugin-factory-app)
+
+### Using GitHub Copilot CLI in This Directory
+
+```bash
+# Ask questions about code or commands
+gh copilot -- -i "How does the GraphQL type-safety pipeline work?"
+
+# Get suggestions
+gh copilot -- -i "Write a test for the shared transaction pattern"
+
+# Use installed plugins
+gh copilot -- -i "Document this architectural work for my portfolio"
+```
 
 ---
 

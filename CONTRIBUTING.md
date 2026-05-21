@@ -11,13 +11,14 @@ For AI code generation and GitHub Copilot usage, see [.github/copilot-instructio
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
-2. [Development Workflow](#development-workflow)
-3. [Code Standards](#code-standards)
-4. [Testing](#testing)
-5. [Commit Messages](#commit-messages)
-6. [Security](#security)
-7. [Pull Request Process](#pull-request-process)
-8. [Code Review](#code-review)
+2. [GitHub Copilot CLI Setup](#github-copilot-cli-setup)
+3. [Development Workflow](#development-workflow)
+4. [Code Standards](#code-standards)
+5. [Testing](#testing)
+6. [Commit Messages](#commit-messages)
+7. [Security](#security)
+8. [Pull Request Process](#pull-request-process)
+9. [Code Review](#code-review)
 
 ---
 
@@ -55,6 +56,81 @@ For AI code generation and GitHub Copilot usage, see [.github/copilot-instructio
    ```
 
 See [docs/SETUP.md](docs/SETUP.md) for detailed setup instructions.
+
+---
+
+## GitHub Copilot CLI Setup
+
+**GitHub Copilot CLI** extends your terminal with AI-powered development assistance, including access to custom skills and plugins.
+
+### Prerequisites
+
+- GitHub Copilot subscription (or free trial)
+- GitHub CLI (`gh`) v2.30.0+
+- GitHub authentication: `gh auth login`
+
+### Installation
+
+GitHub Copilot CLI is automatically available through GitHub CLI:
+
+```bash
+# Verify installation
+gh copilot --version
+
+# If not installed, download:
+gh copilot update
+```
+
+### Enable Project Skills (Claude Code)
+
+This repository is pre-configured with skills in `.claude/settings.json`:
+
+```bash
+# View enabled skills
+cat .claude/settings.json
+
+# Available skills:
+# - factory-app-session-blog (document architectural work)
+# - fix-github-issues (automated issue fixing)
+# - example-skills:session-blog-to-gist (convert work to blog posts)
+# - example-skills:push-feature-branch (create branches and push)
+# - example-skills:doc-coauthoring (collaborative documentation)
+# - update-config (configure Copilot settings)
+# - secure-github-repo (GitHub security hardening)
+```
+
+Start using Copilot CLI in this directory:
+
+```bash
+# Interactive mode (full featured)
+gh copilot
+
+# Non-interactive mode (single request)
+gh copilot -p "Fix the bug in the shared transaction pattern"
+
+# Ask for explanations
+gh copilot -i "Explain how the type-safety pipeline works"
+```
+
+### Install GitHub Copilot CLI Plugins
+
+To access additional skills (like `factory-app-session-blog`), install plugins:
+
+```bash
+# Install the factory-app plugin
+gh copilot -- plugin install pluto-atom-4/copilot-plugin-factory-app
+
+# Verify installation
+gh copilot -- plugin list
+
+# Use plugins in sessions
+gh copilot -i "Use the factory-app-session-blog skill to document this work"
+```
+
+**For more information:**
+- [GitHub Copilot CLI Documentation](https://docs.github.com/copilot/how-tos/copilot-cli)
+- [Plugin System Guide](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-cli-plugins)
+- [CLAUDE.md - Detailed Skill Configuration](CLAUDE.md)
 
 ---
 
