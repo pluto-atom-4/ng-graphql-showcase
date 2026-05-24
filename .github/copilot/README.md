@@ -44,7 +44,7 @@ When implementing GitHub issues, follow the **standardized multi-phase workflow*
 2. **Phase 2**: Copy implementation plan template, complete all required sections
 3. **Phase 3**: Implement features while updating file manifest continuously
 4. **Phase 4**: Run pre-commit checks (format, lint, test, type-check)
-5. **Phase 5**: Create PR with automated validation
+5. **Phase 5**: Create PR and follow manual review procedure
 6. **Phase 6**: Follow PR review procedure (Issue #19)
 7. **Phase 7**: Merge after approval and cleanup
 

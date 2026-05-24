@@ -277,8 +277,8 @@ GitHub auto-closes the issue when PR is merged (due to "Fixes #<N>" keyword).
    - Plan is not optional; it's mandatory
 
 2. ❌ **Never create PR without implementation plan**
-   - GitHub Actions validates plan exists
-   - PR validation will fail without plan
+   - Implementation plan is mandatory for traceability
+   - Plan will be verified during Issue #19 PR review procedure
 
 3. ❌ **Never skip file manifest updates**
    - File manifest must match git diff
