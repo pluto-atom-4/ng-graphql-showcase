@@ -7,15 +7,20 @@ This directory contains GitHub Copilot-specific configurations, procedures, and 
 ```
 .github/copilot/
 ├── README.md (this file)
-└── rules/
-    └── pr-review-workflow.md — Automated GitHub PR review procedure
+├── rules/
+│   ├── pr-review-workflow.md — Automated GitHub PR review procedure
+│   └── implementation-flow-rules.md — Standardized GitHub issue implementation workflow
+└── templates/
+    └── IMPLEMENTATION_PLAN_TEMPLATE.md — Reusable implementation plan template
 ```
 
 ## Quick Reference
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
-| **[pr-review-workflow.md](rules/pr-review-workflow.md)** | Defines how Copilot reviews PRs and posts GitHub comments | Developers, Copilot users, PR reviewers |
+| **[rules/pr-review-workflow.md](rules/pr-review-workflow.md)** | Phase-based PR review procedure with mandatory comment posting | Developers, Copilot users, PR reviewers |
+| **[rules/implementation-flow-rules.md](rules/implementation-flow-rules.md)** | Phase-based implementation workflow with plan template and GitHub Actions validation | All implementers, issue handlers |
+| **[templates/IMPLEMENTATION_PLAN_TEMPLATE.md](templates/IMPLEMENTATION_PLAN_TEMPLATE.md)** | Standardized template for GitHub issue implementations | All implementers |
 
 ## Key Procedures
 
@@ -29,7 +34,27 @@ When reviewing a GitHub PR, Copilot follows a **mandatory three-phase workflow**
 
 **Key Rule**: Review outcomes MUST be posted as GitHub PR comments for team visibility.
 
-For details, see: [pr-review-workflow.md](rules/pr-review-workflow.md)
+For details, see: [rules/pr-review-workflow.md](rules/pr-review-workflow.md)
+
+### Implementation Flow Workflow
+
+When implementing GitHub issues, follow the **standardized multi-phase workflow**:
+
+1. **Phase 1**: Read and understand issue, plan implementation, create feature branch
+2. **Phase 2**: Copy implementation plan template, complete all required sections
+3. **Phase 3**: Implement features while updating file manifest continuously
+4. **Phase 4**: Run pre-commit checks (format, lint, test, type-check)
+5. **Phase 5**: Create PR with automated validation
+6. **Phase 6**: Follow PR review procedure (Issue #19)
+7. **Phase 7**: Merge after approval and cleanup
+
+**Key Rule**: Every implementation MUST have:
+- Feature branch: `feat/issue-N-kebab-case`
+- Implementation plan: `docs/implementation-planning/issue-N-*.md`
+- Complete file manifest tracked throughout
+- All implementation criteria satisfied before merge
+
+For details, see: [rules/implementation-flow-rules.md](rules/implementation-flow-rules.md)
 
 ## Related Files
 
@@ -38,12 +63,29 @@ For details, see: [pr-review-workflow.md](rules/pr-review-workflow.md)
 - **Contribution Guide**: See `../../CONTRIBUTING.md`
 - **Architecture Guide**: See `../../docs/research-architecuture-design.md`
 
+## Automation & Enforcement
+
+### GitHub Actions Workflows
+
+| Workflow | Purpose | Trigger |
+|----------|---------|---------|
+| **implementation-flow-validation.yml** | Validates implementation plans on every PR | Pull request opened/updated |
+| **ai-code-review.yml** (existing) | Auto-approves PRs after CI passes | Pull request opened/synchronized |
+
+The **implementation-flow-validation.yml** workflow automatically:
+- ✅ Extracts issue number from branch name
+- ✅ Verifies implementation plan exists
+- ✅ Checks plan structure (all required sections)
+- ✅ Validates file manifest
+- ✅ Counts implementation criteria items
+- ✅ Posts validation summary as PR comment
+
 ## Future Procedures (Planned)
 
-- [ ] Code change approval workflow
-- [ ] Security review checklist
+- [ ] Security review checklist template
 - [ ] Performance verification procedure
 - [ ] Documentation update guidelines
+- [ ] Implementation criteria validation in GitHub Actions
 
 ## Best Practices
 
@@ -82,6 +124,7 @@ If you have improvements to these procedures:
 
 ---
 
-**Last Updated**: 2026-05-22  
+**Last Updated**: 2026-05-23  
 **Maintained By**: Development Team  
-**Status**: Active & in use
+**Status**: Active & in use  
+**Version**: 1.1 (Added implementation flow templates and automation)

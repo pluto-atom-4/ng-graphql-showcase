@@ -12,12 +12,13 @@ For AI code generation and GitHub Copilot usage, see [.github/copilot-instructio
 
 1. [Getting Started](#getting-started)
 2. [GitHub Copilot CLI Setup](#github-copilot-cli-setup)
-3. [Development Workflow](#development-workflow)
-4. [Code Standards](#code-standards)
-5. [Testing](#testing)
-6. [Commit Messages](#commit-messages)
-7. [Security](#security)
-8. [Pull Request Process](#pull-request-process)
+3. [Implementation Flow](#implementation-flow)
+4. [Development Workflow](#development-workflow)
+5. [Code Standards](#code-standards)
+6. [Testing](#testing)
+7. [Commit Messages](#commit-messages)
+8. [Security](#security)
+9. [Pull Request Process](#pull-request-process)
 9. [Code Review](#code-review)
 
 ---
@@ -131,6 +132,152 @@ gh copilot -i "Use the factory-app-session-blog skill to document this work"
 - [GitHub Copilot CLI Documentation](https://docs.github.com/copilot/how-tos/copilot-cli)
 - [Plugin System Guide](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-cli-plugins)
 - [CLAUDE.md - Detailed Skill Configuration](CLAUDE.md)
+
+---
+
+## Implementation Flow
+
+### Overview
+
+All GitHub issue implementations follow a **standardized Git feature branch pattern** that includes:
+- Feature branch naming conventions
+- Implementation plan with file manifest tracking
+- Implementation criteria checklist
+- Phase-based delivery structure
+- Mandatory PR review (following Issue #19 procedure)
+
+This ensures **traceability, consistency, and clear deliverables** for every implementation.
+
+### Feature Branch Naming
+
+```
+feat/issue-<number>-<kebab-case-description>
+
+Examples:
+- feat/issue-22-implementation-flow
+- feat/issue-9-design-to-code-workflow
+- feat/issue-10-container-service
+```
+
+### Implementation Plan Structure
+
+Every GitHub issue implementation requires a comprehensive implementation plan in `docs/implementation-planning/`:
+
+**Required Sections**:
+1. **Issue Information**: Issue number, feature branch, status
+2. **Executive Summary**: 2-3 sentence overview
+3. **Problem Statement**: What problem are we solving
+4. **Solution Approach**: High-level solution
+5. **Implementation Criteria**: Checklist (mandatory criteria before merge)
+6. **File Manifest**: Track all created/modified files
+7. **Phases** (if multi-phase): Goals, tasks, deliverables per phase
+8. **Acceptance Criteria**: Verification table
+9. **Next Steps**: Clear action items
+
+### File Manifest Tracking
+
+The file manifest provides complete auditability:
+
+```markdown
+## File Manifest
+
+### Files Created
+| File Path | Purpose | Status |
+|-----------|---------|--------|
+| docs/new-file.md | Description | ✅ |
+
+### Files Modified
+| File Path | Changes | Status |
+|-----------|---------|--------|
+| README.md | Added section | ✅ |
+
+### Files Deleted
+| File Path | Reason |
+|-----------|--------|
+| (none) | N/A |
+```
+
+Status options: ✅ (Done), ⏳ (In Progress), ❌ (Blocked), 🔄 (Pending Review)
+
+### Implementation Criteria (Mandatory)
+
+All implementations must meet these criteria before merge:
+
+- [ ] Code passes linting: `pnpm lint --workspace=frontend`
+- [ ] All tests pass: `pnpm test`
+- [ ] TypeScript strict mode: No type errors
+- [ ] Security: No secrets, credentials, or API keys in code
+- [ ] Documentation: README, CONTRIBUTING, relevant docs updated
+- [ ] Backwards compatibility: No breaking changes (unless documented)
+- [ ] Performance: No performance regressions
+- [ ] Code review: Passed PR review (Issue #19 procedure)
+- [ ] File manifest: Matches actual created/modified files
+- [ ] Acceptance criteria: All items verified
+
+### Implementation Workflow
+
+```
+1. Create/Enhance GitHub Issue
+   ↓
+2. Create feature branch: feat/issue-N-...
+   ↓
+3. Create implementation plan in docs/implementation-planning/
+   ├─ Include criteria
+   ├─ Include file manifest
+   ├─ Include phase structure (if needed)
+   └─ Include acceptance criteria
+   ↓
+4. Implement features on branch
+   └─ Update file manifest as you create/modify files
+   ↓
+5. Run tests & linting locally
+   ↓
+6. Create PR + push to remote
+   ↓
+7. Code review (following Issue #19 mandatory procedure)
+   ├─ Phase 1: Analyze PR details
+   ├─ Phase 2: Review code + file manifest
+   └─ Phase 3: Post review comment to GitHub (MANDATORY)
+   ↓
+8. Merge PR to main
+   ↓
+9. Close issue with link to commit/PR
+```
+
+### Quick Start for Implementers
+
+```bash
+# 1. Create feature branch
+git checkout main && git pull
+git checkout -b feat/issue-<N>-<kebab-case-title>
+
+# 2. Copy implementation plan template
+cp .github/copilot/templates/IMPLEMENTATION_PLAN_TEMPLATE.md \
+   docs/implementation-planning/issue-<N>-<name>.md
+
+# 3. Fill in your issue details in the implementation plan
+
+# 4. Implement features & update file manifest as you go
+
+# 5. Run checks before creating PR
+pnpm format                           # Auto-format code
+pnpm lint --workspace=frontend        # Check for style issues
+pnpm test                             # Run tests
+
+# 6. Commit and push
+git add .
+git commit -m "feat: Implement Issue #<N> - Description"
+git push -u origin feat/issue-<N>-<kebab-case-title>
+
+# 7. Create PR (link will appear in git output)
+```
+
+### Resources
+
+- **Template**: [docs/IMPLEMENTATION_PLAN_TEMPLATE.md](docs/IMPLEMENTATION_PLAN_TEMPLATE.md)
+- **Implementation Flow Guide**: [docs/IMPLEMENTATION_FLOW.md](docs/IMPLEMENTATION_FLOW.md)
+- **PR Review Procedure**: [Issue #19 / .github/copilot/rules/pr-review-workflow.md](.github/copilot/rules/pr-review-workflow.md)
+- **Example Implementation**: [Issue #9 / docs/implementation-planning/issue-9-design-to-code-workflow.md](docs/implementation-planning/issue-9-design-to-code-workflow.md)
 
 ---
 
