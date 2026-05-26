@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Type-safe full-stack monorepo for managing long-running manufacturing workflows",
   "scripts": {
+    "prepare": "husky install",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:clean": "docker-compose down -v",
@@ -23,7 +24,9 @@
     "format": "pnpm --filter frontend run format"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.5"
   },
   "keywords": [
     "manufacturing",

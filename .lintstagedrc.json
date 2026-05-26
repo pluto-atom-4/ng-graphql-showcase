@@ -1,0 +1,15 @@
+{
+  "*.md": [
+    "prettier --write"
+  ],
+  "*.{json,yaml,yml}": [
+    "prettier --write"
+  ],
+  "frontend/src/**/*.{ts,html}": [
+    "pnpm --filter frontend run format",
+    "pnpm --filter frontend run lint --fix"
+  ],
+  "frontend/src/**/*.{scss,css}": [
+    "pnpm --filter frontend run format"
+  ]
+}
