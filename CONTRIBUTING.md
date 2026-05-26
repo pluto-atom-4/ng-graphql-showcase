@@ -332,6 +332,54 @@ pnpm test:frontend
 pnpm lint
 ```
 
+### 3.5 Pre-Commit Hooks
+
+**Automatic Code Quality Checks**
+
+This project uses **Husky + lint-staged** to automatically enforce code quality before commits:
+
+```bash
+git commit -m "feat: Add feature"
+# ↓ Pre-commit hook runs automatically
+# ↓ Formats code with Prettier
+# ↓ Lints with ESLint
+# ✅ Commit allowed if all checks pass
+# ❌ Commit rejected if any check fails
+```
+
+**What the hook checks:**
+- ✅ **Formatting:** Prettier auto-fixes code style for TS, HTML, SCSS, CSS, JSON, YAML, Markdown
+- ✅ **Linting:** ESLint checks TypeScript and fixes auto-fixable issues
+- ✅ **File patterns:** Only checks files you modified (staged files)
+
+**If a check fails:**
+
+1. The commit is rejected
+2. Errors are displayed with fixes applied (when possible)
+3. Re-stage and commit: `git add . && git commit`
+4. If you fixed all issues, the commit succeeds
+
+**Bypass pre-commit hooks** (for CI/CD or emergency):
+
+```bash
+# Skip pre-commit hooks one time
+git commit --no-verify -m "feat: Emergency hotfix"
+
+# Useful for: CI/CD automation, cherry-picks, rebases
+```
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "command not found: pnpm" | Run `pnpm install` to reinstall dependencies |
+| "prettier: command not found" | Run `pnpm format` to verify prettier works |
+| "lint: command not found" | Run `pnpm lint` to verify ESLint works |
+| Hook takes too long | Reduce scope: only commit related files |
+| Permission denied on .husky/pre-commit | Run: `chmod +x .husky/pre-commit` |
+
+---
+
 ### 4. Commit Changes
 
 ```bash
