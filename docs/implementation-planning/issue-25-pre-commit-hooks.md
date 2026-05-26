@@ -40,6 +40,7 @@ Currently, the project has **no pre-commit hooks** configured:
 - ✅ Stage-aware: only checks modified files
 - ✅ Proven ecosystem (React, Vue, Angular projects)
 - ✅ Easy to bypass with `git commit --no-verify` if needed
+- ✅ Supports both frontend (pnpm) and backend (.NET) checks
 
 **Architecture:**
 ```
@@ -49,11 +50,19 @@ git commit
    ↓
 lint-staged (stages files filter)
    ↓
-pnpm format       (Prettier via pnpm wrapper)
-pnpm lint         (ESLint via pnpm wrapper)
+Frontend: pnpm format + pnpm lint (TypeScript, ESLint)
+Backend:  dotnet format (C# formatting)
    ↓
 Commit allowed if all pass, or rejected
 ```
+
+**Why dotnet format for backend?**
+- ✅ Official Microsoft tool
+- ✅ Zero-config (uses existing .editorconfig)
+- ✅ Fast execution (~1-2 seconds)
+- ✅ No new dependencies
+- ✅ Verify-only mode (non-intrusive)
+- ✅ StyleCop + FxCop continue at build-time (not pre-commit)
 
 ---
 
@@ -66,13 +75,16 @@ Commit allowed if all pass, or rejected
 - [x] Create `.husky/pre-commit` hook with lint-staged command
 - [x] Add npm script: `"prepare": "husky install"` for auto-setup on `pnpm install`
 - [x] Create `.lintstagedrc.json` with pnpm command wrappers
+- [x] Add C# backend support with `dotnet format --verify-no-changes`
 
 **Phase 2: Configuration & Testing** ⏳ IN PROGRESS
-- [ ] Verify lint-staged runs on `git commit`
+- [ ] Test frontend files on `git commit` (TypeScript, HTML, Markdown)
+- [ ] Test backend .cs files on `git commit` (C# formatting)
 - [ ] Verify Prettier auto-fixes formatting
-- [ ] Verify ESLint checks TypeScript (with --fix for auto-fixable issues)
+- [ ] Verify ESLint checks TypeScript
+- [ ] Verify `dotnet format` catches C# style violations
 - [ ] Test bypass: `git commit --no-verify`
-- [ ] Document in CONTRIBUTING.md: "Pre-Commit Hooks" section
+- [ ] Document in CONTRIBUTING.md: Frontend + Backend sections
 - [ ] Add troubleshooting section for common hook issues
 
 **Phase 3: CI Integration** 🔄 DEFERRED
@@ -89,7 +101,7 @@ Commit allowed if all pass, or rejected
 | `.husky/pre-commit` | Create | ✅ Done | Main git pre-commit hook |
 | `.lintstagedrc.json` | Create | ✅ Done | Lint-staged file patterns & pnpm commands |
 | `CONTRIBUTING.md` | Modify | ⏳ Pending | Document pre-commit hooks & bypass |
-| `docs/implementation-planning/issue-25-pre-commit-hooks.md` | Create | ✅ Done | Implementation planning document |
+| `backend/src/**/*.cs` | Create | ✅ Done | C# formatting checks via dotnet format |
 
 ---
 

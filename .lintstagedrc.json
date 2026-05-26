@@ -11,5 +11,8 @@
   ],
   "frontend/src/**/*.{scss,css}": [
     "pnpm format --write"
+  ],
+  "backend/src/**/*.cs": [
+    "dotnet format --verify-no-changes --include backend/src"
   ]
 }

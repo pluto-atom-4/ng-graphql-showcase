@@ -348,8 +348,9 @@ git commit -m "feat: Add feature"
 ```
 
 **What the hook checks:**
-- ✅ **Formatting:** Prettier auto-fixes code style for TS, HTML, SCSS, CSS, JSON, YAML, Markdown
-- ✅ **Linting:** ESLint checks TypeScript and fixes auto-fixable issues
+- ✅ **Frontend Formatting:** Prettier auto-fixes code style for TS, HTML, SCSS, CSS, JSON, YAML, Markdown
+- ✅ **Frontend Linting:** ESLint checks TypeScript and fixes auto-fixable issues
+- ✅ **Backend Formatting:** `dotnet format` verifies C# code style (uses .editorconfig rules)
 - ✅ **File patterns:** Only checks files you modified (staged files)
 
 **If a check fails:**
@@ -375,8 +376,31 @@ git commit --no-verify -m "feat: Emergency hotfix"
 | "command not found: pnpm" | Run `pnpm install` to reinstall dependencies |
 | "prettier: command not found" | Run `pnpm format` to verify prettier works |
 | "lint: command not found" | Run `pnpm lint` to verify ESLint works |
+| "dotnet format: command not found" | Ensure .NET SDK 8+ is installed and in PATH |
+| C# formatting errors | Run: `dotnet format --include backend/src` to auto-fix |
 | Hook takes too long | Reduce scope: only commit related files |
 | Permission denied on .husky/pre-commit | Run: `chmod +x .husky/pre-commit` |
+
+**Backend C# Developers:**
+
+Pre-commit hooks verify C# formatting via `dotnet format` using your project's `.editorconfig` rules:
+
+```bash
+# Before commit: Your C# code is automatically checked
+git add backend/src/FactoryApp.Domain/Build.cs
+git commit -m "feat: Add BuildStatus property"
+# ↓ Pre-commit hook runs
+# ↓ dotnet format verifies formatting rules
+# ✅ Commit allowed if formatting is correct
+# ❌ Commit rejected if style violations found
+
+# If rejected, auto-fix and recommit:
+dotnet format --include backend/src
+git add .
+git commit -m "feat: Add BuildStatus property"
+```
+
+**Note:** StyleCop analyzers and FxCop security checks run at **build-time** (`dotnet build`), not pre-commit, to keep pre-commit hooks fast.
 
 ---
 
