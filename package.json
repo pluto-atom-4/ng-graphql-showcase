@@ -9,7 +9,7 @@
     "docker:logs": "docker-compose logs -f sql-server",
     "db:migrate": "cd backend/src/FactoryApp.WebApi && dotnet ef database update",
     "setup": "pnpm docker:up && pnpm db:migrate && echo '✅ Setup complete. Run: pnpm dev:backend & pnpm dev:frontend'",
-    "dev": "pnpm --parallel dev:backend dev:frontend",
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
     "dev:backend": "cd backend/src/FactoryApp.WebApi && dotnet watch run",
     "dev:frontend": "pnpm --filter frontend run ng serve",
     "build": "pnpm build:backend && pnpm build:frontend",
@@ -22,9 +22,9 @@
     "lint": "pnpm --filter frontend run lint",
     "format": "pnpm --filter frontend run format"
   },
-  "workspaces": [
-    "frontend"
-  ],
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
   "keywords": [
     "manufacturing",
     "workflow",
