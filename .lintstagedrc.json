@@ -4,15 +4,6 @@
   ],
   "*.{json,yaml,yml}": [
     "pnpm format --write"
-  ],
-  "frontend/src/**/*.{ts,html}": [
-    "pnpm format --write",
-    "pnpm lint --fix"
-  ],
-  "frontend/src/**/*.{scss,css}": [
-    "pnpm format --write"
-  ],
-  "backend/src/**/*.cs": [
-    "dotnet format --verify-no-changes --include backend/src"
   ]
 }
+
