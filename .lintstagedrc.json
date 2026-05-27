@@ -1,9 +1,4 @@
 {
-  "*.md": [
-    "pnpm format --write"
-  ],
-  "*.{json,yaml,yml}": [
-    "pnpm format --write"
-  ]
+  "*.md": ["prettier --write"],
+  "*.{json,yaml,yml}": ["prettier --write"]
 }
-
