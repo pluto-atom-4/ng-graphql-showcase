@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Type-safe full-stack monorepo for managing long-running manufacturing workflows",
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:clean": "docker-compose down -v",
@@ -28,8 +28,6 @@
     "validate:generated-components": "node scripts/validate-generated-components.js"
   },
   "devDependencies": {
-    "@builder.io/cli": "^1.2.10",
-    "@figma/code-connect": "^1.4.5",
     "concurrently": "^8.2.0",
     "husky": "9.1.7",
     "lint-staged": "17.0.5",
@@ -44,5 +42,14 @@
     "full-stack"
   ],
   "author": "Pluto Atom",
-  "license": "MIT"
+  "license": "MIT",
+  "pnpm": {
+    "overrides": {
+      "glob@<11": ">=11.0.0",
+      "uuid@<9": ">=9.0.0",
+      "tar@<7": ">=7.0.0",
+      "node-domexception": "npm:empty-npm-package@1.0.0",
+      "whatwg-encoding": "npm:@exodus/bytes@1.0.0-rc.3"
+    }
+  }
 }
