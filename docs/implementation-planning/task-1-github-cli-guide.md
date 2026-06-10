@@ -3,7 +3,7 @@
 **Date:** 2026-05-20  
 **Phase:** Issue #7 Phase 2 - GitHub Security Features  
 **Task:** 1 - Enable Secret Scanning + Push Protection  
-**Method:** GitHub CLI (automated, not manual UI)  
+**Method:** GitHub CLI (automated, not manual UI)
 
 ---
 
@@ -18,6 +18,7 @@ gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
 This approach:
+
 - ✅ Takes 30 seconds to execute
 - ✅ Can be automated in CI/CD
 - ✅ Creates no UI dependency
@@ -29,8 +30,10 @@ This approach:
 ## Comparison: Manual UI vs GitHub CLI
 
 ### Manual UI Approach
+
 **Time:** 5-10 minutes  
 **Steps:**
+
 1. Open GitHub repository Settings page
 2. Navigate to "Code security and analysis" section
 3. Click "Enable" button for Secret Scanning
@@ -39,6 +42,7 @@ This approach:
 6. Navigate back to verify changes
 
 **Downsides:**
+
 - ❌ Browser-dependent
 - ❌ Cannot be automated
 - ❌ No audit trail in git
@@ -46,13 +50,16 @@ This approach:
 - ❌ Multi-step manual process
 
 ### GitHub CLI Approach
+
 **Time:** < 1 minute  
 **Command:**
+
 ```bash
 gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
 **Advantages:**
+
 - ✅ Single command
 - ✅ Works in CI/CD pipelines
 - ✅ Repeatable across all repositories
@@ -65,6 +72,7 @@ gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ## Implementation Steps
 
 ### Prerequisites
+
 - ✅ GitHub CLI installed: `which gh`
 - ✅ Authenticated: `gh auth status`
 - ✅ Repository admin permissions
@@ -72,7 +80,7 @@ gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ### Step 1: Enable Secret Scanning
 
 ```bash
-cd /home/pluto-atom-4/Documents/stoke-full-stack/ng-graphql-playground
+cd /home/pluto-atom-4/Documents/stoke-full-stack/ng-graphql-showcase
 
 # Enable both Secret Scanning and Push Protection
 gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
@@ -85,12 +93,14 @@ gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ### Step 2: Verify Configuration
 
 **Option A: View via GitHub CLI**
+
 ```bash
 gh repo view --json url,visibility,nameWithOwner
 ```
 
 **Option B: View in browser**
-- URL: https://github.com/pluto-atom-4/ng-graphql-playground/settings/security_analysis
+
+- URL: https://github.com/pluto-atom-4/ng-graphql-showcase/settings/security_analysis
 - Look for:
   - Secret scanning: ✅ Enabled
   - Push protection: ✅ Enabled
@@ -116,7 +126,7 @@ git log -p --all -S "api_key" | head -5 && echo "⚠️ API keys found!" || echo
 
 Add Secret Scanning section to `docs/solo-dev-pull-request-review.md`:
 
-```markdown
+````markdown
 ## Secret Scanning & Push Protection
 
 ### Enabling Secret Scanning with GitHub CLI
@@ -126,6 +136,7 @@ Secret scanning detects hardcoded credentials (AWS keys, tokens, etc.) and preve
 ```bash
 gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
+````
 
 ### How It Works
 
@@ -136,7 +147,7 @@ gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ### Detected Patterns
 
 - AWS credentials (AKIA... patterns)
-- GitHub personal access tokens (ghp_...)
+- GitHub personal access tokens (ghp\_...)
 - Private SSH keys
 - Database connection strings
 - OAuth tokens
@@ -165,12 +176,13 @@ git push --no-verify  # Bypasses checks (only if absolutely necessary)
 
 ### Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Push blocked with "secret scanning" error | Remove the secret and re-commit |
-| Push accepted but secret is visible | Use `git filter-branch` to remove from history |
-| False positive detected | Contact GitHub Support for pattern whitelist |
-```
+| Issue                                     | Solution                                       |
+| ----------------------------------------- | ---------------------------------------------- |
+| Push blocked with "secret scanning" error | Remove the secret and re-commit                |
+| Push accepted but secret is visible       | Use `git filter-branch` to remove from history |
+| False positive detected                   | Contact GitHub Support for pattern whitelist   |
+
+````
 
 ---
 
@@ -196,17 +208,19 @@ git push origin test/secret-scanning
 
 # Expected: Push rejected by GitHub with message:
 # "Push rejected by secret scanning. Resolve the secret and re-push your changes."
-```
+````
 
 ### Verify Results
 
 ✅ **Expected behavior:**
+
 - Push blocked by GitHub
 - Error message mentions secret scanning
 - Secret never reaches repository
 - Local commits are NOT deleted
 
 ✅ **Cleanup after test:**
+
 ```bash
 # Delete local test commit
 git reset --hard HEAD~1
@@ -238,6 +252,7 @@ git branch -D test/secret-scanning
 ### Issue: "Permission denied" when running `gh repo edit`
 
 **Solution:** Verify GitHub CLI authentication
+
 ```bash
 gh auth status
 gh auth login  # Re-authenticate if needed
@@ -246,14 +261,16 @@ gh auth login  # Re-authenticate if needed
 ### Issue: "Repository not found" error
 
 **Solution:** Verify you're in the correct directory
+
 ```bash
-pwd  # Should be: /home/pluto-atom-4/Documents/stoke-full-stack/ng-graphql-playground
+pwd  # Should be: /home/pluto-atom-4/Documents/stoke-full-stack/ng-graphql-showcase
 gh repo view  # Should work if authenticated
 ```
 
 ### Issue: Settings not updated after command
 
 **Solution:** Give GitHub 30-60 seconds to propagate settings
+
 ```bash
 sleep 30
 gh repo view --json url,visibility  # Verify again
@@ -262,6 +279,7 @@ gh repo view --json url,visibility  # Verify again
 ### Issue: Cannot push after Push Protection enabled
 
 **Solution:** Remove the secret and re-commit
+
 ```bash
 # Edit the file to remove secret
 git add -A
@@ -274,26 +292,31 @@ git push origin your-branch
 ## GitHub CLI Reference
 
 **Check if GitHub CLI is installed:**
+
 ```bash
 gh --version
 ```
 
 **Authenticate:**
+
 ```bash
 gh auth login
 ```
 
 **View current repository:**
+
 ```bash
 gh repo view
 ```
 
 **Edit repository settings:**
+
 ```bash
 gh repo edit --help
 ```
 
 **View all available flags:**
+
 ```bash
 gh repo edit --help | grep "\-\-enable"
 ```
@@ -311,14 +334,14 @@ gh repo edit --help | grep "\-\-enable"
 
 ## Timeline
 
-| Step | Duration | Command |
-|------|----------|---------|
-| Enable Secret Scanning | 10 sec | `gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection` |
-| Verify Settings | 10 sec | `gh repo view --json url,visibility` |
-| Scan History | 30 sec | `git log -p --all` (search for patterns) |
-| Update Docs | 5 min | Add section to solo-dev-pull-request-review.md |
-| Test Push Protection | 3 min | Create test, verify blocked, cleanup |
-| **Total** | **~9 minutes** | - |
+| Step                   | Duration       | Command                                                                          |
+| ---------------------- | -------------- | -------------------------------------------------------------------------------- |
+| Enable Secret Scanning | 10 sec         | `gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection` |
+| Verify Settings        | 10 sec         | `gh repo view --json url,visibility`                                             |
+| Scan History           | 30 sec         | `git log -p --all` (search for patterns)                                         |
+| Update Docs            | 5 min          | Add section to solo-dev-pull-request-review.md                                   |
+| Test Push Protection   | 3 min          | Create test, verify blocked, cleanup                                             |
+| **Total**              | **~9 minutes** | -                                                                                |
 
 ---
 

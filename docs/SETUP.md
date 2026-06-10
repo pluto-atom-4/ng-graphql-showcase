@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers setting up the **ng-graphql-playground** monorepo for local development with minimal complexity and maximum iteration speed.
+This guide covers setting up the **ng-graphql-showcase** monorepo for local development with minimal complexity and maximum iteration speed.
 
 ### Architecture
 
@@ -64,8 +64,8 @@ This guide covers setting up the **ng-graphql-playground** monorepo for local de
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/pluto-atom-4/ng-graphql-playground.git
-cd ng-graphql-playground
+git clone https://github.com/pluto-atom-4/ng-graphql-ng-graphql-showcase.git
+cd ng-graphql-ng-graphql-showcase
 ```
 
 ### 2. Install Node Dependencies
@@ -83,11 +83,13 @@ npm run setup
 ```
 
 This command:
+
 1. Starts SQL Server 2022 container in background (`docker-compose up -d`)
 2. Waits for container to be ready
 3. Runs EF Core migrations to create database schema
 
 **Expected output:**
+
 ```
 Creating ng-graphql-sql-server ... done
 Build started...
@@ -112,11 +114,13 @@ npm run dev:backend
 ```
 
 This runs `dotnet watch run` in the backend directory with:
+
 - ✅ Hot-reload on file changes (<1 second)
 - ✅ Full debugging support in Rider/VS Code
 - ✅ GraphQL schema auto-emit to `schema.graphql`
 
 **Expected output:**
+
 ```
 watch : Started
 watch : Building...
@@ -132,11 +136,13 @@ npm run dev:frontend
 ```
 
 This runs `npm run ng serve` with:
+
 - ✅ HMR (Hot Module Replacement) on file changes
 - ✅ Type-safe services from GraphQL schema
 - ✅ Angular dev server with live reload
 
 **Expected output:**
+
 ```
 ✔ Compiled successfully.
 ⠙ Compiling...
@@ -223,6 +229,7 @@ This automatically connects to the Docker SQL Server container on port 1433.
 The frontend is configured to call the backend at `http://localhost:5000` (default).
 
 If you need to change this, configure it in your Angular environment files:
+
 - `frontend/src/environments/environment.ts` (local development)
 - `frontend/src/environments/environment.prod.ts` (production)
 
@@ -312,12 +319,14 @@ taskkill /PID <PID> /F
 ### Debugging
 
 **In JetBrains Rider:**
+
 1. Set breakpoints in C# code
 2. Run `npm run dev:backend`
 3. Rider automatically attaches debugger
 4. Use **Debug Console** to inspect variables
 
 **In VS Code:**
+
 1. Install C# Dev Kit extension
 2. Set breakpoints
 3. Use F5 or Run → Start Debugging
@@ -325,6 +334,7 @@ taskkill /PID <PID> /F
 ### Database Performance
 
 If queries are slow, check indexes:
+
 ```sql
 SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID('Builds');
 ```
@@ -348,7 +358,7 @@ See `CLAUDE.md` for detailed architecture documentation.
 
 ## Getting Help
 
-- **Issues:** [GitHub Issues](https://github.com/pluto-atom-4/ng-graphql-playground/issues)
+- **Issues:** [GitHub Issues](https://github.com/pluto-atom-4/ng-graphql-ng-graphql-showcase/issues)
 - **Documentation:** See `README.md` and `CLAUDE.md`
 - **Architecture:** See `docs/research-architecuture-design.md`
 
