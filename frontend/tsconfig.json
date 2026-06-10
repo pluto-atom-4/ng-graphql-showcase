@@ -6,6 +6,8 @@
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "skipLibCheck": true, // Add this to skip checking .d.ts files in node_modules
+    "skipDefaultLibCheck": true, // Add this to skip checking default library declaration files
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,

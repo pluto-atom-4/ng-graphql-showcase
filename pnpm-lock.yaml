@@ -75,9 +75,12 @@ importers:
         specifier: ^0.15.0
         version: 0.15.1
     devDependencies:
+      "@analogjs/vite-plugin-angular":
+        specifier: ^2.6.0
+        version: 2.6.0(@angular-devkit/build-angular@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(chokidar@4.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(tailwindcss@4.3.0)(typescript@5.6.3)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))(yaml@2.9.0))(@angular/build@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(postcss@8.5.12)(tailwindcss@4.3.0)(terser@5.39.0)(typescript@5.6.3)(yaml@2.9.0))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))
       "@analogjs/vitest-angular":
         specifier: ^2.5.3
-        version: 2.5.3(3b67a69f57e4a26c1ed510e03c68ee62)
+        version: 2.5.3(edb8e4bfd26cf3310b153c2facf6f87f)
       "@angular-devkit/build-angular":
         specifier: ^19.0.0
         version: 19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(chokidar@4.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(tailwindcss@4.3.0)(typescript@5.6.3)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))(yaml@2.9.0)
@@ -159,14 +162,14 @@ packages:
       }
     engines: { node: ">=6.0.0" }
 
-  "@analogjs/vite-plugin-angular@2.5.3":
+  "@analogjs/vite-plugin-angular@2.6.0":
     resolution:
       {
-        integrity: sha512-iPc2mdAsQkk13k94FonoVmRLdjKw3qLx0BK7jQ+gPPuCsFF7LPzndOn8ToCNCXZEkXYTIQsczrcuSRbE61ORiQ==,
+        integrity: sha512-fPo2RgkJxLijIe9o+VSrUmfzZDEXVqXX5a86vpj/cAuuY62Of02g6G6QrqHtIkDFSUdEK8cbY/8zAiZlXW0/Hw==,
       }
     peerDependencies:
-      "@angular-devkit/build-angular": ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      "@angular/build": ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+      "@angular-devkit/build-angular": ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0
+      "@angular/build": ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
       "@angular-devkit/build-angular":
@@ -10196,7 +10199,7 @@ snapshots:
       "@jridgewell/gen-mapping": 0.3.13
       "@jridgewell/trace-mapping": 0.3.31
 
-  "@analogjs/vite-plugin-angular@2.5.3(@angular-devkit/build-angular@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(chokidar@4.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(tailwindcss@4.3.0)(typescript@5.6.3)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))(yaml@2.9.0))(@angular/build@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(postcss@8.5.12)(tailwindcss@4.3.0)(terser@5.39.0)(typescript@5.6.3)(yaml@2.9.0))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))":
+  "@analogjs/vite-plugin-angular@2.6.0(@angular-devkit/build-angular@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(chokidar@4.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(tailwindcss@4.3.0)(typescript@5.6.3)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))(yaml@2.9.0))(@angular/build@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(postcss@8.5.12)(tailwindcss@4.3.0)(terser@5.39.0)(typescript@5.6.3)(yaml@2.9.0))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))":
     dependencies:
       magic-string: 0.30.21
       obug: 2.1.1
@@ -10211,9 +10214,9 @@ snapshots:
       - "@emnapi/core"
       - "@emnapi/runtime"
 
-  "@analogjs/vitest-angular@2.5.3(3b67a69f57e4a26c1ed510e03c68ee62)":
+  "@analogjs/vitest-angular@2.5.3(edb8e4bfd26cf3310b153c2facf6f87f)":
     dependencies:
-      "@analogjs/vite-plugin-angular": 2.5.3(@angular-devkit/build-angular@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(chokidar@4.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(tailwindcss@4.3.0)(typescript@5.6.3)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))(yaml@2.9.0))(@angular/build@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(postcss@8.5.12)(tailwindcss@4.3.0)(terser@5.39.0)(typescript@5.6.3)(yaml@2.9.0))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))
+      "@analogjs/vite-plugin-angular": 2.6.0(@angular-devkit/build-angular@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(chokidar@4.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(tailwindcss@4.3.0)(typescript@5.6.3)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))(yaml@2.9.0))(@angular/build@19.2.27(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(@angular/compiler@19.2.25)(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(postcss@8.5.12)(tailwindcss@4.3.0)(terser@5.39.0)(typescript@5.6.3)(yaml@2.9.0))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))
       "@angular-devkit/architect": 0.2200.0
       "@angular-devkit/schematics": 22.0.0
       vitest: 4.1.8(@types/node@25.9.1)(jsdom@26.1.0)(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.32.0)(sass@1.85.0)(terser@5.39.0)(yaml@2.9.0))
