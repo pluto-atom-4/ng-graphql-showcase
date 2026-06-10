@@ -1,7 +1,9 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BehaviorSubject, Observable, Subject, interval } from 'rxjs';
-import { map, takeUntil, startWith, bufferTime, shareReplay } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop'; // Required import
+import { computed } from '@angular/core'; // Required import
+import { interval, Observable } from 'rxjs';
+import { map, bufferTime, startWith } from 'rxjs/operators';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
 
@@ -22,22 +24,25 @@ import { CardComponent, BadgeComponent, ButtonComponent } from './index';
   standalone: true,
   imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent],
   template: `
-    <app-card [title]="buildName" [description]="buildId">
+    <!-- 1. Check for value availability safely -->
+    <app-card *ngIf="buildStatus()" [title]="buildName" [description]="buildId">
+
       <!-- Status badge -->
       <div class="mb-4 flex items-center gap-2">
-        <app-badge [label]="(buildStatus$ | async)?.status" [variant]="statusVariant" />
-        <span class="text-sm text-gray-500">{{ (buildStatus$ | async)?.timestamp | date:'HH:mm:ss' }}</span>
+        <!-- 2. Invoke signals using parentheses: buildStatus().status -->
+        <app-badge [label]="buildStatus().status" [variant]="statusVariant()" />
+        <span class="text-sm text-gray-500">{{ buildStatus().timestamp | date:'HH:mm:ss' }}</span>
       </div>
 
       <!-- Progress bar -->
       <div class="mb-4">
         <div class="flex justify-between mb-2">
           <span class="text-sm font-semibold">Build Progress</span>
-          <span class="text-sm">{{ (buildStatus$ | async)?.progress }}%</span>
+          <span class="text-sm">{{ buildStatus().progress }}%</span>
         </div>
         <progress
           class="progress progress-primary w-full"
-          [value]="(buildStatus$ | async)?.progress || 0"
+          [value]="buildStatus().progress || 0"
           max="100"
         ></progress>
       </div>
@@ -47,12 +52,12 @@ import { CardComponent, BadgeComponent, ButtonComponent } from './index';
         <div>
           <p class="text-gray-600">Tests</p>
           <p class="text-lg font-semibold">
-            {{ (buildStatus$ | async)?.testsPassed }}/{{ (buildStatus$ | async)?.testsTotal }}
+            {{ buildStatus().testsPassed }}/{{ buildStatus().testsTotal }}
           </p>
         </div>
         <div>
           <p class="text-gray-600">Duration</p>
-          <p class="text-lg font-semibold">{{ (buildStatus$ | async)?.duration }}s</p>
+          <p class="text-lg font-semibold">{{ buildStatus().duration }}s</p>
         </div>
       </div>
 
@@ -62,62 +67,72 @@ import { CardComponent, BadgeComponent, ButtonComponent } from './index';
           <summary class="collapse-title text-sm font-medium">Details</summary>
           <div class="collapse-content">
             <pre class="text-xs bg-base-300 p-2 rounded overflow-auto max-h-40">{{
-              (buildStatus$ | async) | json
-            }}</pre>
+                buildStatus() | json
+              }}</pre>
           </div>
         </details>
       </div>
 
       <!-- Action buttons -->
       <div class="card-actions gap-2 pt-4 border-t border-base-300">
-        <app-button
-          label="View Logs"
-          variant="outline"
-          size="sm"
-          (trigger)="viewLogs()"
-        />
-        <app-button
-          label="Cancel Build"
-          variant="ghost"
-          size="sm"
-          [disabled]="isComplete"
-          (trigger)="cancelBuild()"
-        />
-        <app-button
-          label="Restart"
-          variant="primary"
-          size="sm"
-          [disabled]="!isComplete"
-          (trigger)="restartBuild()"
-        />
+        <app-button label="View Logs" variant="outline" size="sm" (trigger)="viewLogs()" />
+        <!-- 3. Computed signals are also invoked with parentheses -->
+        <app-button label="Cancel Build" variant="ghost" size="sm" [disabled]="isComplete()" (trigger)="cancelBuild()" />
+        <app-button label="Restart" variant="primary" size="sm" [disabled]="!isComplete()" (trigger)="restartBuild()" />
       </div>
     </app-card>
   `,
 })
-export class BuildProgressCardComponent implements OnInit, OnDestroy {
+export class BuildProgressCardComponent implements OnInit {
   @Input() buildName = 'Build #42';
   @Input() buildId = 'build-uuid-123';
 
-  private destroy$ = new Subject<void>();
-  buildStatus$!: BehaviorSubject<BuildStatus>;
+  // 4. Declare a readonly Signal instead of an Observable
+  buildStatus!: () => BuildStatus;
 
   ngOnInit(): void {
-    // In a real app, this would subscribe to GraphQL:
-    // this.buildStatus$ = this.buildService.buildSubscription(this.buildId).pipe(...)
-    //
-    // Simulated build progress for demo purposes
-    this.buildStatus$ = this.mockBuildProgress$().pipe(
-      bufferTime(250), // Batch high-frequency updates every 250ms
-      map(statuses => statuses[statuses.length - 1] || { status: 'idle', progress: 0, testsPassed: 0, testsTotal: 0, duration: 0, timestamp: new Date() }),
-      shareReplay(1),
-      takeUntil(this.destroy$)
+    const rawStream$ = this.mockBuildProgress$().pipe(
+      bufferTime(250),
+      map(statuses => statuses[statuses.length - 1] || {
+        status: 'idle', progress: 0, testsPassed: 0,
+        testsTotal: 0, duration: 0, timestamp: new Date()
+      })
     );
+
+    // 5. Convert the stream to a Signal.
+    // We pass an initial value so the template has data immediately.
+    this.buildStatus = toSignal(rawStream$, {
+      initialValue: {
+        status: 'Starting',
+        progress: 0,
+        testsPassed: 0,
+        testsTotal: 150,
+        duration: 0,
+        timestamp: new Date()
+      }
+    });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  // 6. Use 'computed' signals for derived state.
+  // These automatically recalculate whenever buildStatus updates.
+  statusVariant = computed(() => {
+    const status = this.buildStatus().status;
+    switch (status) {
+      case 'Complete': return 'success';
+      case 'Finalizing': return 'warning';
+      case 'In Progress':
+      case 'Starting': return 'info';
+      case 'Failed':
+      case 'Cancelled': return 'error';
+      default: return 'info';
+    }
+  });
+
+  isComplete = computed(() => {
+    const status = this.buildStatus().status;
+    return status === 'Complete' || status === 'Failed' || status === 'Cancelled';
+  });
+
 
   /**
    * Mock GraphQL subscription emitting build status updates
@@ -139,7 +154,9 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
         const progress = Math.min(tick * 5, 100);
         const testsPassed = Math.floor(progress * 1.5);
         const testsTotal = 150;
-        const status = progress < 50 ? 'In Progress' : progress < 100 ? 'Finalizing' : 'Complete';
+
+        // Fixed: Explicit type forces TypeScript to see literal values instead of 'string'
+        const status: BuildStatus['status'] = progress < 50 ? 'In Progress' : progress < 100 ? 'Finalizing' : 'Complete';
 
         return {
           status,
@@ -150,8 +167,9 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
           timestamp: new Date(),
         };
       }),
+      // Fixed: Explicit type prevents type-widening inside the operator
       startWith({
-        status: 'Starting',
+        status: 'Starting' as const, // or 'Starting' as BuildStatus['status']
         progress: 0,
         testsPassed: 0,
         testsTotal: 150,
@@ -159,30 +177,6 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
         timestamp: new Date(),
       })
     );
-  }
-
-  get statusVariant(): 'info' | 'success' | 'warning' | 'error' {
-    // Type-safe variant mapping
-    const status = this.buildStatus$.value?.status;
-    switch (status) {
-      case 'Complete':
-        return 'success';
-      case 'Finalizing':
-        return 'warning';
-      case 'In Progress':
-      case 'Starting':
-        return 'info';
-      case 'Failed':
-      case 'Cancelled':
-        return 'error';
-      default:
-        return 'info';
-    }
-  }
-
-  get isComplete(): boolean {
-    const status = this.buildStatus$.value?.status;
-    return status === 'Complete' || status === 'Failed' || status === 'Cancelled';
   }
 
   viewLogs(): void {

@@ -21,7 +21,7 @@ import { Component, input, output } from '@angular/core';
     <dialog
       class="modal"
       [class.modal-open]="isOpen()"
-      (backdrop)="onCloseClick()"
+      [attr.open]="isOpen() ? '' : null"
     >
       <div class="modal-box">
         <h3 class="font-bold text-lg">{{ title() }}</h3>
@@ -45,19 +45,18 @@ import { Component, input, output } from '@angular/core';
           </button>
         </div>
       </div>
+      <!-- DaisyUI backdrop handles the background clicks safely here -->
       <form method="dialog" class="modal-backdrop">
-        <button (click)="onCloseClick()">close</button>
+        <button type="button" (click)="onCloseClick()">close</button>
       </form>
     </dialog>
   `,
 })
 export class ModalComponent {
-  // 1. Convert inputs to Signals
   title = input<string>('Modal Title');
   confirmLabel = input<string>('Confirm');
   isOpen = input<boolean>(false);
 
-  // 2. Clear out 'on' prefixes and avoid native DOM clashes
   closeModal = output<void>();
   confirm = output<void>();
 
@@ -69,3 +68,4 @@ export class ModalComponent {
     this.confirm.emit();
   }
 }
+
