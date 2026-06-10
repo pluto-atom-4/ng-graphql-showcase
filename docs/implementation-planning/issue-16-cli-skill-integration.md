@@ -1,6 +1,6 @@
 # Issue #16: Make Claude Skills Available from GitHub Copilot CLI Sessions
 
-**Issue**: https://github.com/pluto-atom-4/ng-graphql-playground/issues/16  
+**Issue**: https://github.com/pluto-atom-4/ng-graphql-showcase/issues/16  
 **Status**: ✅ **IMPLEMENTED** (Phase B Complete)  
 **Date Created**: 2026-05-21  
 **Completion Date**: 2026-05-21  
@@ -26,10 +26,10 @@ GitHub Copilot CLI and Claude Code use **different skill registration systems**:
 
 ### Current State
 
-| System | Skill Access | Configuration File |
-|--------|--------------|-------------------|
-| **Claude Code** | ✅ YES | `.claude/settings.json` (skillOverrides enabled) |
-| **GitHub Copilot CLI** | ❌ NO | None (plugin system required) |
+| System                 | Skill Access | Configuration File                               |
+| ---------------------- | ------------ | ------------------------------------------------ |
+| **Claude Code**        | ✅ YES       | `.claude/settings.json` (skillOverrides enabled) |
+| **GitHub Copilot CLI** | ❌ NO        | None (plugin system required)                    |
 
 ### Diagnostic Commands Executed
 
@@ -57,7 +57,7 @@ $ gh copilot -- plugin list
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Developer Workspace (ng-graphql-playground)               │
+│  Developer Workspace (ng-graphql-showcase)               │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────────────┐  ┌──────────────────────────────┐ │
@@ -86,18 +86,21 @@ $ gh copilot -- plugin list
 **Approach**: Package `factory-app-session-blog` skill as a GitHub plugin repository.
 
 **Steps**:
+
 1. Create new repo: `pluto-atom-4/copilot-plugin-factory-app`
 2. Add `copilot.yml` manifest file with skill metadata
 3. Publish to GitHub (public or private)
 4. Document installation: `gh copilot -- plugin install pluto-atom-4/copilot-plugin-factory-app`
 
 **Pros**:
+
 - ✅ Reusable across any GitHub Copilot CLI session
 - ✅ Version-controlled skill definitions
 - ✅ Can be shared with other developers/projects
 - ✅ Leverages GitHub's plugin marketplace
 
 **Cons**:
+
 - 🔴 Requires new repository
 - 🔴 Maintenance burden for plugin version updates
 
@@ -110,6 +113,7 @@ $ gh copilot -- plugin list
 **Approach**: Add instructions to CLAUDE.md for manually installing skills as plugins.
 
 **Steps**:
+
 1. Add section: "GitHub Copilot CLI Plugin Installation"
 2. Document each skill:
    - Which plugin to install: `gh copilot -- plugin install <repo>`
@@ -117,11 +121,13 @@ $ gh copilot -- plugin list
    - Troubleshooting
 
 **Pros**:
+
 - ✅ Fast to implement (5 min)
 - ✅ No new repository needed
 - ✅ Users understand CLI skill model
 
 **Cons**:
+
 - 🔴 Manual installation every developer must do
 - 🔴 Not truly "available" like Claude Code
 - 🔴 Skill discovery is harder
@@ -135,6 +141,7 @@ $ gh copilot -- plugin list
 **Approach**: Add a `.copilotrc` file in repo root that auto-loads plugins when `gh copilot` is invoked from this directory.
 
 **Steps**:
+
 1. Create `.copilotrc` (YAML/JSON):
    ```yaml
    plugins:
@@ -145,10 +152,12 @@ $ gh copilot -- plugin list
 3. Rely on Copilot CLI auto-loading from `.copilotrc`
 
 **Pros**:
+
 - ✅ Single configuration file for entire repo
 - ✅ No manual installation needed per session
 
 **Cons**:
+
 - 🔴 `.copilotrc` support may vary by CLI version
 - 🔴 Requires plugin repository to exist (combines with Option A)
 - 🔴 Unclear CLI auto-loading behavior
@@ -160,6 +169,7 @@ $ gh copilot -- plugin list
 ## Recommended Path: Option A + Documentation
 
 **Rationale**:
+
 1. **Option A** (Custom Plugin) establishes the right pattern for future CLI skill reuse
 2. **Documentation** in CLAUDE.md explains the two-system model to developers
 3. **Scalable** for future plugins without modifying core repository
@@ -171,47 +181,54 @@ $ gh copilot -- plugin list
 **File**: `CLAUDE.md` (lines 266-293)
 
 **Changes**:
+
 - Add section: "GitHub Copilot CLI Plugin Model"
 - Explain difference between Claude Code (`.claude/settings.json`) and CLI (plugins)
 - Document that skills require plugin installation
 - Link to plugin repository
 
 **Example text**:
-```markdown
+
+````markdown
 ### GitHub Copilot CLI Plugin Model
 
-Unlike Claude Code (which uses `.claude/settings.json`), GitHub Copilot CLI 
+Unlike Claude Code (which uses `.claude/settings.json`), GitHub Copilot CLI
 requires skills to be installed as **plugins**:
 
 1. **Claude Code Skills**: Defined in `.claude/settings.json` → auto-load
 2. **GitHub Copilot CLI Skills**: Installed via plugin system → manual installation
 
 To install `factory-app-session-blog` plugin:
+
 ```bash
 gh copilot -- plugin install pluto-atom-4/copilot-plugin-factory-app
 ```
+````
 
 See [Plugin Repository](https://github.com/pluto-atom-4/copilot-plugin-factory-app) for details.
+
 ```
 
 ---
 
 #### Task 2: Create Plugin Repository (20 min)
 
-**Repository Name**: `copilot-plugin-factory-app`  
+**Repository Name**: `copilot-plugin-factory-app`
 **Location**: https://github.com/pluto-atom-4/copilot-plugin-factory-app
 
 **Contents**:
 ```
+
 copilot-plugin-factory-app/
 ├── README.md (Plugin documentation, features, installation)
 ├── copilot.yml (Plugin manifest with skill metadata)
 ├── skills/
-│   ├── factory-app-session-blog.md (Skill definition)
-│   └── resources/
-│       └── session-blog-template.md (Reusable template)
+│ ├── factory-app-session-blog.md (Skill definition)
+│ └── resources/
+│ └── session-blog-template.md (Reusable template)
 └── LICENSE (MIT or Apache 2.0)
-```
+
+````
 
 **copilot.yml Example**:
 ```yaml
@@ -226,7 +243,7 @@ skills:
     description: "Document full-stack monorepo work as blog posts, gists, portfolio pieces"
     usage: "/factory-app-session-blog <topic>"
     tags: ["documentation", "portfolio", "blogging"]
-```
+````
 
 **Timeline**: 20 min (repo creation + manifest + documentation)
 
@@ -235,6 +252,7 @@ skills:
 #### Task 3: Test Plugin Installation (5 min)
 
 **Commands**:
+
 ```bash
 # Install plugin from GitHub
 gh copilot -- plugin install pluto-atom-4/copilot-plugin-factory-app
@@ -248,6 +266,7 @@ gh copilot -p "Using the factory-app-session-blog skill, document this feature" 
 ```
 
 **Success Criteria**:
+
 - ✅ Plugin installs without errors
 - ✅ `gh copilot -- plugin list` shows `factory-app-session-blog` as installed
 - ✅ CLI can reference the skill in prompts
@@ -259,12 +278,14 @@ gh copilot -p "Using the factory-app-session-blog skill, document this feature" 
 **File**: `CONTRIBUTING.md`
 
 **Changes**:
+
 - Add section: "GitHub Copilot CLI Setup"
 - Document plugin installation steps for new contributors
 - Link to plugin repository
 
 **Example text**:
-```markdown
+
+````markdown
 ### GitHub Copilot CLI Setup
 
 To enable skills in GitHub Copilot CLI sessions:
@@ -273,8 +294,10 @@ To enable skills in GitHub Copilot CLI sessions:
    ```bash
    gh copilot -- plugin install pluto-atom-4/copilot-plugin-factory-app
    ```
+````
 
 2. Verify installation:
+
    ```bash
    gh copilot -- plugin list
    ```
@@ -284,6 +307,7 @@ To enable skills in GitHub Copilot CLI sessions:
    gh copilot
    ```
    Then type: `/factory-app-session-blog ...`
+
 ```
 
 ---
@@ -362,16 +386,16 @@ If plugin integration doesn't work as expected:
 ✅ **Resolved Through Implementation:**
 
 1. **Repository Visibility**: Plugin repository created as **public** (https://github.com/pluto-atom-4/copilot-plugin-factory-app)
-   
+
 2. **Option Selection**: Implemented **Option A** (Custom Plugin Repository) with documentation (Option B)
-   
+
 3. **Plugin Format**: Used `plugin.json` manifest based on GitHub Copilot CLI expected format
    - Also included `copilot.yml` for reference
    - Documented all findings in implementation logs
 
 ### Outstanding Questions
 
-1. **CLI Plugin Format Compatibility**: 
+1. **CLI Plugin Format Compatibility**:
    - Current `plugin.json` format may need adjustment based on CLI version updates
    - Monitor GitHub Copilot CLI release notes for format changes
    - Recommendation: Retry installation after CLI updates to verify format
@@ -438,7 +462,7 @@ If plugin integration doesn't work as expected:
 5. **LICENSE** (MIT)
 6. **.gitignore** (Standard patterns)
 
-**Commits**: 
+**Commits**:
 - Commit 1: Initial setup (copilot.yml, README, skill definition, LICENSE, .gitignore)
 - Commit 2: Added plugin.json manifest for CLI compatibility
 - Commit 3: Documented testing results and findings
@@ -527,11 +551,11 @@ If plugin integration doesn't work as expected:
 - **Timeline**: Monitor GitHub Copilot CLI releases
 
 ### Advantages Despite Installation Issue
-✅ Plugin repository is production-ready  
-✅ Documentation is comprehensive and accurate  
-✅ Manifest follows GitHub official specifications  
-✅ All files are version-controlled and properly structured  
-✅ Ready for immediate use once CLI format is clarified  
+✅ Plugin repository is production-ready
+✅ Documentation is comprehensive and accurate
+✅ Manifest follows GitHub official specifications
+✅ All files are version-controlled and properly structured
+✅ Ready for immediate use once CLI format is clarified
 
 ---
 
@@ -559,3 +583,4 @@ If plugin integration doesn't work as expected:
 - [ ] Submit plugin to GitHub Copilot Plugin Marketplace (when format is stable)
 - [ ] Create additional plugins for other skills (fix-github-issues, session-blog-to-gist, etc.)
 - [ ] Develop plugin development guide for team/community
+```

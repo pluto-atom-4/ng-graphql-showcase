@@ -9,6 +9,7 @@ This guide explains the **AI Code Review GitHub Action** that automatically appr
 ## Workflow Trigger Events
 
 The AI Code Review workflow activates when:
+
 - A new PR is **opened**
 - New **commits are pushed** to an existing PR (synchronize event)
 
@@ -18,10 +19,10 @@ The AI Code Review workflow activates when:
 
 A PR is **automatically approved** if ALL of the following conditions are met:
 
-| Condition | Status |
-|-----------|--------|
+| Condition                    | Status      |
+| ---------------------------- | ----------- |
 | PR created by `pluto-atom-4` | ✅ Required |
-| PR is NOT in draft status | ✅ Required |
+| PR is NOT in draft status    | ✅ Required |
 
 **If any condition fails**, auto-approval is skipped (external PR or draft).
 
@@ -32,6 +33,7 @@ A PR is **automatically approved** if ALL of the following conditions are met:
 ### Step 1: Job Condition Gate
 
 **Condition Check:**
+
 ```yaml
 if: github.actor == 'pluto-atom-4' && github.event.pull_request.draft == false
 ```
@@ -42,6 +44,7 @@ if: github.actor == 'pluto-atom-4' && github.event.pull_request.draft == false
 - This is the **first and primary security check**
 
 **Output:**
+
 ```
 Job skipped for external contributors
 OR
@@ -62,14 +65,15 @@ Job runs for pluto-atom-4 non-draft PRs
 
 ```javascript
 const pr = context.payload.pull_request;
-console.log('PR: ' + pr.number);
-console.log('Author: ' + pr.user.login);
-console.log('Draft: ' + pr.draft);
+console.log("PR: " + pr.number);
+console.log("Author: " + pr.user.login);
+console.log("Draft: " + pr.draft);
 ```
 
 **Purpose:** Log PR metadata to workflow logs for debugging/audit trail
 
 **Output Example:**
+
 ```
 PR: 11
 Author: pluto-atom-4
@@ -79,17 +83,19 @@ Draft: false
 ### Step 4: Approve PR
 
 **GitHub API Call:**
+
 ```javascript
 github.rest.pulls.createReview({
   owner: context.repo.owner,
   repo: context.repo.repo,
   pull_number: context.issue.number,
-  event: 'APPROVE',
-  body: '✅ AI Code Review Approved\n\nAll CI checks must pass before merge:\n- Type checking\n- Build\n- Tests\n\nReady for manual merge when CI passes.'
-})
+  event: "APPROVE",
+  body: "✅ AI Code Review Approved\n\nAll CI checks must pass before merge:\n- Type checking\n- Build\n- Tests\n\nReady for manual merge when CI passes.",
+});
 ```
 
 **Approval Message:**
+
 ```
 ✅ AI Code Review Approved
 
@@ -102,6 +108,7 @@ Ready for manual merge when CI passes.
 ```
 
 **Uses:**
+
 - `${{ secrets.BOT_TOKEN }}` — GitHub token for API access (requires setup in repository secrets)
 - Calls GitHub REST API to create approval review
 
@@ -110,12 +117,15 @@ Ready for manual merge when CI passes.
 ## What Happens After Auto-Approval?
 
 ### 1. PR Receives Approval Review ✅
+
 - The PR shows a green checkmark in the review section
 - Approval is visible in the PR timeline
 - Approval message explains CI requirements
 
 ### 2. CI/CD Checks Still Run 🔄
+
 **All automated checks must pass:**
+
 - Type checking (TypeScript/C#)
 - Linting & code formatting
 - Unit tests (backend + frontend)
@@ -124,7 +134,9 @@ Ready for manual merge when CI passes.
 - GraphQL schema validation
 
 ### 3. Manual Merge Ready 🚀
+
 Once CI checks pass, the PR is ready for manual merge via GitHub UI:
+
 1. Navigate to PR #11
 2. Click "Merge pull request"
 3. Choose merge strategy (Squash, Merge, Rebase)
@@ -145,6 +157,7 @@ If the GitHub API call to create a review fails (e.g., insufficient permissions,
 4. **Developer can investigate** — Check workflow logs for details
 
 **Common Issues:**
+
 - `BOT_TOKEN` not configured in repository secrets
 - `BOT_TOKEN` has insufficient permissions
 - Network or GitHub API unavailability
@@ -172,6 +185,7 @@ Check workflow logs if auto-approval doesn't occur:
 ### CI Still Required
 
 **Auto-approval does NOT bypass:**
+
 - ❌ Linting failures
 - ❌ Test failures
 - ❌ Type errors
@@ -248,37 +262,49 @@ WORKFLOW COMPLETE ✅
 ## FAQ
 
 ### Q: Why auto-approve if CI must still pass?
+
 **A:** Auto-approval confirms the PR structure is valid (owner-created, not draft). CI ensures code quality. Both provide different validation layers.
 
 ### Q: Can external contributors use this?
+
 **A:** No. The workflow explicitly checks `github.actor == 'pluto-atom-4'`. Only the owner is auto-approved.
 
 ### Q: What if I want manual review of my own PR?
+
 **A:** Currently, all non-draft PRs from pluto-atom-4 are auto-approved. To skip, you could:
+
 1. Create PR in draft mode
 2. Request review via GitHub UI
 3. Un-draft when ready
 
 ### Q: Does auto-approval bypass tests?
+
 **A:** No. Auto-approval and CI checks are independent. CI still runs and must pass before merge.
 
 ### Q: Where do I see the approval?
+
 **A:** In the PR on GitHub:
+
 1. Click the PR number (e.g., #11)
 2. Scroll to "Reviews" section
 3. See the approval with the AI Code Review message
 
 ### Q: Can I undo an auto-approval?
+
 **A:** Yes. Dismiss the review via the GitHub UI:
+
 1. In the Reviews section
 2. Click "Dismiss review" on the approval
 3. This removes the approval without deleting the review
 
 ### Q: What if BOT_TOKEN is not configured?
+
 **A:** The workflow will fail at the "Approve PR" step with:
+
 ```
 Error: Token required but not supplied
 ```
+
 Configure the token in repository secrets to fix.
 
 ---
@@ -288,6 +314,7 @@ Configure the token in repository secrets to fix.
 **File Location:** `.github/workflows/ai-code-review.yml`
 
 **Key Configuration:**
+
 ```yaml
 on:
   pull_request:
@@ -303,6 +330,7 @@ jobs:
 ```
 
 **Customization:**
+
 - **Change owner:** Edit `github.actor == 'pluto-atom-4'`
 - **Add branch filter:** Add `branches: [main]` to `on.pull_request`
 - **Add PR events:** Add `reopened` to `types: [opened, synchronize, reopened]`
@@ -323,6 +351,7 @@ GitHub **Secret Scanning** automatically detects hardcoded credentials and preve
 ### Detected Patterns
 
 GitHub Secret Scanning detects:
+
 - AWS credentials (`AKIA...` patterns)
 - GitHub personal access tokens (`ghp_...` patterns)
 - Private SSH keys and certificates
@@ -334,11 +363,13 @@ GitHub Secret Scanning detects:
 ### Enabling Secret Scanning
 
 **Using GitHub CLI:**
+
 ```bash
 gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
 **Result:**
+
 - Secret Scanning: Enabled (detects credentials in code)
 - Push Protection: Enabled (blocks risky pushes)
 
@@ -370,22 +401,24 @@ Some patterns might be detected as secrets when they're actually examples or doc
 
 ### Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
+| Issue                                  | Solution                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Push rejected but I don't see a secret | Run `git diff HEAD` to review recent changes; check for test credentials or API keys in comments |
-| Accidental secret already in history | Repository owner needs to use `git filter-branch` or BFG Repo-Cleaner to remove; then force-push |
-| Push override needed (not recommended) | Use `git push --no-verify` (bypasses ALL safety checks) |
-| Need to whitelist a pattern | Contact GitHub Support with reasoning and pattern details |
+| Accidental secret already in history   | Repository owner needs to use `git filter-branch` or BFG Repo-Cleaner to remove; then force-push |
+| Push override needed (not recommended) | Use `git push --no-verify` (bypasses ALL safety checks)                                          |
+| Need to whitelist a pattern            | Contact GitHub Support with reasoning and pattern details                                        |
 
 ### Best Practices
 
 ✅ **Do:**
+
 - Keep `.env.local.example` with placeholder values (example only, no real secrets)
 - Use `.env` or `.env.local` (in `.gitignore`) for actual credentials
 - Use GitHub Secrets for CI/CD credentials, not environment files
 - Reference `.env.local.example` in CONTRIBUTING.md for setup
 
 ❌ **Don't:**
+
 - Commit API keys, tokens, or passwords to any branch
 - Use `--no-verify` to bypass secret scanning (defeats the purpose)
 - Store secrets in configuration files tracked by git
@@ -394,6 +427,7 @@ Some patterns might be detected as secrets when they're actually examples or doc
 ### Related Documentation
 
 For Phase 2 security implementation details, see:
+
 - **[docs/implementation-planning/task-1-github-cli-guide.md](./implementation-planning/task-1-github-cli-guide.md)** — Complete GitHub CLI guide
 - **[SECURITY.md](../SECURITY.md)** — Vulnerability reporting and security policy
 
@@ -404,6 +438,7 @@ For Phase 2 security implementation details, see:
 ### How Dependabot Works
 
 Dependabot automatically:
+
 1. **Scans dependencies** for available updates and vulnerabilities
 2. **Creates PRs** with update proposals (weekly on Monday)
 3. **Runs CI/CD** to verify updates don't break anything
@@ -413,6 +448,7 @@ Dependabot automatically:
 ### Configuration
 
 Dependabot is configured via `.github/dependabot.yml`:
+
 - **pnpm/npm packages**: Weekly updates, auto-merge patch/minor
 - **NuGet packages** (backend): Weekly updates, auto-merge patch/minor
 - **GitHub Actions**: Weekly updates, manual review only
@@ -420,6 +456,7 @@ Dependabot is configured via `.github/dependabot.yml`:
 ### Dependabot PR Workflow
 
 #### Automatic Process (Patch/Minor Updates)
+
 ```
 Monday 3 AM UTC → Dependabot creates PR
   ↓
@@ -431,6 +468,7 @@ Update deployed to main branch
 ```
 
 #### Manual Review Process (Major Updates, Actions)
+
 ```
 Monday 3-5 AM UTC → Dependabot creates PR
   ↓
@@ -444,17 +482,20 @@ Yes → Merge PR | No → Close/convert to draft
 ### Reviewing Dependabot PRs
 
 **What to look for:**
+
 1. **Changelog** — Read package changelog for breaking changes
 2. **CI Status** — All checks must pass (green checkmarks)
 3. **Dependency Tree** — Check if other packages depend on this
 4. **Security Advisories** — Look for related CVE fixes
 
 **When to auto-merge:**
+
 - ✅ Patch versions (1.0.0 → 1.0.1): Safe, likely merge
 - ✅ Minor versions (1.0.0 → 1.1.0): Usually safe, unless changelog shows risks
 - ❌ Major versions (1.0.0 → 2.0.0): Review carefully for breaking changes
 
 **When to skip/close:**
+
 - ❌ If tests fail in Dependabot PR
 - ❌ If major version has incompatible API changes
 - ❌ If your code needs updates for new version
@@ -462,9 +503,11 @@ Yes → Merge PR | No → Close/convert to draft
 ### Common Dependabot Scenarios
 
 #### Scenario 1: Auto-Merged PR Appears on Main
+
 **What happened:** Patch/minor update was deemed safe and auto-merged
 
 **Action:** Pull latest main branch and test locally
+
 ```bash
 git pull origin main
 pnpm install  # or: npm install (auto-detects)
@@ -473,9 +516,11 @@ pnpm test     # or: npm run test
 ```
 
 #### Scenario 2: Major Version Requires Manual Review
+
 **What happened:** Dependabot created PR but didn't auto-merge (major version)
 
 **Action:** Review changelog and merge if safe
+
 ```bash
 # 1. Review the PR on GitHub
 # 2. Check the changelog link in PR description
@@ -484,18 +529,22 @@ pnpm test     # or: npm run test
 ```
 
 #### Scenario 3: Update Causes Test Failure
+
 **What happened:** CI checks failed; update introduces breaking change
 
 **Action:** Close PR and keep current version
+
 ```bash
 # On GitHub: Click "Close pull request"
 # Dependabot will re-create in next cycle if unresolved
 ```
 
 #### Scenario 4: Security Vulnerability Detected
+
 **What happened:** Dependabot detected CVE; creating urgent security PR
 
 **Action:** Merge immediately if tests pass
+
 ```bash
 # On GitHub: Review security advisory link
 # If tests pass (green): Click "Merge pull request"
@@ -504,27 +553,28 @@ pnpm test     # or: npm run test
 
 ### Dependabot Settings for This Repository
 
-| Setting | Value | Reason |
-|---------|-------|--------|
-| Schedule | Weekly, Monday 3 AM UTC | Batch updates; off-peak |
-| Auto-merge | On for patch/minor; Off for major/actions | Balance safety and automation |
-| Dependency types | All (direct, indirect, dev, prod) | Full visibility |
-| Labels | `dependencies`, `frontend`, `backend`, `ci` | Easy filtering |
-| Package managers | pnpm/npm + NuGet + GitHub Actions | Full coverage |
+| Setting          | Value                                       | Reason                        |
+| ---------------- | ------------------------------------------- | ----------------------------- |
+| Schedule         | Weekly, Monday 3 AM UTC                     | Batch updates; off-peak       |
+| Auto-merge       | On for patch/minor; Off for major/actions   | Balance safety and automation |
+| Dependency types | All (direct, indirect, dev, prod)           | Full visibility               |
+| Labels           | `dependencies`, `frontend`, `backend`, `ci` | Easy filtering                |
+| Package managers | pnpm/npm + NuGet + GitHub Actions           | Full coverage                 |
 
 ### Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Dependabot PRs not appearing | Wait 24 hours for first run; check Settings → Dependabot enabled |
-| PR fails CI checks | Review error messages; may indicate incompatibility |
-| Auto-merge not happening | Check if PR is marked as draft; convert to normal PR |
-| pnpm vs npm confusion | Dependabot auto-detects; uses pnpm-lock.yaml if present, npm-lock.json otherwise |
-| Too many PRs at once | Reduce frequency in `.github/dependabot.yml` (e.g., monthly instead of weekly) |
+| Issue                        | Solution                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| Dependabot PRs not appearing | Wait 24 hours for first run; check Settings → Dependabot enabled                 |
+| PR fails CI checks           | Review error messages; may indicate incompatibility                              |
+| Auto-merge not happening     | Check if PR is marked as draft; convert to normal PR                             |
+| pnpm vs npm confusion        | Dependabot auto-detects; uses pnpm-lock.yaml if present, npm-lock.json otherwise |
+| Too many PRs at once         | Reduce frequency in `.github/dependabot.yml` (e.g., monthly instead of weekly)   |
 
 ### Disabling Dependabot Temporarily
 
 If you need to pause updates:
+
 ```bash
 # Edit .github/dependabot.yml
 # Change interval from "weekly" to "never"
@@ -533,6 +583,7 @@ If you need to pause updates:
 ```
 
 To re-enable:
+
 ```bash
 # Change interval back to "weekly"
 # Commit and push
@@ -542,7 +593,8 @@ To re-enable:
 ### Viewing Dependabot History
 
 GitHub tracks all Dependabot activity:
-- **URL:** https://github.com/pluto-atom-4/ng-graphql-playground/network/updates
+
+- **URL:** https://github.com/pluto-atom-4/ng-graphql-showcase/network/updates
 - Shows: All update PRs, merge history, skipped versions
 
 ### Related Documentation

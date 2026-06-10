@@ -8,7 +8,7 @@
 
 ## Overview
 
-This guide covers the daisyUI + Tailwind CSS design system used in the ng-graphql-playground frontend. daisyUI provides semantic component classes built on Tailwind CSS, enabling fast component development without external design tools.
+This guide covers the daisyUI + Tailwind CSS design system used in the ng-ng-graphql-showcase frontend. daisyUI provides semantic component classes built on Tailwind CSS, enabling fast component development without external design tools.
 
 ## Quick Start
 
@@ -454,4 +454,4 @@ export class BuildProgressComponent {
 
 - `docs/agentic-workflow-for-ui-devel.md` — Terminal-first UI development workflow
 - `.github/copilot/rules/copilot-cli-component-generation.md` — Copilot CLI skill for scaffolding
-- GitHub Issues: [#30 (daisyUI), #9 (original design-to-code)](https://github.com/pluto-atom-4/ng-graphql-playground/issues)
+- GitHub Issues: [#30 (daisyUI), #9 (original design-to-code)](https://github.com/pluto-atom-4/ng-graphql-showcase/issues)

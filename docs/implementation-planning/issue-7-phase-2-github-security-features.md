@@ -49,24 +49,28 @@ Phase 2 implements **automated security scanning and dependency management** to 
 #### 1.1 Enable Secret Scanning with GitHub CLI
 
 **Command:**
+
 ```bash
-cd /path/to/ng-graphql-playground
+cd /path/to/ng-graphql-showcase
 gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
 **What it does:**
+
 - Enables GitHub Secret Scanning (detects hardcoded secrets)
 - Enables Push Protection (blocks pushes with detected secrets)
 - Both configured in single command
 - Requires repository admin permissions
 
 **Expected Output:**
+
 ```
 ✓ Secret scanning enabled
 ✓ Push protection enabled
 ```
 
 **Advantages of GitHub CLI approach:**
+
 - ✅ One-liner (no manual UI navigation)
 - ✅ Can be automated in CI/CD pipelines
 - ✅ Documented in git history
@@ -76,17 +80,20 @@ gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection
 #### 1.2 Verify Configuration
 
 **Verify Secret Scanning is enabled:**
+
 ```bash
 gh repo view --json url,visibility
 ```
 
 **Alternative: View in browser:**
-- URL: `https://github.com/pluto-atom-4/ng-graphql-playground/settings/security_analysis`
+
+- URL: `https://github.com/pluto-atom-4/ng-graphql-showcase/settings/security_analysis`
 - Verify both "Secret Scanning" and "Push Protection" show "✅ Enabled"
 
 #### 1.3 Verify No Existing Secrets in Repository
 
 **Scan commit history for common secrets:**
+
 ```bash
 # Search for AWS patterns
 git log -p --all | grep -i 'AKIA[0-9A-Z]\{16\}'
@@ -100,6 +107,7 @@ git log -p -S "token" --all | head -20
 **Expected Result:** No matches (repository is clean)
 
 **If secrets found:**
+
 1. View the commit: `git show <commit-hash>`
 2. Remove the secret using `git filter-branch`:
    ```bash
@@ -111,14 +119,15 @@ git log -p -S "token" --all | head -20
    ```
 4. **Alternative:** Use [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/)
 
-**Current Status:** No secrets expected in ng-graphql-playground (fresh repository)
+**Current Status:** No secrets expected in ng-graphql-showcase (fresh repository)
 
 #### 1.4 Create Documentation
 
 **Update `docs/solo-dev-pull-request-review.md`:**
 
 Add new section:
-```markdown
+
+````markdown
 ## Secret Scanning & Push Protection
 
 ### How It Works
@@ -130,8 +139,9 @@ Add new section:
 ### Detected Patterns
 
 GitHub Secret Scanning detects:
+
 - AWS credentials (AKIA... patterns)
-- GitHub tokens (ghp_... patterns)
+- GitHub tokens (ghp\_... patterns)
 - Private SSH keys
 - Database connection strings
 - API keys for major cloud providers
@@ -154,10 +164,12 @@ git commit --amend --no-edit
 # 4. Push again
 git push origin your-branch
 ```
+````
 
 ### Emergency Override (Not Recommended)
 
 If you need to push despite secret detection:
+
 ```bash
 git push --no-verify
 ```
@@ -167,14 +179,18 @@ git push --no-verify
 ### Troubleshooting
 
 **Q: Push blocked with "Push rejected by secret scanning"**
+
 - A: Remove the secret from your commits and try again
 
 **Q: Accidental commit to main?**
+
 - A: Contact repository owner immediately for remediation
 
 **Q: False positive detection?**
+
 - A: Contact GitHub Support to whitelist the pattern
-```
+
+````
 
 #### 1.5 Test Push Protection (Optional)
 
@@ -197,9 +213,10 @@ git push origin test-secret-branch
 
 # Expected: Push rejected by GitHub Push Protection
 # Message: "Push rejected by secret scanning"
-```
+````
 
 **After verification:**
+
 ```bash
 # Clean up test branch
 git push origin --delete test-secret-branch
@@ -209,7 +226,8 @@ git reset --hard HEAD~1  # Remove test commit locally
 
 **Expected Result:** ✅ Push blocked successfully, secret not leaked
 
-**Deliverable:** 
+**Deliverable:**
+
 - ✅ Secret scanning enabled via GitHub CLI
 - ✅ Push protection enabled via GitHub CLI
 - ✅ Documentation added to `docs/solo-dev-pull-request-review.md`
@@ -217,6 +235,7 @@ git reset --hard HEAD~1  # Remove test commit locally
 - ✅ (Optional) Push protection tested and verified
 
 **Verification Checklist:**
+
 - [ ] `gh repo edit --enable-secret-scanning --enable-secret-scanning-push-protection` executed successfully
 - [ ] GitHub Settings page shows "✅ Enabled" for Secret Scanning
 - [ ] GitHub Settings page shows "✅ Enabled" for Push Protection
@@ -310,7 +329,7 @@ updates:
     labels:
       - "dependencies"
       - "ci"
-    auto-merge: false  # Review actions manually first
+    auto-merge: false # Review actions manually first
     allow:
       - dependency-type: "all"
 ```
@@ -341,10 +360,12 @@ updates:
 **Tasks Within Task 2:**
 
 **2.1 Create `.github/dependabot.yml`**
+
 - Copy configuration above
 - Commit with message: "chore(deps): add Dependabot configuration"
 
 **2.2 Create Dependabot Documentation**
+
 - Add section to `docs/solo-dev-pull-request-review.md`
 - Document workflow:
   1. Dependabot creates PR
@@ -355,16 +376,19 @@ updates:
 - Link to `CONTRIBUTING.md` for update process
 
 **2.3 Configure Repository Secrets** (if needed)
+
 - Verify no secrets needed in Dependabot PRs
 - Dependabot uses repository token automatically
 - No additional setup required for npm/NuGet
 
-**Deliverable:** 
+**Deliverable:**
+
 - `.github/dependabot.yml` committed
 - Documentation updated
 - First Dependabot run triggers automatically within 24 hours
 
 **Verification:**
+
 - GitHub Settings → Code security and analysis → Dependabot
 - Status shows "✅ Enabled"
 - Check Settings → Secrets to verify token setup (should be automatic)
@@ -385,11 +409,11 @@ name: CodeQL Analysis
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   schedule:
-    - cron: '0 2 * * 0'  # Weekly Sunday 2 AM UTC
+    - cron: "0 2 * * 0" # Weekly Sunday 2 AM UTC
 
 jobs:
   analyze:
@@ -400,7 +424,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'csharp', 'javascript-typescript' ]
+        language: ["cpp", "csharp", "javascript-typescript"]
 
     permissions:
       actions: read
@@ -423,7 +447,7 @@ jobs:
         if: matrix.language == 'csharp'
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0'
+          dotnet-version: "8.0"
 
       - name: Restore and build
         if: matrix.language == 'csharp'
@@ -436,7 +460,7 @@ jobs:
         if: matrix.language == 'javascript-typescript'
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         if: matrix.language == 'javascript-typescript'
@@ -473,22 +497,25 @@ jobs:
 **Tasks Within Task 3:**
 
 **3.1 Create `.github/workflows/codeql-analysis.yml`**
+
 - Copy configuration above
 - Commit with message: "chore(ci): add CodeQL security analysis workflow"
 
 **3.2 Update Branch Protection Rule (main branch)**
+
 - Navigate to: Settings → Branches → main → Branch protection rule → Edit
 - Add required status check: `analyze` (CodeQL job name)
 - Required for: "All PR must pass CodeQL analysis before merge"
 - Save changes
 
 **3.3 Create CodeQL Documentation**
+
 - Create new document: `docs/codeql-analysis-guide.md`
 - Document:
   1. What CodeQL does (detects security vulnerabilities)
   2. Supported languages (TypeScript, C#)
   3. How to view results:
-     - GitHub Security tab: `https://github.com/pluto-atom-4/ng-graphql-playground/security/code-scanning`
+     - GitHub Security tab: `https://github.com/pluto-atom-4/ng-graphql-showcase/security/code-scanning`
      - PR checks: Shows pass/fail directly in PR
   4. How to suppress false positives (add `// lgtm[js/...]` comments)
   5. Running CodeQL locally:
@@ -504,6 +531,7 @@ jobs:
      - Alert resolved when fixed
 
 **3.4 Test CodeQL Integration**
+
 - Create a simple test PR with intentional vulnerability
 - Verify CodeQL detects it
 - Verify PR check shows failure
@@ -511,17 +539,20 @@ jobs:
 - Delete test PR
 
 **3.5 Update CI/CD Documentation**
+
 - Add CodeQL section to existing CI/CD docs
 - Link from `CONTRIBUTING.md` to CodeQL guide
 - Document branch protection requirement
 
 **Deliverable:**
+
 - `.github/workflows/codeql-analysis.yml` committed
 - Branch protection rule updated with CodeQL check
 - Documentation created: `docs/codeql-analysis-guide.md`
 - Integration test completed
 
 **Verification:**
+
 - GitHub Settings → Branches → main shows CodeQL check required
 - GitHub Security tab shows "Code scanning" section
 - First CodeQL run completes within 24 hours
@@ -561,6 +592,7 @@ jobs:
 - ⚠️ No existing secrets in commit history (verify with `git log -p` search)
 
 **Not Required:**
+
 - CI/CD pipelines already running (CodeQL is independent)
 - Specific GitHub plan (CodeQL free tier available)
 
@@ -589,6 +621,7 @@ git push origin test-branch
 **Timeline:** First Dependabot run within 24 hours
 
 **Expected Result:**
+
 - ✅ PR created on Monday 3 AM UTC (first week)
 - ✅ PR auto-assigned to @pluto-atom-4
 - ✅ PR labeled with `dependencies`
@@ -606,6 +639,7 @@ const query = `SELECT * FROM users WHERE id = ${userId}`;
 ```
 
 **Expected Result:**
+
 - ✅ CodeQL detects SQL injection pattern
 - ✅ GitHub Security tab shows alert
 - ✅ PR check fails until fixed
@@ -628,6 +662,7 @@ const query = `SELECT * FROM users WHERE id = ${userId}`;
 - ✅ CI/CD documentation updated
 
 **Metrics:**
+
 - Files created: 2 (dependabot.yml, codeql-analysis.yml)
 - Files updated: 3+ (branch protection, docs)
 - New automation: 3 (secret scanning, dependabot, codeql)
@@ -640,13 +675,16 @@ const query = `SELECT * FROM users WHERE id = ${userId}`;
 If Phase 2 causes issues:
 
 **To disable Secret Scanning:**
+
 - Settings → Code security and analysis → Secret scanning → Disable
 
 **To disable Dependabot:**
+
 - Delete `.github/dependabot.yml`
 - Commit: `git rm .github/dependabot.yml && git commit -m "Disable Dependabot"`
 
 **To disable CodeQL:**
+
 - Delete `.github/workflows/codeql-analysis.yml`
 - Remove CodeQL from branch protection rule (Settings → Branches → Edit rule)
 
@@ -662,6 +700,7 @@ Before starting, verify these settings are accessible:
 - [ ] User has admin permissions on repository
 
 **Troubleshooting:**
+
 - If Secret Scanning not visible: Repository must be public or on GitHub Pro plan
 - If CodeQL not visible: Same requirement as Secret Scanning
 - If Dependabot not visible: Usually available on all plans
@@ -670,30 +709,33 @@ Before starting, verify these settings are accessible:
 
 ## Estimated Timeline
 
-| Task | Duration | Start | End | Status |
-|------|----------|-------|-----|--------|
-| Secret Scanning + Push Protection | 15 min | - | - | Ready |
-| Dependabot Configuration | 45 min | After Task 1 | - | Ready |
-| CodeQL Analysis Setup | 60 min | After Task 2 | - | Ready |
-| Testing & Verification | 30 min | Parallel | - | Ready |
-| Documentation Review | 15 min | After all tasks | - | Ready |
-| **TOTAL PHASE 2** | **~2.5 hours** | - | - | - |
+| Task                              | Duration       | Start           | End | Status |
+| --------------------------------- | -------------- | --------------- | --- | ------ |
+| Secret Scanning + Push Protection | 15 min         | -               | -   | Ready  |
+| Dependabot Configuration          | 45 min         | After Task 1    | -   | Ready  |
+| CodeQL Analysis Setup             | 60 min         | After Task 2    | -   | Ready  |
+| Testing & Verification            | 30 min         | Parallel        | -   | Ready  |
+| Documentation Review              | 15 min         | After all tasks | -   | Ready  |
+| **TOTAL PHASE 2**                 | **~2.5 hours** | -               | -   | -      |
 
 ---
 
 ## Post-Phase-2 Maintenance
 
 **Weekly (1-2 hours):**
+
 - Review Dependabot PRs (auto-merge most; review major updates)
 - Check GitHub Security tab for new CodeQL alerts
 - Monitor CI/CD checks on main branch
 
 **Monthly (30 min):**
+
 - Review secret scanning logs
 - Analyze CodeQL vulnerability trends
 - Update documentation if needed
 
 **Quarterly (1 hour):**
+
 - Review and update Dependabot configuration
 - Assess new security features in GitHub
 - Plan Phase 3 (branch protection enhancement)
@@ -703,6 +745,7 @@ Before starting, verify these settings are accessible:
 ## Links & Resources
 
 **GitHub Documentation:**
+
 - [Secret Scanning Documentation](https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning)
 - [Dependabot Documentation](https://docs.github.com/en/code-security/dependabot)
 - [CodeQL Documentation](https://codeql.github.com/)
@@ -710,6 +753,7 @@ Before starting, verify these settings are accessible:
 - [CodeQL Queries for C#](https://github.com/github/codeql/tree/main/csharp/ql/src)
 
 **Related Issues:**
+
 - Issue #7: Harden repository security settings
 - PR #13: Phase 1 - Security foundation documents (merged)
 
@@ -718,11 +762,13 @@ Before starting, verify these settings are accessible:
 ## Sign-Off
 
 **Phase 2 Plan Review:**
+
 - [ ] Plan reviewed by solo developer
 - [ ] No blockers identified
 - [ ] Ready to proceed with implementation
 
 **Phase 2 Completion:**
+
 - [ ] All tasks completed
 - [ ] Tests passed
 - [ ] Documentation updated

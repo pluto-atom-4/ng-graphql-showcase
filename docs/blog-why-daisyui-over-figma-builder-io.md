@@ -291,4 +291,4 @@ Use what you need. Skip what you don't.
 - [daisyUI Components](https://daisyui.com/components/)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Playwright Visual Comparisons](https://playwright.dev/docs/test-snapshots)
-- GitHub Issues: [#9 (revert), #30 (daisyUI)](https://github.com/pluto-atom-4/ng-graphql-playground/issues)
+- GitHub Issues: [#9 (revert), #30 (daisyUI)](https://github.com/pluto-atom-4/ng-graphql-ng-graphql-showcase/issues)
