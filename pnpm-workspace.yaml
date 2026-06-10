@@ -5,3 +5,9 @@ allowBuilds:
   esbuild: true
   lmdb: true
   msgpackr-extract: true
+overrides:
+  "glob@<11": ">=11.0.0"
+  "uuid@<9": ">=9.0.0"
+  "tar@<7": ">=7.0.0"
+  "node-domexception": "npm:empty-npm-package@1.0.0"
+  "whatwg-encoding": "npm:@exodus/bytes@1.0.0-rc.3"
