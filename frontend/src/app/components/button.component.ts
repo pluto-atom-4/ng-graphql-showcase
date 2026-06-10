@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'outline';
@@ -21,39 +21,47 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
   standalone: true,
   imports: [CommonModule],
   template: `
+    <!-- 3. Read the signals/computed values directly in the template by calling them () -->
     <button
-      [attr.disabled]="isDisabled ? true : null"
-      [ngClass]="getClasses()"
-      (click)="onClick()"
+      [attr.disabled]="isDisabled() ? true : null"
+      [ngClass]="classes()"
+      (click)="onClickHandler()"
     >
-      <span *ngIf="!loading">{{ label }}</span>
-      <span *ngIf="loading" class="loading loading-spinner loading-sm"></span>
+      @if (!loading()) {
+        <span>{{ label() }}</span>
+      }
+      @if (loading()) {
+        <span class="loading loading-spinner loading-sm"></span>
+      }
     </button>
   `,
 })
 export class ButtonComponent {
-  @Input() label = 'Button';
-  @Input() variant: ButtonVariant = 'primary';
-  @Input() size: ButtonSize = 'md';
-  @Input() loading = false;
-  @Input() disabled = false;
-  @Output() onClick = new EventEmitter<void>();
+  // 1. Declare inputs using the new input() function (they become read-only signals)
+  label = input<string>('Button');
+  variant = input<ButtonVariant>('primary');
+  size = input<ButtonSize>('md');
+  loading = input<boolean>(false);
+  disabled = input<boolean>(false);
 
-  get isDisabled(): boolean {
-    return this.disabled || this.loading;
-  }
+  // 2. Declare outputs using the new output() function
+  trigger = output<void>();
 
-  getClasses(): string {
+  // 4. Use computed() to automatically update state derived from inputs
+  isDisabled = computed(() => this.disabled() || this.loading());
+
+  classes = computed(() => {
     const base = 'btn font-semibold transition-all';
-    const variantClass = `btn-${this.variant}`;
-    const sizeClass = this.size === 'md' ? '' : `btn-${this.size}`;
+    const variantClass = `btn-${this.variant()}`;
+    const sizeClass = this.size() === 'md' ? '' : `btn-${this.size()}`;
 
     return [base, variantClass, sizeClass].filter(Boolean).join(' ');
-  }
+  });
 
   onClickHandler(): void {
-    if (!this.isDisabled) {
-      this.onClick.emit();
+    if (!this.isDisabled()) {
+      this.trigger.emit();
     }
   }
 }
+

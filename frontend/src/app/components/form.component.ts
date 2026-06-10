@@ -1,6 +1,5 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, input, output } from '@angular/core';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 
 /**
  * Reusable Form component using daisyUI
@@ -20,30 +19,33 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 @Component({
   selector: 'app-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   template: `
-    <form [formGroup]="formGroup" (ngSubmit)="onFormSubmit()" class="space-y-4">
+    <form [formGroup]="formGroup()" (ngSubmit)="onFormSubmit()" class="space-y-4">
       <ng-content></ng-content>
       <div class="form-control pt-4">
         <button
           type="submit"
-          [disabled]="!formGroup.valid"
+          [disabled]="!formGroup().valid"
           class="btn btn-primary"
         >
-          {{ submitLabel }}
+          {{ submitLabel() }}
         </button>
       </div>
     </form>
   `,
 })
 export class FormComponent {
-  @Input() formGroup!: FormGroup;
-  @Input() submitLabel = 'Submit';
-  @Output() onSubmit = new EventEmitter<any>();
+  formGroup = input.required<FormGroup>();
+  submitLabel = input<string>('Submit');
+
+  // Change "submit" to "formSubmit" to avoid colliding with native HTML events
+  formSubmit = output<unknown>();
 
   onFormSubmit(): void {
-    if (this.formGroup.valid) {
-      this.onSubmit.emit(this.formGroup.value);
+    const currentForm = this.formGroup();
+    if (currentForm.valid) {
+      this.formSubmit.emit(currentForm.value);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, interval } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, interval } from 'rxjs';
 import { map, takeUntil, startWith, bufferTime, shareReplay } from 'rxjs/operators';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
@@ -74,21 +74,21 @@ import { CardComponent, BadgeComponent, ButtonComponent } from './index';
           label="View Logs"
           variant="outline"
           size="sm"
-          (onClick)="viewLogs()"
+          (trigger)="viewLogs()"
         />
         <app-button
           label="Cancel Build"
           variant="ghost"
           size="sm"
           [disabled]="isComplete"
-          (onClick)="cancelBuild()"
+          (trigger)="cancelBuild()"
         />
         <app-button
           label="Restart"
           variant="primary"
           size="sm"
           [disabled]="!isComplete"
-          (onClick)="restartBuild()"
+          (trigger)="restartBuild()"
         />
       </div>
     </app-card>
@@ -99,12 +99,12 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   @Input() buildId = 'build-uuid-123';
 
   private destroy$ = new Subject<void>();
-  buildStatus$!: Observable<BuildStatus>;
+  buildStatus$!: BehaviorSubject<BuildStatus>;
 
   ngOnInit(): void {
     // In a real app, this would subscribe to GraphQL:
     // this.buildStatus$ = this.buildService.buildSubscription(this.buildId).pipe(...)
-    // 
+    //
     // Simulated build progress for demo purposes
     this.buildStatus$ = this.mockBuildProgress$().pipe(
       bufferTime(250), // Batch high-frequency updates every 250ms
@@ -163,7 +163,7 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
 
   get statusVariant(): 'info' | 'success' | 'warning' | 'error' {
     // Type-safe variant mapping
-    const status = (this.buildStatus$ as any).value?.status;
+    const status = this.buildStatus$.value?.status;
     switch (status) {
       case 'Complete':
         return 'success';
@@ -181,7 +181,7 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   }
 
   get isComplete(): boolean {
-    const status = (this.buildStatus$ as any).value?.status;
+    const status = this.buildStatus$.value?.status;
     return status === 'Complete' || status === 'Failed' || status === 'Cancelled';
   }
 
