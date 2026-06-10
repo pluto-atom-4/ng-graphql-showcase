@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 /**
  * Reusable Card component using daisyUI
@@ -15,16 +15,20 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="card-factory">
       <div class="card-body">
-        <h2 *ngIf="title" class="card-title">{{ title }}</h2>
-        <p *ngIf="description" class="text-gray-600">{{ description }}</p>
+        @if (title) {
+          <h2 class="card-title">{{ title }}</h2>
+        }
+        @if (description) {
+          <p class="text-gray-600">{{ description }}</p>
+        }
         <ng-content></ng-content>
       </div>
     </div>
-  `,
+    `,
 })
 export class CardComponent {
   @Input() title?: string;

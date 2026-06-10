@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output } from '@angular/core';
 
 /**
  * Reusable Modal component using daisyUI
@@ -17,15 +16,15 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <dialog
       class="modal"
-      [class.modal-open]="isOpen"
-      (backdrop)="onCloseClick()"
+      [class.modal-open]="isOpen()"
+      [attr.open]="isOpen() ? '' : null"
     >
       <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ title }}</h3>
+        <h3 class="font-bold text-lg">{{ title() }}</h3>
         <div class="py-4">
           <ng-content></ng-content>
         </div>
@@ -42,28 +41,31 @@ import { CommonModule } from '@angular/common';
             class="btn btn-primary"
             (click)="onConfirmClick()"
           >
-            {{ confirmLabel }}
+            {{ confirmLabel() }}
           </button>
         </div>
       </div>
+      <!-- DaisyUI backdrop handles the background clicks safely here -->
       <form method="dialog" class="modal-backdrop">
-        <button (click)="onCloseClick()">close</button>
+        <button type="button" (click)="onCloseClick()">close</button>
       </form>
     </dialog>
   `,
 })
 export class ModalComponent {
-  @Input() title = 'Modal Title';
-  @Input() confirmLabel = 'Confirm';
-  @Input() isOpen = false;
-  @Output() onClose = new EventEmitter<void>();
-  @Output() onConfirm = new EventEmitter<void>();
+  title = input<string>('Modal Title');
+  confirmLabel = input<string>('Confirm');
+  isOpen = input<boolean>(false);
+
+  closeModal = output<void>();
+  confirm = output<void>();
 
   onCloseClick(): void {
-    this.onClose.emit();
+    this.closeModal.emit();
   }
 
   onConfirmClick(): void {
-    this.onConfirm.emit();
+    this.confirm.emit();
   }
 }
+

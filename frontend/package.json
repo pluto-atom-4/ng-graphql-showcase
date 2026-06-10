@@ -8,6 +8,7 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
+    "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json,md}\"",
     "codegen": "pnpm graphql-code-generator --config codegen.ts"
   },
@@ -30,6 +31,7 @@
     "zone.js": "^0.15.0"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.6.0",
     "@analogjs/vitest-angular": "^2.5.3",
     "@angular-devkit/build-angular": "^19.0.0",
     "@angular-eslint/builder": "^19.8.1",

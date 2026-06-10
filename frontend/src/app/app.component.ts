@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { ButtonComponent, CardComponent, BadgeComponent } from './components';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, BuildProgressCardComponent, ButtonComponent, CardComponent, BadgeComponent],
+  imports: [BuildProgressCardComponent, ButtonComponent, CardComponent, BadgeComponent],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-base-100 to-base-200 p-8">
       <div class="max-w-6xl mx-auto">
