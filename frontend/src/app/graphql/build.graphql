@@ -1,0 +1,88 @@
+# GraphQL schema for Build management in a manufacturing context
+# build.graphql
+#
+# Queries
+query GetBuild($id: ID!) {
+    build(id: $id) {
+        id
+        name
+        description
+        status
+        createdAt
+        updatedAt
+        parts {
+            id
+            name
+            sku
+            quantity
+        }
+        testRuns {
+            id
+            status
+            result
+            fileUrl
+        }
+    }
+}
+
+query ListBuilds($limit: Int!, $offset: Int!) {
+    builds(limit: $limit, offset: $offset) {
+        items {
+            id
+            name
+            status
+            createdAt
+        }
+        totalCount
+        hasNextPage
+        hasPreviousPage
+    }
+}
+
+# Mutations
+mutation CreateBuild($name: String!, $description: String) {
+    createBuild(name: $name, description: $description) {
+        id
+        name
+        status
+    }
+}
+
+mutation UpdateBuildStatus($id: ID!, $status: BuildStatus!) {
+    updateBuildStatus(id: $id, status: $status) {
+        id
+        status
+        updatedAt
+    }
+}
+
+mutation AddPart($buildId: ID!, $name: String!, $sku: String!, $quantity: Int!) {
+    addPart(buildId: $buildId, name: $name, sku: $sku, quantity: $quantity) {
+        id
+        buildId
+        name
+        sku
+        quantity
+    }
+}
+
+mutation SubmitTestRun($buildId: ID!, $status: TestStatus!, $result: String, $fileUrl: String) {
+    submitTestRun(buildId: $buildId, status: $status, result: $result, fileUrl: $fileUrl) {
+        id
+        status
+        result
+        completedAt
+    }
+}
+
+# Subscriptions
+subscription BuildStatusUpdate($buildId: ID!) {
+    buildStatus(buildId: $buildId) {
+        status
+        progress
+        testsPassed
+        testsTotal
+        duration
+        timestamp
+    }
+}
