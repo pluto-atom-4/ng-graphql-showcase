@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A **full-stack monorepo** for managing long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
 
 **Stack:**
+
 - **Frontend**: Angular 17+ with Apollo/Urql (GraphQL clients)
 - **API Gateway**: Hot Chocolate GraphQL (ChilliCream)
 - **Backend**: ASP.NET Core (.NET 8/9)
@@ -42,35 +43,35 @@ dotnet test backend/src
 
 ```bash
 # Install dependencies
-npm install --workspace=frontend
+pnpm install
 
 # Generate type-safe Angular services from GraphQL schema
-npm run codegen --workspace=frontend
+pnpm --filter frontend run codegen
 
 # Start Angular dev server (HMR enabled)
-npm run ng serve --workspace=frontend
+pnpm --filter frontend run ng serve
 
 # Run frontend tests
-npm run test --workspace=frontend
+pnpm --filter frontend run test
 
 # Lint frontend code
-npm run lint --workspace=frontend
+pnpm --filter frontend run lint
 ```
 
 ### Monorepo (Root)
 
 ```bash
 # Start both backend + frontend watchers concurrently
-npm run dev
+pnpm dev
 
 # Build both stacks
-npm run build
+pnpm build
 
 # Run all tests (backend + frontend)
-npm run test
+pnpm test
 
 # Lint entire monorepo
-npm run lint
+pnpm lint
 ```
 
 ---
@@ -82,8 +83,8 @@ npm run lint
 │         Angular UI (Apollo / Urql)           │  Real-time GraphQL
 └──────────────────────┬───────────────────────┘  subscriptions via
                        │ ▲                        WebSockets / SSE
-  GraphQL Mutations    │ │  
-                       ▼ │  
+  GraphQL Mutations    │ │
+                       ▼ │
 ┌──────────────────────────────────────────────┐
 │        Hot Chocolate GraphQL Gateway         │  Auto-emits schema.graphql
 │  (Projections, DataLoaders, Subscriptions)   │  on backend build
@@ -134,7 +135,8 @@ Developers modify C# entities → types flow to Angular automatically. No manual
 - **Dapper** (No-tracked): High-velocity telemetry ingestion, batch inserts from automated machines
 - **Both** share explicit ADO.NET transactions for atomic multi-step operations
 
-When a mutation updates domain state *and* logs high-frequency metrics:
+When a mutation updates domain state _and_ logs high-frequency metrics:
+
 ```csharp
 using var transaction = await context.Database.BeginTransactionAsync();
 var dbConnection = context.Database.GetDbConnection();
@@ -199,14 +201,16 @@ ng-graphql-playground/
 
 ### The Shared Transaction Rule
 
-When updating a core asset via EF Core *and* logging bulk metrics via Dapper in the same operation, **always** use an explicit transaction. Forgetting this causes deadlocks on the factory floor.
+When updating a core asset via EF Core _and_ logging bulk metrics via Dapper in the same operation, **always** use an explicit transaction. Forgetting this causes deadlocks on the factory floor.
 
 ### GraphQL Query Depth Limits
 
 Hot Chocolate enforces a max nesting depth of 5 layers. Frontend developers must not construct deeply nested queries like:
+
 ```graphql
 Build { Parts { TestRuns { Logs { Metrics { Details } } } } }
 ```
+
 This generates catastrophic N+1 queries. Use DataLoaders and separate requests instead.
 
 ### No Direct Entity Exposure
@@ -244,7 +248,7 @@ Store only **primitive keys** in Elsa workflow variables (Guid, string). When an
 
 ### Frontend
 
-- Component tests: `npm run test --workspace=frontend` (Jasmine/Karma)
+- Component tests: `pnpm --filter frontend run test` (Vitest + Angular Testing Library)
 - E2E tests: Via Angular testing utilities; mock Apollo/Urql responses
 - Real GraphQL integration: Test against a staging backend running the full Hot Chocolate gateway
 
@@ -253,6 +257,7 @@ Store only **primitive keys** in Elsa workflow variables (Guid, string). When an
 ## IDE Recommendation
 
 **JetBrains Rider 2024.x** is the gold standard for this monorepo:
+
 - Native C# debugging with EF Core inspection
 - Integrated SQL Server profiler (critical for Dapper tuning)
 - Full-stack debugging (backend resolvers + network requests simultaneously)
@@ -266,6 +271,7 @@ VS Code is feasible but lacks the integrated database tools and C# debugging dep
 ## GitHub Copilot CLI Compatibility
 
 This project is configured to work seamlessly with GitHub Copilot CLI:
+
 - `.claude/settings.json` defines permissions and hooks for Claude Code sessions
 - `CLAUDE.md` (this file) is automatically loaded in every session
 - Skills are available through two distinct systems (see below)
@@ -274,10 +280,10 @@ This project is configured to work seamlessly with GitHub Copilot CLI:
 
 GitHub Copilot CLI and Claude Code use **separate skill delivery mechanisms**:
 
-| System | Skill Source | Configuration | Installation |
-|--------|--------------|----------------|--------------|
-| **Claude Code** | Configured in settings | `.claude/settings.json` (skillOverrides) | Auto-loaded ✅ |
-| **GitHub Copilot CLI** | Plugin marketplace | GitHub repository + `copilot.yml` | `gh copilot -- plugin install` |
+| System                 | Skill Source           | Configuration                            | Installation                   |
+| ---------------------- | ---------------------- | ---------------------------------------- | ------------------------------ |
+| **Claude Code**        | Configured in settings | `.claude/settings.json` (skillOverrides) | Auto-loaded ✅                 |
+| **GitHub Copilot CLI** | Plugin marketplace     | GitHub repository + `copilot.yml`        | `gh copilot -- plugin install` |
 
 ### Claude Code Skills (Auto-Loaded)
 
@@ -312,6 +318,7 @@ gh copilot -p "Document this session" --allow-all-tools
 ```
 
 For more information on GitHub Copilot CLI plugins, see:
+
 - [CLI Plugin Documentation](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-cli-plugins)
 - [Plugin Repository](https://github.com/pluto-atom-4/copilot-plugin-factory-app)
 
@@ -337,17 +344,17 @@ Root-level `package.json` manages the entire build:
 ```json
 {
   "scripts": {
-    "build": "npm run build:backend && npm run build:frontend",
+    "build": "pnpm build:backend && pnpm build:frontend",
     "build:backend": "dotnet build ./backend/src/FactoryApp.sln",
-    "build:frontend": "npm run build --workspace=frontend",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "dotnet watch run --project ./backend/src/FactoryApp.WebApi",
-    "dev:frontend": "npm run ng serve --workspace=frontend",
-    "test": "npm run test:backend && npm run test:frontend",
+    "build:frontend": "pnpm --filter frontend run build",
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:backend": "cd backend/src/FactoryApp.WebApi && dotnet watch run",
+    "dev:frontend": "pnpm --filter frontend run ng serve",
+    "test": "pnpm test:backend && pnpm test:frontend",
     "test:backend": "dotnet test ./backend/src",
-    "test:frontend": "npm run test --workspace=frontend",
-    "codegen": "npm run codegen --workspace=frontend",
-    "lint": "npm run lint --workspace=frontend"
+    "test:frontend": "pnpm --filter frontend run test",
+    "codegen": "pnpm --filter frontend run codegen",
+    "lint": "pnpm --filter frontend run lint"
   }
 }
 ```
@@ -357,22 +364,26 @@ Root-level `package.json` manages the entire build:
 ## Common Debugging Scenarios
 
 ### "Frontend type error: property X doesn't exist"
+
 1. Check if the property exists in the C# entity
 2. Verify the Hot Chocolate resolver exposes it
 3. Run `dotnet build` to re-emit `schema.graphql`
-4. Re-run `npm run codegen` to regenerate Angular services
+4. Re-run `pnpm codegen` to regenerate Angular services
 
 ### "N+1 query performance issue in Hot Chocolate"
+
 1. Check if the resolver uses a DataLoader for child entities
 2. Add `[UseProjection]` to the root query resolver
 3. Verify the GraphQL query doesn't nest deeper than 5 layers
 
 ### "Deadlock when updating Build + logging metrics"
+
 1. Ensure both EF Core and Dapper operations share the same `DbTransaction`
 2. Confirm the transaction is not nested (one top-level transaction scope)
 3. Check SQL Server's deadlock graph in Activity Monitor
 
 ### "Elsa workflow fails on resume after schema update"
+
 1. Verify the activity only stores primitive keys, not entity objects
 2. Check if a column was renamed; Dapper queries referencing old column names will fail
 3. Deploy a new workflow version; don't force-update active runs
@@ -394,7 +405,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0'
+          dotnet-version: "8.0"
       - run: dotnet build ./backend/src/FactoryApp.sln
       - run: dotnet test ./backend/src
 ```
@@ -416,16 +427,15 @@ jobs:
 
 ## Important Files & Their Roles
 
-| File | Purpose |
-|------|---------|
-| `backend/src/FactoryApp.WebApi/Program.cs` | Hot Chocolate bootstrap, EF Core config, Elsa setup |
-| `backend/src/FactoryApp.WebApi/schema.graphql` | **Auto-generated** GraphQL schema; commit to repo |
-| `backend/src/FactoryApp.Domain/FactoryDbContext.cs` | EF Core DbContext with NoTracking default |
-| `frontend/src/app/api/generated/graphql.ts` | **Auto-generated** type-safe services; never edit |
-| `frontend/codegen.ts` | GraphQL Code Generator configuration |
-| `frontend/angular.json` | Angular workspace config |
-| `docs/research-architecuture-design.md` | Detailed trade-off analysis & recommendations |
-| `docs/monorepo-assessment.md` | Tooling & structure best practices |
+| File                                                | Purpose                                             |
+| --------------------------------------------------- | --------------------------------------------------- |
+| `backend/src/FactoryApp.WebApi/Program.cs`          | Hot Chocolate bootstrap, EF Core config, Elsa setup |
+| `backend/src/FactoryApp.WebApi/schema.graphql`      | **Auto-generated** GraphQL schema; commit to repo   |
+| `backend/src/FactoryApp.Domain/FactoryDbContext.cs` | EF Core DbContext with NoTracking default           |
+| `frontend/src/app/api/generated/graphql.ts`         | **Auto-generated** type-safe services; never edit   |
+| `frontend/codegen.ts`                               | GraphQL Code Generator configuration                |
+| `frontend/angular.json`                             | Angular workspace config                            |
+| `docs/monorepo-assessment.md`                       | Tooling & structure best practices                  |
 
 ---
 
@@ -458,22 +468,28 @@ When you're asked to review a GitHub PR, **you must execute this three-phase wor
    - **Never skip this step** — it's mandatory for visibility
 
 **Example Comment Structure**:
+
 ```markdown
 # 🔍 PR Review: [PR Title]
 
 ## Summary
+
 ✅ APPROVED FOR MERGE
 
 ## Requirements
-| Requirement | Implementation | Status |
-|---|---|---|
+
+| Requirement  | Implementation    | Status  |
+| ------------ | ----------------- | ------- |
 | [from issue] | [how PR meets it] | ✅ Done |
 
 ## File Analysis
+
 ### [File]
+
 - Purpose, Quality, Impact, Testing
 
 ## Verification
+
 - [x] Type safety maintained
 - [x] Tests pass
 - [x] [PR-specific item]
@@ -482,6 +498,7 @@ When you're asked to review a GitHub PR, **you must execute this three-phase wor
 ```
 
 **Key Rules**:
+
 - ✅ Always post review outcomes to GitHub
 - ✅ Use structured format with tables and checklists
 - ✅ Reference requirements explicitly

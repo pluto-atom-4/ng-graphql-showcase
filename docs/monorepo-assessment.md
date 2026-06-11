@@ -5,6 +5,7 @@
 ### ✅ **Rider is EXCELLENT for this architecture**
 
 **Strengths:**
+
 - **Native C# Support:** First-class support for .NET projects, EF Core migrations, Hot Chocolate GraphQL debugging
 - **Database Tools:** Built-in SQL Server profiler and query analysis (critical for Dapper/EF Core optimization)
 - **Full-Stack Debugging:** Can debug backend GraphQL resolvers while inspecting frontend network requests
@@ -13,12 +14,15 @@
 - **Workflow Visualization:** Good integration with async/await patterns and Elsa workflow debugging
 
 **Why NOT alternatives:**
+
 - **VS Code:** Limited C# debugging, weak EF Core tooling, GraphQL support requires extensions
 - **Visual Studio Community:** Heavier than Rider, overkill for monorepo complexity
 - **Neovim/Vim:** Lacks integrated database tools needed for hybrid EF Core + Dapper debugging
 
 ### Recommendation
+
 **Use JetBrains Rider 2024.x+ with:**
+
 - Ultimate Edition (includes database tools)
 - .NET 8+ SDK configured
 - Hot Chocolate plugin for enhanced GraphQL support
@@ -29,6 +33,7 @@
 ## 2. Monorepo Tool Strategy
 
 ### Your Hybrid Stack Challenge
+
 ```
 Backend:    C# / .NET (Solutions, Projects, NuGet)
 Frontend:   TypeScript / Node.js (npm/yarn/pnpm)
@@ -40,6 +45,7 @@ Orchestration: Need cross-platform build coordination
 #### **Primary: NX Monorepo (RECOMMENDED)**
 
 **Why NX for this architecture:**
+
 - ✅ Designed for polyglot monorepos (C# + TypeScript)
 - ✅ Task graph execution & caching
 - ✅ Incremental builds (rebuild only changed projects)
@@ -47,17 +53,19 @@ Orchestration: Need cross-platform build coordination
 - ✅ Scalable to enterprise monorepos
 
 **Setup:**
-```bash
-# Install NX in root
-npm init -w @nrwl/nx -- nx@latest init
 
-# Add to both backend and frontend
-nx add @nrwl/dotnet  # For C# project orchestration
-nx add @nrwl/angular # Already using Angular
+```bash
+# Install NX in root using pnpm
+pnpm add -D nx@latest
+
+# Add plugins to manage both backend and frontend
+pnpm exec nx add @nx/dotnet   # For C# project orchestration
+pnpm exec nx add @nx/angular  # Already using Angular
 ```
 
 **Benefits:**
-- Single `nx build` command builds both backend + frontend
+
+- Single `pnpm exec nx build` command builds both backend + frontend
 - Automatic dependency detection (frontend depends on backend schema)
 - Shared linting/testing configuration
 - CI/CD integration simplification
@@ -66,14 +74,14 @@ nx add @nrwl/angular # Already using Angular
 
 #### **Secondary: Package Managers**
 
-| Tool | Use Case | Recommendation |
-|------|----------|-----------------|
-| **npm** (Current) | Node.js monorepo standard | ✅ Keep as-is for simplicity |
-| **pnpm** | Faster, stricter dependency management | Consider later (not needed now) |
-| **Bun** | All-in-one runtime | ❌ Not production-ready for .NET monorepos |
-| **Python (uv)** | Not applicable | ❌ No Python in your stack |
+| Tool               | Use Case                               | Recommendation                              |
+| ------------------ | -------------------------------------- | ------------------------------------------- |
+| **pnpm** (Current) | Faster, stricter dependency management | ✅ Best choice for workspace isolation      |
+| **npm**            | Node.js monorepo standard              | ❌ Replaced by pnpm for speed and stability |
+| **Bun**            | All-in-one runtime                     | ❌ Not production-ready for .NET monorepos  |
+| **Python (uv)**    | Not applicable                         | ❌ No Python in your stack                  |
 
-**Conclusion:** Keep **npm** for frontend, don't add unnecessary tool complexity.
+**Conclusion:** Use **pnpm** to ensure fast, strict dependency resolution across monorepo workspaces.
 
 ---
 
@@ -84,15 +92,15 @@ Create root-level build scripts (instead of tool dependency):
 ```json
 {
   "scripts": {
-    "build": "npm run build:backend && npm run build:frontend",
+    "build": "pnpm build:backend && pnpm build:frontend",
     "build:backend": "dotnet build ./backend/src/FactoryApp.sln",
-    "build:frontend": "npm run build --workspace=frontend",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "dotnet watch --project ./backend/src/FactoryApp.WebApi/FactoryApp.WebApi.csproj",
-    "dev:frontend": "npm run ng serve --workspace=frontend",
-    "test": "npm run test:backend && npm run test:frontend",
+    "build:frontend": "pnpm --filter frontend run build",
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:backend": "cd backend/src/FactoryApp.WebApi && dotnet watch run",
+    "dev:frontend": "pnpm --filter frontend run ng serve",
+    "test": "pnpm test:backend && pnpm test:frontend",
     "test:backend": "dotnet test ./backend/src",
-    "test:frontend": "npm run test --workspace=frontend"
+    "test:frontend": "pnpm --filter frontend run test"
   }
 }
 ```
@@ -200,7 +208,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0'
+          dotnet-version: "8.0"
       - run: dotnet build ./backend/src/FactoryApp.sln
       - run: dotnet test ./backend/src
 
@@ -210,7 +218,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm install
       - run: npm run lint --workspace=frontend
       - run: npm run test --workspace=frontend
@@ -220,7 +228,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: npm run generate:types  # Verify types stay in sync
+      - run: npm run generate:types # Verify types stay in sync
 ```
 
 ---
@@ -228,6 +236,7 @@ jobs:
 ## 5. Dependency Management Strategy
 
 ### Backend (.NET)
+
 - **NuGet:** Package manager for C# dependencies
 - **Pinned versions** in .csproj files for stability
 - **Central Package Management** (CentralPackageVersions)
@@ -242,38 +251,38 @@ jobs:
 ```
 
 ### Frontend (Node.js)
-- **npm:** Use workspaces for monorepo
-- **package-lock.json:** Commit for reproducible builds
-- **npm ci** in CI/CD (not `npm install`)
 
-```json
-{
-  "workspaces": [
-    "frontend"
-  ]
-}
+- **pnpm:** Use workspaces for monorepo tracking
+- **pnpm-lock.yaml:** Commit for reproducible builds
+- **pnpm install --frozen-lockfile** in CI/CD (replaces `npm ci`)
+
+```yaml
+# pnpm-workspace.yaml
+packages:
+  - "frontend"
 ```
 
 ---
 
 ## 6. Tool Recommendations Summary
 
-| Aspect | Recommendation | Rationale |
-|--------|----------------|-----------|
-| **IDE** | JetBrains Rider Ultimate 2024+ | Best C# + TypeScript + DB tooling |
-| **Monorepo Orchestration** | NX (optional) or npm scripts | NX for scale, npm for simplicity |
-| **Backend Build** | `dotnet build` + MSBuild | Native .NET ecosystem |
-| **Frontend Build** | `npm run build` (Angular CLI) | Industry standard |
-| **Package Manager** | npm (keep current) | Stable, no need to switch |
-| **Local Development** | docker-compose + npm scripts | Easy multi-service coordination |
-| **CI/CD** | GitHub Actions (you have it!) | Native to GitHub, free |
-| **Versioning** | Semantic Versioning (SemVer) | Communicate breaking changes |
+| Aspect                     | Recommendation                                   | Rationale                              |
+| -------------------------- | ------------------------------------------------ | -------------------------------------- |
+| **IDE**                    | JetBrains Rider Ultimate 2024+                   | Best C# + TypeScript + DB tooling      |
+| **Monorepo Orchestration** | NX (optional) or pnpm scripts                    | NX for scale, pnpm for simplicity      |
+| **Backend Build**          | `dotnet build` + MSBuild                         | Native .NET ecosystem                  |
+| **Frontend Build**         | `pnpm --filter frontend run build` (Angular CLI) | Industry standard                      |
+| **Package Manager**        | pnpm (Current)                                   | Faster, stricter dependency management |
+| **Local Development**      | docker-compose + pnpm scripts                    | Easy multi-service coordination        |
+| **CI/CD**                  | GitHub Actions (you have it!)                    | Native to GitHub, free                 |
+| **Versioning**             | Semantic Versioning (SemVer)                     | Communicate breaking changes           |
 
 ---
 
 ## 7. Avoid Common Pitfalls
 
 ❌ **Do NOT:**
+
 - Use Bun in production for .NET monorepos (immature for hybrid stacks)
 - Introduce Python (uv) without a specific reason (adds dependency management complexity)
 - Switch package managers frequently (npm → pnpm → yarn churn)
@@ -281,6 +290,7 @@ jobs:
 - Ignore workspace-level root scripts (every developer should run same `npm run dev`)
 
 ✅ **DO:**
+
 - Enforce consistent local environments (Docker for SQL Server)
 - Automate schema synchronization (GraphQL code-gen as pre-commit hook)
 - Keep monorepo README updated with onboarding steps
@@ -292,17 +302,20 @@ jobs:
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1)
+
 - [ ] Set up root `package.json` with npm workspace
 - [ ] Create root-level npm scripts for `build`, `dev`, `test`
 - [ ] Document setup in `/docs/SETUP.md`
 - [ ] Add `.editorconfig` + `prettier.config.js` for consistency
 
 ### Phase 2: Automation (Week 2)
+
 - [ ] Set up GitHub Actions CI/CD pipelines
 - [ ] Add pre-commit hooks (husky + lint-staged)
 - [ ] Automate GraphQL code generation on backend build
 
 ### Phase 3: Optimization (Week 3+)
+
 - [ ] Consider NX adoption if monorepo grows
 - [ ] Add workspace linting rules (eslint shared config)
 - [ ] Implement Docker build layer optimization
