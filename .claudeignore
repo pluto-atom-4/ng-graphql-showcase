@@ -1,3 +1,6 @@
 # Ignore development notes and temporary planning docs
 docs/dev-note/
 docs/implementation-planning/
+docs/blog-why-daisyui-over-figma-builder-io.md
+docs/research-architecuture-design.md
+docs/solo-dev-pull-request-review.md
