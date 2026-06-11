@@ -1,0 +1,10 @@
+subscription BuildStatusUpdate($buildId: String!) {
+    buildStatus(buildId: $buildId) {
+      status
+      progress
+      testsPassed
+      testsTotal
+      duration
+      timestamp
+    }
+  }
