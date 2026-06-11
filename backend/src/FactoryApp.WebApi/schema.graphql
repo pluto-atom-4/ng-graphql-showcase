@@ -1,0 +1,311 @@
+# schema.graphql
+
+"""
+Manufacturing Workflow GraphQL Schema
+
+Domain Model:
+- Build: Top-level manufacturing item
+- Part: Components in a Build
+- TestRun: Test execution results with file references
+"""
+scalar DateTime
+
+enum BuildStatus {
+  PENDING
+  RUNNING
+  COMPLETE
+  FAILED
+}
+
+enum TestStatus {
+  PENDING
+  RUNNING
+  PASSED
+  FAILED
+}
+
+type Build {
+  """
+  Build unique identifier
+  """
+  id: ID!
+
+  """
+  Build name/identifier
+  """
+  name: String!
+
+  """
+  Optional description
+  """
+  description: String
+
+  """
+  Current build status
+  """
+  status: BuildStatus!
+
+  """
+  Parts included in this build (batched via DataLoader to prevent N+1)
+  """
+  parts: [Part!]!
+
+  """
+  Test runs for this build (batched via DataLoader to prevent N+1)
+  """
+  testRuns: [TestRun!]!
+
+  """
+  Timestamp when build was created
+  """
+  createdAt: DateTime!
+
+  """
+  Timestamp of last update
+  """
+  updatedAt: DateTime!
+}
+
+type PaginatedBuilds {
+  """
+  Array of builds for the current page
+  """
+  items: [Build!]!
+
+  """
+  Total number of builds
+  """
+  totalCount: Int!
+
+  """
+  Whether there is a next page
+  """
+  hasNextPage: Boolean!
+
+  """
+  Whether there is a previous page
+  """
+  hasPreviousPage: Boolean!
+}
+
+type Part {
+  """
+  Part unique identifier
+  """
+  id: ID!
+
+  """
+  Build this part belongs to
+  """
+  buildId: ID!
+
+  """
+  Part name
+  """
+  name: String!
+
+  """
+  Stock keeping unit
+  """
+  sku: String!
+
+  """
+  Quantity in build
+  """
+  quantity: Int!
+
+  """
+  Timestamp when part was created
+  """
+  createdAt: DateTime!
+}
+
+type TestRun {
+  """
+  TestRun unique identifier
+  """
+  id: ID!
+
+  """
+  Build this test run belongs to
+  """
+  buildId: ID!
+
+  """
+  Current test status
+  """
+  status: TestStatus!
+
+  """
+  Test result summary
+  """
+  result: String
+
+  """
+  URL to test result file (Express backend /upload)
+  """
+  fileUrl: String
+
+  """
+  Timestamp when test completed
+  """
+  completedAt: DateTime
+
+  """
+  Timestamp when test was created
+  """
+  createdAt: DateTime!
+
+  """
+  Timestamp of last update
+  """
+  updatedAt: DateTime!
+}
+
+type AuthPayload {
+  """
+  JWT token for authentication
+  """
+  token: String!
+
+  """
+  User that authenticated
+  """
+  user: AuthUser!
+}
+
+type AuthUser {
+  """
+  User unique identifier
+  """
+  id: ID!
+
+  """
+  User email address
+  """
+  email: String!
+}
+
+type Query {
+    build(id: ID!): Build
+    builds(limit: Int!, offset: Int!): PaginatedBuilds!
+}
+
+
+type Mutation {
+  """
+  Authenticate user with email and password.
+  Returns JWT token valid for 24 hours.
+
+  Example:
+    mutation {
+      login(email: "user@example.com", password: "password123") {
+        token
+        user { id email }
+      }
+    }
+  """
+  login(email: String!, password: String!): AuthPayload!
+
+  """
+  Create a new build.
+
+  Example:
+    mutation {
+      createBuild(name: "Build-2026-001", description: "Q2 production run") {
+        id
+        name
+        status
+      }
+    }
+  """
+  createBuild(name: String!, description: String): Build!
+
+  """
+  Update build status.
+
+  Emits buildStatusChanged event to Express event bus for real-time SSE.
+
+  Example:
+    mutation {
+      updateBuildStatus(id: "abc123", status: RUNNING) {
+        id
+        status
+        updatedAt
+      }
+    }
+  """
+  updateBuildStatus(id: ID!, status: BuildStatus!): Build!
+
+  """
+  Add a part to a build.
+
+  Example:
+    mutation {
+      addPart(buildId: "abc123", name: "Valve", sku: "V-001", quantity: 2) {
+        id
+        buildId
+        name
+        sku
+      }
+    }
+  """
+  addPart(buildId: ID!, name: String!, sku: String!, quantity: Int!): Part!
+
+  """
+  Submit a test run for a build.
+
+  fileUrl should point to Express /upload endpoint result.
+  Emits testRunCompleted event to Express event bus for real-time SSE.
+
+  Example:
+    mutation {
+      submitTestRun(buildId: "abc123", status: PASSED, result: "All tests passed", fileUrl: "http://localhost:5000/uploads/test-result.txt") {
+        id
+        status
+        result
+        completedAt
+      }
+    }
+  """
+  submitTestRun(buildId: ID!, status: TestStatus!, result: String, fileUrl: String): TestRun!
+}
+
+type Subscription {
+  """
+  Subscribe to real-time build status updates for a specific build.
+
+  Example:
+    subscription {
+      buildStatus(buildId: "abc123") {
+        status
+        progress
+        testsPassed
+        testsTotal
+        duration
+        timestamp
+      }
+    }
+  """
+  buildStatus(buildId: ID!): BuildStatusUpdate!
+}
+
+type BuildStatusUpdate {
+    """Build current status"""
+    status: BuildStatus!
+
+    """Progress percentage (0-100)"""
+    progress: Int!
+
+    """Number of tests passed"""
+    testsPassed: Int!
+
+    """Total number of tests"""
+    testsTotal: Int!
+
+    """Build duration in seconds"""
+    duration: Int!
+
+    """Timestamp of update"""
+    timestamp: DateTime!
+}
