@@ -16,8 +16,7 @@ builder.Services
     .AddQueryType<BuildQuery>()
     .AddMutationType<BuildMutation>()
     .AddSubscriptionType<BuildSubscription>()
-    .AddInMemorySubscriptions()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
+    .AddInMemorySubscriptions();
 
 var app = builder.Build();
 
