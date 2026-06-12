@@ -1,32 +1,28 @@
+using FactoryApp.Domain;
+using FactoryApp.GraphQL;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Register Hot Chocolate GraphQL Server with base root types
+// 1. Register Entity Framework Core with SQL Server
+builder.Services.AddDbContext<FactoryDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? "Server=(localdb)\\mssqllocaldb;Database=FactoryAppDb;Trusted_Connection=true;"));
+
+// 2. Register Hot Chocolate GraphQL Server with domain resolvers
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<Query>()
-    .AddMutationType<Mutation>()
-    .AddSubscriptionType<Subscription>();
+    .AddQueryType<BuildQuery>()
+    .AddMutationType<BuildMutation>()
+    .AddSubscriptionType<BuildSubscription>()
+    .AddInMemorySubscriptions()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 var app = builder.Build();
 
-// 2. Map the GraphQL endpoint (Defaults to /graphql)
+// 3. Map the GraphQL endpoint (Defaults to /graphql)
 app.MapGraphQL();
 
 app.Run();
-
-// 3. Define minimalist inline types for the engine bootstrap process
-public class Query
-{
-    public string Init() => "GraphQL Engine Online";
-}
-
-public class Mutation
-{
-    public string Init() => "Mutations Ready";
-}
-
-public class Subscription
-{
-    public string Init() => "Subscriptions Ready";
-}
 

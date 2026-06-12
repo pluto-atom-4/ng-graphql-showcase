@@ -4,6 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Generate schema.graphql on build -->
+    <GenerateSchemaFile>true</GenerateSchemaFile>
+    <SchemaFilePath>schema.graphql</SchemaFilePath>
   </PropertyGroup>
 
   <ItemGroup>
