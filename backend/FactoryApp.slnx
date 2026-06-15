@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Solution Version="0.1">
+  <Folder Name="/src/">
+    <Project Path="src/FactoryApp.Domain/FactoryApp.Domain.csproj" />
+    <Project Path="src/FactoryApp.GraphQL/FactoryApp.GraphQL.csproj" />
+    <Project Path="src/FactoryApp.Workflows/FactoryApp.Workflows.csproj" />
+    <Project Path="src/FactoryApp.WebApi/FactoryApp.WebApi.csproj" />
+  </Folder>
+  <Project Path="FactoryApp.Tests/FactoryApp.Tests.csproj" />
+</Solution>
