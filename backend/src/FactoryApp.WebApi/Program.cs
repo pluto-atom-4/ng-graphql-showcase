@@ -11,8 +11,9 @@ builder.Services.AddDbContext<FactoryDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
             ?? "Server=(localdb)\\mssqllocaldb;Database=FactoryAppDb;Trusted_Connection=true;"));
 
-// 2. Register authentication service
+// 2. Register application services
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<LoggingService>();
 
 // 3. Register Hot Chocolate GraphQL Server with domain resolvers
 builder.Services
