@@ -1,5 +1,6 @@
 using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL.Services;
+using HotChocolate;
 using Xunit;
 
 namespace FactoryApp.Tests;
@@ -17,14 +18,14 @@ public class ValidationServiceTests
     public void ValidateEmail_WithEmptyEmail_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateEmail(""));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateEmail(""));
     }
 
     [Fact]
     public void ValidateEmail_WithInvalidFormat_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateEmail("not-an-email"));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateEmail("not-an-email"));
     }
 
     [Fact]
@@ -38,14 +39,14 @@ public class ValidationServiceTests
     public void ValidatePassword_WithShortPassword_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidatePassword("Short1!"));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidatePassword("Short1!"));
     }
 
     [Fact]
     public void ValidatePassword_WithEmptyPassword_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidatePassword(""));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidatePassword(""));
     }
 
     [Fact]
@@ -59,7 +60,7 @@ public class ValidationServiceTests
     public void ValidateBuildName_WithEmptyName_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateBuildName(""));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateBuildName(""));
     }
 
     [Fact]
@@ -69,7 +70,7 @@ public class ValidationServiceTests
         var longName = new string('a', 257);
 
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateBuildName(longName));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateBuildName(longName));
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class ValidationServiceTests
         var longDescription = new string('a', 1001);
 
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateBuildDescription(longDescription));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateBuildDescription(longDescription));
     }
 
     [Fact]
@@ -107,7 +108,7 @@ public class ValidationServiceTests
     public void ValidatePartName_WithEmptyName_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidatePartName(""));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidatePartName(""));
     }
 
     [Fact]
@@ -121,7 +122,7 @@ public class ValidationServiceTests
     public void ValidateSKU_WithEmptySKU_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateSKU(""));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateSKU(""));
     }
 
     [Fact]
@@ -135,14 +136,14 @@ public class ValidationServiceTests
     public void ValidateQuantity_WithZeroQuantity_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateQuantity(0));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateQuantity(0));
     }
 
     [Fact]
     public void ValidateQuantity_WithNegativeQuantity_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateQuantity(-5));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateQuantity(-5));
     }
 
     [Fact]
@@ -156,14 +157,14 @@ public class ValidationServiceTests
     public void ValidateTestResult_FailedTestWithoutResult_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateTestResult(null, true));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateTestResult(null, true));
     }
 
     [Fact]
     public void ValidateTestResult_FailedTestWithEmptyResult_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateTestResult("", true));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateTestResult("", true));
     }
 
     [Fact]
@@ -184,7 +185,7 @@ public class ValidationServiceTests
     public void ValidateFileUrl_WithInvalidUrl_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidateFileUrl("not-a-url"));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidateFileUrl("not-a-url"));
     }
 
     [Fact]
@@ -198,20 +199,20 @@ public class ValidationServiceTests
     public void ValidatePaginationParams_WithNegativeLimit_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidatePaginationParams(-1, 0));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidatePaginationParams(-1, 0));
     }
 
     [Fact]
     public void ValidatePaginationParams_WithNegativeOffset_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidatePaginationParams(10, -1));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidatePaginationParams(10, -1));
     }
 
     [Fact]
     public void ValidatePaginationParams_WithLimitExceedingMax_ThrowsException()
     {
         // Act & Assert
-        Assert.Throws<Exception>(() => ValidationService.ValidatePaginationParams(1001, 0));
+        Assert.Throws<GraphQLException>(() => ValidationService.ValidatePaginationParams(1001, 0));
     }
 }
