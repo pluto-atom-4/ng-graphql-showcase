@@ -1,9 +1,9 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.GraphQL.DTOs;
 using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
-using HotChocolate.Execution.Configuration;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,7 +39,7 @@ public class BuildMutationType
         };
     }
 
-    public async Task<Build> CreateBuild(
+    public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
         [Service] FactoryDbContext dbContext)
@@ -66,10 +66,10 @@ public class BuildMutationType
         dbContext.Builds.Add(build);
         await dbContext.SaveChangesAsync();
 
-        return build;
+        return MapperService.ToBuildPayload(build);
     }
 
-    public async Task<Build> UpdateBuildStatus(
+    public async Task<BuildPayload> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
         [Service] FactoryDbContext dbContext,
@@ -92,10 +92,10 @@ public class BuildMutationType
             Timestamp = DateTime.UtcNow
         });
 
-        return build;
+        return MapperService.ToBuildPayload(build);
     }
 
-    public async Task<Part> AddPart(
+    public async Task<PartPayload> AddPart(
         Guid buildId,
         string name,
         string sku,
@@ -130,10 +130,10 @@ public class BuildMutationType
         dbContext.Parts.Add(part);
         await dbContext.SaveChangesAsync();
 
-        return part;
+        return MapperService.ToPartPayload(part);
     }
 
-    public async Task<TestRun> SubmitTestRun(
+    public async Task<TestRunPayload> SubmitTestRun(
         Guid buildId,
         TestStatus status,
         string? result,
@@ -178,7 +178,7 @@ public class BuildMutationType
                 Timestamp = DateTime.UtcNow
             });
 
-            return testRun;
+            return MapperService.ToTestRunPayload(testRun);
         }
         catch
         {
