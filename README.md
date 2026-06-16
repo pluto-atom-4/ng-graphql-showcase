@@ -42,7 +42,6 @@ Elsa State Automation   │                │ Execution (Bypass Change Tracker)
          └──────────────────────────────────────────────┘
 ```
 
-
 ---
 
 ## 📁 Repository Directory Structure
@@ -73,12 +72,12 @@ ng-graphql-playground/
 
 ### 1. The Separation of Concerns
 
-* **EF Core** handles all system reads (GraphQL), schema migrations, and **Elsa 3 Workflow Engine** operations. The context defaults to `NoTracking` to match Dapper's read performance.
-* **Dapper** is used strictly for high-frequency writes (automated testing metrics, high-speed sorting arrays) to bypass all ORM state overhead.
+- **EF Core** handles all system reads (GraphQL), schema migrations, and **Elsa 3 Workflow Engine** operations. The context defaults to `NoTracking` to match Dapper's read performance.
+- **Dapper** is used strictly for high-frequency writes (automated testing metrics, high-speed sorting arrays) to bypass all ORM state overhead.
 
 ### 2. The Shared Transaction Rule
 
-When a mutation updates a core asset state via EF Core while logging bulk metrics via Dapper, they 
+When a mutation updates a core asset state via EF Core while logging bulk metrics via Dapper, they
 **must** share an explicit ADO.NET transaction context to prevent deadlocks:
 
 ```csharp
@@ -106,10 +105,10 @@ Type safety is fully automated during a local build. Changing a backend C# DTO o
 
 ### Prerequisites
 
-* [.NET SDK](https://microsoft.com) (Version 8.0 or later)
-* [Node.js](https://nodejs.org) (Version 18 or later)
-* [pnpm](https://pnpm.io/) (Version 8.0 or later) — Package manager for monorepo
-* [Docker Desktop](https://www.docker.com/products/docker-desktop) (for SQL Server 2022)
+- [.NET SDK](https://microsoft.com) (Version 8.0 or later)
+- [Node.js](https://nodejs.org) (Version 18 or later)
+- [pnpm](https://pnpm.io/) (Version 8.0 or later) — Package manager for monorepo
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (for SQL Server 2022)
 
 ### One-Time Setup
 
@@ -122,18 +121,21 @@ pnpm setup
 ### Daily Development
 
 **Terminal 1: Backend (.NET with hot-reload)**
+
 ```bash
 pnpm dev:backend
 # Runs: dotnet watch run on Port 5000
 ```
 
 **Terminal 2: Frontend (Angular with HMR)**
+
 ```bash
 pnpm dev:frontend
 # Runs: pnpm --filter frontend run ng serve on Port 4200
 ```
 
 **Or run both concurrently:**
+
 ```bash
 pnpm dev
 # Starts both backend and frontend watchers simultaneously
@@ -143,11 +145,11 @@ pnpm dev
 
 ### Access Services
 
-| Service | URL |
-|---------|-----|
-| **GraphQL Endpoint** | `http://localhost:5000/graphql` |
-| **Angular Frontend** | `http://localhost:4200` |
-| **SQL Server** | `Server=localhost,1433; User Id=sa; Password=P@ssw0rd1234!` |
+| Service              | URL                                                         |
+| -------------------- | ----------------------------------------------------------- |
+| **GraphQL Endpoint** | `http://localhost:5000/graphql`                             |
+| **Angular Frontend** | `http://localhost:4200`                                     |
+| **SQL Server**       | `Server=localhost,1433; User Id=sa; Password=P@ssw0rd1234!` |
 
 ### Stop Services
 
@@ -164,5 +166,179 @@ pnpm docker:clean       # Remove all containers and data volumes
 pnpm docker:logs        # View SQL Server logs
 pnpm db:migrate         # Run EF Core migrations
 ```
+
+---
+
+## 🗄️ Database Configuration
+
+### Docker SQL Server (All Platforms)
+
+**Default configuration** — uses Docker container running SQL Server 2022:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=FactoryDb;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=True"
+  }
+}
+```
+
+Start the container before development:
+
+```bash
+pnpm docker:up
+sleep 10  # Wait for SQL Server to be ready
+pnpm db:migrate
+```
+
+### LocalDB (Windows Only)
+
+For Windows development without Docker, use SQL Server LocalDB instead:
+
+1. **Update connection string** in `backend/src/FactoryApp.WebApi/appsettings.Development.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=FactoryAppDb;Trusted_Connection=true;"
+  }
+}
+```
+
+2. **Run migrations:**
+
+```bash
+cd backend/src/FactoryApp.WebApi
+dotnet ef database update
+```
+
+No Docker required. LocalDB is automatically installed with Visual Studio or SQL Server Express.
+
+---
+
+## 🔧 Entity Framework Core Migrations
+
+### Create a New Migration
+
+When you modify entities in `backend/src/FactoryApp.Domain/Entities/`:
+
+```bash
+cd backend/src/FactoryApp.WebApi
+
+# Create migration (auto-detects DbContext changes)
+dotnet ef migrations add <MigrationName>
+# Example:
+dotnet ef migrations add AddBuildStatusHistory
+```
+
+This generates a new migration file in `backend/src/FactoryApp.Domain/Migrations/`.
+
+### Apply Migrations
+
+```bash
+# Apply all pending migrations
+pnpm db:migrate
+
+# Or manually:
+cd backend/src/FactoryApp.WebApi
+dotnet ef database update
+```
+
+### List Applied Migrations
+
+```bash
+cd backend/src/FactoryApp.WebApi
+dotnet ef migrations list
+```
+
+### Rollback Migration
+
+If a migration hasn't been applied to production:
+
+```bash
+cd backend/src/FactoryApp.WebApi
+dotnet ef migrations remove
+```
+
+If a migration is already applied to the database, create a new "revert" migration instead.
+
+---
+
+## 🐛 Troubleshooting
+
+### SQL Server Container Not Ready
+
+**Symptom:** `dotnet ef database update` fails with connection timeout
+
+**Solution:**
+
+```bash
+# Wait for container to fully initialize (takes 10-15 seconds)
+pnpm docker:up
+sleep 15
+pnpm db:migrate
+
+# Verify container is running
+docker ps --filter "name=ng-graphql-sql-server"
+```
+
+### Migration Conflicts
+
+**Symptom:** `InvalidOperationException: The value cannot be converted to entity type`
+
+**Causes:**
+
+- Stale or incompatible migration files
+- Mismatched DbContext configuration
+
+**Solution:**
+
+```bash
+# 1. Check which migrations are applied
+dotnet ef migrations list
+
+# 2. Clean and restart (CAUTION: Deletes data)
+pnpm docker:clean
+pnpm docker:up
+sleep 15
+pnpm db:migrate
+```
+
+### "No targeted SQL Server found at 'localhost,1433'"
+
+**Causes:**
+
+- SQL Server container not running
+- Port 1433 blocked by firewall
+- Incorrect password in connection string
+
+**Solution:**
+
+```bash
+# Restart Docker
+pnpm docker:down
+pnpm docker:clean
+pnpm docker:up
+sleep 15
+
+# Verify connectivity
+docker logs ng-graphql-sql-server  # Check container logs
+```
+
+### Entity Framework Tools Not Found
+
+**Symptom:** `dotnet ef: command not found`
+
+**Solution:**
+
+```bash
+# Install EF Core CLI tools globally
+dotnet tool install --global dotnet-ef
+
+# Verify installation
+dotnet ef --version
+```
+
+---
 
 For comprehensive setup instructions, see [**docs/SETUP.md**](./docs/SETUP.md)
