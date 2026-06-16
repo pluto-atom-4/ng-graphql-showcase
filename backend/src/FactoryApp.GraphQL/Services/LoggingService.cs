@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace FactoryApp.GraphQL.Services;
 
 public class LoggingService
