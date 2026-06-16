@@ -20,8 +20,7 @@ builder.Services
     .AddQueryType<BuildQueryType>()
     .AddMutationType<BuildMutationType>()
     .AddSubscriptionType<BuildSubscription>()
-    .AddInMemorySubscriptions()
-    .RegisterDataLoaders();
+    .AddInMemorySubscriptions();
 
 var app = builder.Build();
 
