@@ -15,84 +15,144 @@ public class BuildMutationType
         string email,
         string password,
         [Service] FactoryDbContext dbContext,
-        [Service] AuthService authService)
+        [Service] AuthService authService,
+        [Service] LoggingService loggingService)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            throw new GraphQLException("Email is required");
+        var args = new Dictionary<string, object?> { { "email", email } };
 
-        if (string.IsNullOrWhiteSpace(password))
-            throw new GraphQLException("Password is required");
-
-        var user = await dbContext.AuthUsers
-            .FirstOrDefaultAsync(u => u.Email == email)
-            ?? throw new GraphQLException("Invalid email or password");
-
-        if (!authService.VerifyPassword(password, user.PasswordHash))
-            throw new GraphQLException("Invalid email or password");
-
-        var token = authService.GenerateToken(user.Id, user.Email);
-
-        return new AuthPayload
+        try
         {
-            Token = token,
-            User = new AuthUserPayload { Id = user.Id, Email = user.Email }
-        };
+            loggingService.LogMutationStart(nameof(Login), args);
+
+            ValidationService.ValidateEmail(email);
+            ValidationService.ValidatePassword(password);
+
+            var user = await dbContext.AuthUsers
+                .FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+            {
+                loggingService.LogAuthenticationAttempt(email, false);
+                throw new GraphQLException("Invalid email or password");
+            }
+
+            if (!authService.VerifyPassword(password, user.PasswordHash))
+            {
+                loggingService.LogAuthenticationAttempt(email, false);
+                throw new GraphQLException("Invalid email or password");
+            }
+
+            var token = authService.GenerateToken(user.Id, user.Email);
+            loggingService.LogAuthenticationAttempt(email, true);
+            loggingService.LogMutationSuccess(nameof(Login), user.Id);
+
+            return new AuthPayload
+            {
+                Token = token,
+                User = new AuthUserPayload { Id = user.Id, Email = user.Email }
+            };
+        }
+        catch (GraphQLException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogMutationError(nameof(Login), ex, args);
+            throw new GraphQLException("Authentication failed", ex);
+        }
     }
 
     public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
-        [Service] FactoryDbContext dbContext)
+        [Service] FactoryDbContext dbContext,
+        [Service] LoggingService loggingService)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new GraphQLException("Name is required and cannot be empty");
+        var args = new Dictionary<string, object?> { { "name", name }, { "description", description } };
 
-        if (name.Length > 256)
-            throw new GraphQLException("Name must be <= 256 characters");
-
-        if (description?.Length > 1000)
-            throw new GraphQLException("Description must be <= 1000 characters");
-
-        var build = new Build
+        try
         {
-            Id = Guid.NewGuid(),
-            Name = name,
-            Description = description,
-            Status = BuildStatus.Pending,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            loggingService.LogMutationStart(nameof(CreateBuild), args);
 
-        dbContext.Builds.Add(build);
-        await dbContext.SaveChangesAsync();
+            ValidationService.ValidateBuildName(name);
+            ValidationService.ValidateBuildDescription(description);
 
-        return MapperService.ToBuildPayload(build);
+            var build = new Build
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Description = description,
+                Status = BuildStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            dbContext.Builds.Add(build);
+            await dbContext.SaveChangesAsync();
+
+            loggingService.LogMutationSuccess(nameof(CreateBuild), build.Id);
+            return MapperService.ToBuildPayload(build);
+        }
+        catch (GraphQLException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogMutationError(nameof(CreateBuild), ex, args);
+            loggingService.LogDatabaseError(nameof(CreateBuild), ex);
+            throw new GraphQLException("Failed to create build", ex);
+        }
     }
 
     public async Task<BuildPayload> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
         [Service] FactoryDbContext dbContext,
-        [Service] ITopicEventSender eventSender)
+        [Service] ITopicEventSender eventSender,
+        [Service] LoggingService loggingService)
     {
-        var build = await dbContext.Builds.FindAsync(id)
-            ?? throw new GraphQLException($"Build {id} not found");
+        var args = new Dictionary<string, object?> { { "id", id }, { "status", status } };
 
-        var oldStatus = build.Status;
-        build.Status = status;
-        build.UpdatedAt = DateTime.UtcNow;
-
-        await dbContext.SaveChangesAsync();
-
-        await eventSender.SendAsync("buildStatusChanged", new BuildStatusChangedEvent
+        try
         {
-            BuildId = id,
-            OldStatus = oldStatus,
-            NewStatus = status,
-            Timestamp = DateTime.UtcNow
-        });
+            loggingService.LogMutationStart(nameof(UpdateBuildStatus), args);
 
-        return MapperService.ToBuildPayload(build);
+            var build = await dbContext.Builds.FindAsync(id);
+            if (build == null)
+            {
+                loggingService.LogValidationError(nameof(UpdateBuildStatus), $"Build {id} not found");
+                throw new GraphQLException($"Build {id} not found");
+            }
+
+            var oldStatus = build.Status;
+            build.Status = status;
+            build.UpdatedAt = DateTime.UtcNow;
+
+            await dbContext.SaveChangesAsync();
+
+            await eventSender.SendAsync("buildStatusChanged", new BuildStatusChangedEvent
+            {
+                BuildId = id,
+                OldStatus = oldStatus,
+                NewStatus = status,
+                Timestamp = DateTime.UtcNow
+            });
+
+            loggingService.LogMutationSuccess(nameof(UpdateBuildStatus), id);
+            return MapperService.ToBuildPayload(build);
+        }
+        catch (GraphQLException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogMutationError(nameof(UpdateBuildStatus), ex, args);
+            loggingService.LogDatabaseError(nameof(UpdateBuildStatus), ex);
+            throw new GraphQLException("Failed to update build status", ex);
+        }
     }
 
     public async Task<PartPayload> AddPart(
@@ -100,37 +160,58 @@ public class BuildMutationType
         string name,
         string sku,
         int quantity,
-        [Service] FactoryDbContext dbContext)
+        [Service] FactoryDbContext dbContext,
+        [Service] LoggingService loggingService)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new GraphQLException("Name is required");
-
-        if (string.IsNullOrWhiteSpace(sku))
-            throw new GraphQLException("SKU is required");
-
-        if (quantity <= 0)
-            throw new GraphQLException("Quantity must be > 0");
-
-        if (sku.Length > 100)
-            throw new GraphQLException("SKU must be <= 100 characters");
-
-        var build = await dbContext.Builds.FindAsync(buildId)
-            ?? throw new GraphQLException($"Build {buildId} not found");
-
-        var part = new Part
+        var args = new Dictionary<string, object?>
         {
-            Id = Guid.NewGuid(),
-            BuildId = buildId,
-            Name = name,
-            SKU = sku,
-            Quantity = quantity,
-            CreatedAt = DateTime.UtcNow
+            { "buildId", buildId },
+            { "name", name },
+            { "sku", sku },
+            { "quantity", quantity }
         };
 
-        dbContext.Parts.Add(part);
-        await dbContext.SaveChangesAsync();
+        try
+        {
+            loggingService.LogMutationStart(nameof(AddPart), args);
 
-        return MapperService.ToPartPayload(part);
+            ValidationService.ValidatePartName(name);
+            ValidationService.ValidateSKU(sku);
+            ValidationService.ValidateQuantity(quantity);
+
+            var build = await dbContext.Builds.FindAsync(buildId);
+            if (build == null)
+            {
+                loggingService.LogValidationError(nameof(AddPart), $"Build {buildId} not found");
+                throw new GraphQLException($"Build {buildId} not found");
+            }
+
+            var part = new Part
+            {
+                Id = Guid.NewGuid(),
+                BuildId = buildId,
+                Name = name,
+                SKU = sku,
+                Quantity = quantity,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            dbContext.Parts.Add(part);
+            await dbContext.SaveChangesAsync();
+
+            loggingService.LogMutationSuccess(nameof(AddPart), part.Id);
+            return MapperService.ToPartPayload(part);
+        }
+        catch (GraphQLException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogMutationError(nameof(AddPart), ex, args);
+            loggingService.LogDatabaseError(nameof(AddPart), ex);
+            throw new GraphQLException("Failed to add part", ex);
+        }
     }
 
     public async Task<TestRunPayload> SubmitTestRun(
@@ -139,51 +220,77 @@ public class BuildMutationType
         string? result,
         string? fileUrl,
         [Service] FactoryDbContext dbContext,
-        [Service] ITopicEventSender eventSender)
+        [Service] ITopicEventSender eventSender,
+        [Service] LoggingService loggingService)
     {
-        if (string.IsNullOrWhiteSpace(result) && status == TestStatus.Failed)
-            throw new GraphQLException("Result is required for failed tests");
+        var args = new Dictionary<string, object?>
+        {
+            { "buildId", buildId },
+            { "status", status },
+            { "result", result },
+            { "fileUrl", fileUrl }
+        };
 
-        if (fileUrl?.Length > 500)
-            throw new GraphQLException("FileUrl must be <= 500 characters");
-
-        var build = await dbContext.Builds.FindAsync(buildId)
-            ?? throw new GraphQLException($"Build {buildId} not found");
-
-        using var transaction = await dbContext.Database.BeginTransactionAsync();
         try
         {
-            var testRun = new TestRun
+            loggingService.LogMutationStart(nameof(SubmitTestRun), args);
+
+            ValidationService.ValidateTestResult(result, status == TestStatus.Failed);
+            ValidationService.ValidateFileUrl(fileUrl);
+
+            var build = await dbContext.Builds.FindAsync(buildId);
+            if (build == null)
             {
-                Id = Guid.NewGuid(),
-                BuildId = buildId,
-                Status = status,
-                Result = result,
-                FileUrl = fileUrl,
-                CompletedAt = status == TestStatus.Passed || status == TestStatus.Failed ? DateTime.UtcNow : null,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                loggingService.LogValidationError(nameof(SubmitTestRun), $"Build {buildId} not found");
+                throw new GraphQLException($"Build {buildId} not found");
+            }
 
-            dbContext.TestRuns.Add(testRun);
-            await dbContext.SaveChangesAsync();
-
-            await transaction.CommitAsync();
-
-            await eventSender.SendAsync("testRunCompleted", new TestRunCompletedEvent
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
+            try
             {
-                TestRunId = testRun.Id,
-                BuildId = buildId,
-                Status = status,
-                Timestamp = DateTime.UtcNow
-            });
+                var testRun = new TestRun
+                {
+                    Id = Guid.NewGuid(),
+                    BuildId = buildId,
+                    Status = status,
+                    Result = result,
+                    FileUrl = fileUrl,
+                    CompletedAt = status == TestStatus.Passed || status == TestStatus.Failed ? DateTime.UtcNow : null,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-            return MapperService.ToTestRunPayload(testRun);
+                dbContext.TestRuns.Add(testRun);
+                await dbContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                await eventSender.SendAsync("testRunCompleted", new TestRunCompletedEvent
+                {
+                    TestRunId = testRun.Id,
+                    BuildId = buildId,
+                    Status = status,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                loggingService.LogMutationSuccess(nameof(SubmitTestRun), testRun.Id);
+                return MapperService.ToTestRunPayload(testRun);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+        catch (GraphQLException)
         {
-            await transaction.RollbackAsync();
             throw;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogMutationError(nameof(SubmitTestRun), ex, args);
+            loggingService.LogDatabaseError(nameof(SubmitTestRun), ex);
+            throw new GraphQLException("Failed to submit test run", ex);
         }
     }
 }
