@@ -1,19 +1,28 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using HotChocolate;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
 
-public class BuildQuery
+public class BuildQueryType
 {
-    public async Task<Build?> GetBuild(Guid id, FactoryDbContext dbContext)
-    {
-        return await dbContext.Builds.FindAsync(id);
-    }
+    public IQueryable<Build> GetBuilds([Service] FactoryDbContext context)
+        => context.Builds.AsNoTracking();
 
-    public async Task<PaginatedBuilds> GetBuilds(int limit, int offset, FactoryDbContext dbContext)
+    public async Task<Build?> GetBuild(
+        Guid id,
+        [Service] FactoryDbContext context)
+        => await context.Builds
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+    public async Task<PaginatedBuilds> GetBuildsPaginated(
+        int limit,
+        int offset,
+        [Service] FactoryDbContext context)
     {
-        var query = dbContext.Builds.AsQueryable();
+        var query = context.Builds.AsNoTracking();
         var totalCount = await query.CountAsync();
 
         var items = await query

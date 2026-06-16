@@ -1,25 +1,36 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+using FactoryApp.GraphQL.Events;
+using FactoryApp.GraphQL.Services;
 using HotChocolate;
+using HotChocolate.Execution.Configuration;
+using HotChocolate.Subscriptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
 
-public class BuildMutation
+public class BuildMutationType
 {
-    public async Task<AuthPayload> Login(string email, string password, FactoryDbContext dbContext)
+    public async Task<AuthPayload> Login(
+        string email,
+        string password,
+        [Service] FactoryDbContext dbContext,
+        [Service] AuthService authService)
     {
-        // TODO: Implement proper authentication with password hashing (bcrypt/Argon2)
+        if (string.IsNullOrWhiteSpace(email))
+            throw new GraphQLException("Email is required");
+
+        if (string.IsNullOrWhiteSpace(password))
+            throw new GraphQLException("Password is required");
+
         var user = await dbContext.AuthUsers
-            .FirstOrDefaultAsync(u => u.Email == email);
+            .FirstOrDefaultAsync(u => u.Email == email)
+            ?? throw new GraphQLException("Invalid email or password");
 
-        if (user == null)
-        {
+        if (!authService.VerifyPassword(password, user.PasswordHash))
             throw new GraphQLException("Invalid email or password");
-        }
 
-        // TODO: Verify password hash and generate JWT token
-        var token = GenerateDummyJwt(user.Id);
+        var token = authService.GenerateToken(user.Id, user.Email);
 
         return new AuthPayload
         {
@@ -28,8 +39,20 @@ public class BuildMutation
         };
     }
 
-    public async Task<Build> CreateBuild(string name, string? description, FactoryDbContext dbContext)
+    public async Task<Build> CreateBuild(
+        string name,
+        string? description,
+        [Service] FactoryDbContext dbContext)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new GraphQLException("Name is required and cannot be empty");
+
+        if (name.Length > 256)
+            throw new GraphQLException("Name must be <= 256 characters");
+
+        if (description?.Length > 1000)
+            throw new GraphQLException("Description must be <= 1000 characters");
+
         var build = new Build
         {
             Id = Guid.NewGuid(),
@@ -46,22 +69,51 @@ public class BuildMutation
         return build;
     }
 
-    public async Task<Build> UpdateBuildStatus(Guid id, BuildStatus status, FactoryDbContext dbContext)
+    public async Task<Build> UpdateBuildStatus(
+        Guid id,
+        BuildStatus status,
+        [Service] FactoryDbContext dbContext,
+        [Service] ITopicEventSender eventSender)
     {
         var build = await dbContext.Builds.FindAsync(id)
             ?? throw new GraphQLException($"Build {id} not found");
 
+        var oldStatus = build.Status;
         build.Status = status;
         build.UpdatedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync();
 
-        // TODO: Emit buildStatusChanged event to Elsa workflow and hot chocolate subscriptions
+        await eventSender.SendAsync("buildStatusChanged", new BuildStatusChangedEvent
+        {
+            BuildId = id,
+            OldStatus = oldStatus,
+            NewStatus = status,
+            Timestamp = DateTime.UtcNow
+        });
+
         return build;
     }
 
-    public async Task<Part> AddPart(Guid buildId, string name, string sku, int quantity, FactoryDbContext dbContext)
+    public async Task<Part> AddPart(
+        Guid buildId,
+        string name,
+        string sku,
+        int quantity,
+        [Service] FactoryDbContext dbContext)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new GraphQLException("Name is required");
+
+        if (string.IsNullOrWhiteSpace(sku))
+            throw new GraphQLException("SKU is required");
+
+        if (quantity <= 0)
+            throw new GraphQLException("Quantity must be > 0");
+
+        if (sku.Length > 100)
+            throw new GraphQLException("SKU must be <= 100 characters");
+
         var build = await dbContext.Builds.FindAsync(buildId)
             ?? throw new GraphQLException($"Build {buildId} not found");
 
@@ -86,34 +138,53 @@ public class BuildMutation
         TestStatus status,
         string? result,
         string? fileUrl,
-        FactoryDbContext dbContext)
+        [Service] FactoryDbContext dbContext,
+        [Service] ITopicEventSender eventSender)
     {
+        if (string.IsNullOrWhiteSpace(result) && status == TestStatus.Failed)
+            throw new GraphQLException("Result is required for failed tests");
+
+        if (fileUrl?.Length > 500)
+            throw new GraphQLException("FileUrl must be <= 500 characters");
+
         var build = await dbContext.Builds.FindAsync(buildId)
             ?? throw new GraphQLException($"Build {buildId} not found");
 
-        var testRun = new TestRun
+        using var transaction = await dbContext.Database.BeginTransactionAsync();
+        try
         {
-            Id = Guid.NewGuid(),
-            BuildId = buildId,
-            Status = status,
-            Result = result,
-            FileUrl = fileUrl,
-            CompletedAt = status == TestStatus.Passed || status == TestStatus.Failed ? DateTime.UtcNow : null,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            var testRun = new TestRun
+            {
+                Id = Guid.NewGuid(),
+                BuildId = buildId,
+                Status = status,
+                Result = result,
+                FileUrl = fileUrl,
+                CompletedAt = status == TestStatus.Passed || status == TestStatus.Failed ? DateTime.UtcNow : null,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        dbContext.TestRuns.Add(testRun);
-        await dbContext.SaveChangesAsync();
+            dbContext.TestRuns.Add(testRun);
+            await dbContext.SaveChangesAsync();
 
-        // TODO: Emit testRunCompleted event to Elsa workflow and hot chocolate subscriptions
-        return testRun;
-    }
+            await transaction.CommitAsync();
 
-    private static string GenerateDummyJwt(Guid userId)
-    {
-        // TODO: Implement proper JWT generation with signing key
-        return $"dummy.jwt.token.for.{userId}";
+            await eventSender.SendAsync("testRunCompleted", new TestRunCompletedEvent
+            {
+                TestRunId = testRun.Id,
+                BuildId = buildId,
+                Status = status,
+                Timestamp = DateTime.UtcNow
+            });
+
+            return testRun;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
 
