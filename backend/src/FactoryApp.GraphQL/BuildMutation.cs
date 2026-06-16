@@ -3,11 +3,12 @@ using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
+using HotChocolate.Execution.Configuration;
+using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
 
-[GraphQLType("Mutation")]
 public class BuildMutationType
 {
     public async Task<AuthPayload> Login(
