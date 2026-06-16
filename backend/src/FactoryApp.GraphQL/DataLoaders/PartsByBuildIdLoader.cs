@@ -1,5 +1,7 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using HotChocolate;
+using HotChocolate.Execution;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL.DataLoaders;

@@ -1,6 +1,6 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
-using HotChocolate.Execution.Configuration;
+using HotChocolate;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
