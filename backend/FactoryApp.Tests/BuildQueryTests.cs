@@ -3,6 +3,7 @@ using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -18,6 +19,7 @@ public class BuildQueryTests : IAsyncLifetime
     {
         var options = new DbContextOptionsBuilder<FactoryDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _context = new FactoryDbContext(options);
