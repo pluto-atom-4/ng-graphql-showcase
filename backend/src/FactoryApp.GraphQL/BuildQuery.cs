@@ -8,9 +8,6 @@ namespace FactoryApp.GraphQL;
 [GraphQLType("Query")]
 public class BuildQueryType
 {
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
     public IQueryable<Build> GetBuilds([Service] FactoryDbContext context)
         => context.Builds.AsNoTracking();
 
