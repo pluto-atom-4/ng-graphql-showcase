@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
 
-[GraphQLType("Query")]
 public class BuildQueryType
 {
     public IQueryable<Build> GetBuilds([Service] FactoryDbContext context)
