@@ -10,7 +10,6 @@ namespace FactoryApp.GraphQL;
 [GraphQLType("Mutation")]
 public class BuildMutationType
 {
-    [GraphQLField]
     public async Task<AuthPayload> Login(
         string email,
         string password,
@@ -39,7 +38,6 @@ public class BuildMutationType
         };
     }
 
-    [GraphQLField]
     public async Task<Build> CreateBuild(
         string name,
         string? description,
@@ -70,7 +68,6 @@ public class BuildMutationType
         return build;
     }
 
-    [GraphQLField]
     public async Task<Build> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
@@ -97,7 +94,6 @@ public class BuildMutationType
         return build;
     }
 
-    [GraphQLField]
     public async Task<Part> AddPart(
         Guid buildId,
         string name,
@@ -136,7 +132,6 @@ public class BuildMutationType
         return part;
     }
 
-    [GraphQLField]
     public async Task<TestRun> SubmitTestRun(
         Guid buildId,
         TestStatus status,
