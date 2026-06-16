@@ -5,6 +5,8 @@ using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace FactoryApp.Tests;
