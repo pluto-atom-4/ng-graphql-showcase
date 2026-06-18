@@ -1,0 +1,86 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+@buildId = paste_build_id_from_02_create_build_here
+
+###
+### 04. QUERY BUILD WITH RELATIONS - DataLoader Verification
+### Test nested parts and testRuns to verify DataLoader batch loading (N+1 prevention)
+### Note: Run 01-authentication.http then 02-create-build.http first
+###
+
+### Query build with nested parts
+### Verify: parts loaded via DataLoader (should be 1 build query + 1 batch parts query)
+### Check backend logs to confirm no N+1 queries
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name parts { id name sku quantity createdAt } } }"
+}
+
+###
+### Query build with nested testRuns
+### Verify: testRuns loaded via DataLoader batch loading
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name testRuns { id status result fileUrl completedAt createdAt } } }"
+}
+
+###
+### Query build with both parts and testRuns in single query
+### Verify: both nested entities loaded efficiently
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name status parts { id name sku quantity } testRuns { id status result } } }"
+}
+
+###
+### Query multiple builds to test DataLoader batching
+### All parts should be batch-loaded in single query (not N builds * 1 query per build)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 10, offset: 0) { items { id name parts { id name sku } testRuns { id status } } totalCount } }"
+}
+
+###
+### Compare: Query build without relations (baseline for performance comparison)
+### Use this response time as baseline; nested query should take similar time with DataLoader
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name status } }"
+}
+
+###
+### Query parts with all fields
+### Verify Part schema: id, buildId, name, sku, quantity, createdAt
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id parts { id buildId name sku quantity createdAt } } }"
+}
+
+###
+### Query testRuns with all fields
+### Verify TestRun schema: id, buildId, status, result, fileUrl, completedAt, createdAt, updatedAt
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id testRuns { id buildId status result fileUrl completedAt createdAt updatedAt } } }"
+}
