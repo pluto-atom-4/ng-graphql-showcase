@@ -1,0 +1,149 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+
+###
+### 08. ERROR CASES & MALFORMED QUERIES
+### GraphQL syntax errors, missing fields, invalid input, and edge cases
+### Test error response format and error codes
+###
+
+### Missing required argument in mutation
+### Should return GraphQL parse error (missing argument: name)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(description: \"Missing name argument\") { id } }"
+}
+
+###
+### Invalid GraphQL syntax - unmatched brace
+### Should return parse error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Test\") { id name } }"
+}
+
+###
+### Requesting non-existent field
+### Should return GraphQL validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"123\") { id name nonExistentField } }"
+}
+
+###
+### Using wrong type for argument
+### Expected: Int, Got: String
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: \"not-a-number\", offset: 0) { items { id } } }"
+}
+
+###
+### Empty query body
+### Should return parse error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": ""
+}
+
+###
+### Malformed JSON (missing closing brace)
+### Should return HTTP 400 or JSON parse error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Test\") { id }"
+}
+
+###
+### No authorization header (if required)
+### Should return 401 Unauthorized or GraphQL auth error
+POST {{graphqlUrl}}
+Content-Type: application/json
+
+{
+  "query": "mutation { createBuild(name: \"Unauthorized\", description: \"No token\") { id } }"
+}
+
+###
+### Invalid token format
+### Bearer token with invalid value
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer invalid.token.format
+
+{
+  "query": "mutation { createBuild(name: \"Test\", description: null) { id } }"
+}
+
+###
+### Request to non-existent endpoint
+### Should return 404 Not Found
+POST {{baseUrl}}/graphql-not-found
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"123\") { id } }"
+}
+
+###
+### Invalid enum value
+### BuildStatus enum doesn't have INVALID value
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"123\", status: INVALID_STATUS) { id } }"
+}
+
+###
+### Null when non-null expected
+### buildId is required (non-null), cannot pass null
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: null, status: RUNNING) { id } }"
+}
+
+###
+### Query timeout scenario (intentionally deep nesting)
+### Tests server's depth limit (max 5 levels per CLAUDE.md)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 10, offset: 0) { items { id parts { id name testRuns { id status result fileUrl { url { domain { name { value } } } } } } } } }"
+}
+
+###
+### Check error response format
+### Successful error response should contain: errors array with message and extensions
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"\") { id } }"
+}

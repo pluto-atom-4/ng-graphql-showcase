@@ -151,6 +151,16 @@ pnpm dev
 | **Angular Frontend** | `http://localhost:4200`                                     |
 | **SQL Server**       | `Server=localhost,1433; User Id=sa; Password=P@ssw0rd1234!` |
 
+### Testing GraphQL API with HTTP Client
+
+Use the **REST Client** VS Code extension to test GraphQL mutations and queries manually:
+
+- **Install:** `humao.rest-client` from VS Code extensions marketplace
+- **Location:** `backend/src/FactoryApp.WebApi/` (8 organized `.http` files)
+- **Guide:** [**docs/HTTP-CLIENT-TESTING-GUIDE.md**](./docs/HTTP-CLIENT-TESTING-GUIDE.md)
+
+Example: Open `01-authentication.http` → Click "Send Request" above any GraphQL query.
+
 ### Stop Services
 
 ```bash

@@ -1,0 +1,107 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+@buildId = paste_build_id_from_02_create_build_here
+
+###
+### 06. ADD PART - Part Management & Validation
+### Create parts within a build with full validation
+### Note: Run 01-authentication.http then 02-create-build.http first
+###
+
+### Add part with valid inputs
+### Returns PartPayload with id, buildId, name, sku, quantity
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Precision Bearing\", sku: \"SKU-PB-001\", quantity: 5) { id buildId name sku quantity createdAt } }"
+}
+
+###
+### Add second part to same build
+### Verify: multiple parts can belong to same build
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Control Module\", sku: \"SKU-CM-042\", quantity: 2) { id buildId name sku quantity } }"
+}
+
+###
+### Add part with zero quantity
+### Should return validation error (quantity must be > 0)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Invalid Part\", sku: \"SKU-INV\", quantity: 0) { id name } }"
+}
+
+###
+### Add part with negative quantity
+### Should return validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Negative Part\", sku: \"SKU-NEG\", quantity: -10) { id } }"
+}
+
+###
+### Add part to non-existent build
+### Should return error (foreign key constraint or validation)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"00000000-0000-0000-0000-000000000000\", name: \"Orphan Part\", sku: \"SKU-ORP\", quantity: 5) { id } }"
+}
+
+###
+### Add part with empty name
+### Should return validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"\", sku: \"SKU-EMPTY\", quantity: 1) { id } }"
+}
+
+###
+### Add part with empty SKU
+### Should return validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"No SKU Part\", sku: \"\", quantity: 1) { id } }"
+}
+
+###
+### Add part with large quantity
+### Verify: supports high quantity values (e.g., 10000)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Bulk Component\", sku: \"SKU-BULK-999\", quantity: 10000) { id quantity } }"
+}
+
+###
+### Query build with newly added parts
+### Verify: parts visible via DataLoader
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name parts { id name sku quantity } } }"
+}

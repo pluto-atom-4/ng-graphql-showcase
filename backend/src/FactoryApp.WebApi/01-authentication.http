@@ -1,0 +1,50 @@
+@import http-client.env.json
+
+###
+### 01. AUTHENTICATION WORKFLOWS
+### JWT login flows and token extraction
+###
+
+### Login with valid credentials
+### Extracts JWT token for use in subsequent requests
+POST {{graphqlUrl}}
+Content-Type: application/json
+
+{
+  "query": "mutation { login(email: \"test@example.com\", password: \"SecurePassword123!\") { token user { id email } } }"
+}
+
+###
+### Login with invalid email format
+### Should return GraphQL validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+
+{
+  "query": "mutation { login(email: \"not-an-email\", password: \"SecurePassword123!\") { token user { id email } } }"
+}
+
+###
+### Login with weak password
+### Should return GraphQL validation error (too short)
+POST {{graphqlUrl}}
+Content-Type: application/json
+
+{
+  "query": "mutation { login(email: \"test@example.com\", password: \"Short1!\") { token user { id email } } }"
+}
+
+###
+### Login with empty credentials
+### Should return validation error for empty email
+POST {{graphqlUrl}}
+Content-Type: application/json
+
+{
+  "query": "mutation { login(email: \"\", password: \"SecurePassword123!\") { token user { id email } } }"
+}
+
+###
+### Extract token from successful login response
+### Copy token value from response above and use in Authorization header for other requests
+### Example: Authorization: Bearer <token_value_here>
