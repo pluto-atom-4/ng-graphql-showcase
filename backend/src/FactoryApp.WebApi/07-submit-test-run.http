@@ -1,0 +1,119 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+@buildId = paste_build_id_from_02_create_build_here
+
+###
+### 07. SUBMIT TEST RUN - Transaction Testing & Atomicity
+### Submit test results with transaction verification
+### Note: Uses shared EF Core + Dapper transaction (tests atomicity)
+### Run 01-authentication.http then 02-create-build.http first
+###
+
+### Submit test run with PASSED status
+### Verify: testRunId returned, status set, completedAt timestamp recorded
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"All assertions passed\", fileUrl: \"https://example.com/test-results/build-001.json\") { id buildId status result fileUrl completedAt createdAt } }"
+}
+
+###
+### Submit test run with RUNNING status
+### Verify: status can be RUNNING (in-progress test)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: RUNNING, result: null, fileUrl: null) { id status } }"
+}
+
+###
+### Submit test run with FAILED status and result
+### Verify: failed test with error details stored
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: FAILED, result: \"Assertion failed: expected true but got false at line 42\", fileUrl: \"https://example.com/logs/failure-001.log\") { id status result } }"
+}
+
+###
+### Submit test run with FAILED status but no result
+### Should return validation error (failed tests require result explanation)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: FAILED, result: null, fileUrl: null) { id } }"
+}
+
+###
+### Submit test run with FAILED status and empty result
+### Should return validation error (result cannot be empty when status is FAILED)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: FAILED, result: \"\", fileUrl: null) { id } }"
+}
+
+###
+### Submit test run with invalid fileUrl
+### Should return validation error (must be valid URL)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Pass\", fileUrl: \"not-a-url\") { id } }"
+}
+
+###
+### Submit test run with valid fileUrl and PASSED status
+### Verify: fileUrl is optional but validated if provided
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Test passed\", fileUrl: \"https://storage.example.com/results/test-2026-06-17.zip\") { id fileUrl } }"
+}
+
+###
+### Submit test run without fileUrl
+### Verify: fileUrl is optional
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Pass without file\", fileUrl: null) { id fileUrl status } }"
+}
+
+###
+### Submit test run with large result payload
+### Verify: can handle detailed test output
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Test results: \\n1. Voltage test passed: 12.0V ± 0.1V \\n2. Current draw acceptable: 2.5A max \\n3. Temperature within limits: 45°C \\n4. Signal integrity verified \\n5. All subsystems operational\", fileUrl: \"https://example.com/detailed-results.json\") { id result } }"
+}
+
+###
+### Query build with submitted test runs
+### Verify: test runs accessible via DataLoader
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name testRuns { id status result fileUrl completedAt } } }"
+}
