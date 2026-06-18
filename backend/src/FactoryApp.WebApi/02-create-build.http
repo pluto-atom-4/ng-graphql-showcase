@@ -1,0 +1,73 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+
+###
+### 02. CREATE BUILD WORKFLOWS
+### Build creation with validation scenarios
+### Note: Run 01-authentication.http first to set @token variable
+###
+
+### Create build with valid name and description
+### Returns BuildPayload with id, name, description, status
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Manufacturing Build A\", description: \"High-volume production run for Q2 2026\") { id name description status createdAt updatedAt } }"
+}
+
+###
+### Create build with valid name, no description
+### Description is optional
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Quick Build B\") { id name description status } }"
+}
+
+###
+### Create build with empty name
+### Should return GraphQL validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"\", description: \"Description without name\") { id name } }"
+}
+
+###
+### Create build with name exceeding 256 characters
+### Should return validation error (max length: 256)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", description: \"Too long name\") { id name } }"
+}
+
+###
+### Create build with description exceeding 1000 characters
+### Should return validation error (max length: 1000)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Valid Name\", description: \"Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliquua\") { id } }"
+}
+
+###
+### Build status after creation
+### Default status is PENDING
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Status Check Build\", description: \"Verifying default status\") { id status } }"
+}
