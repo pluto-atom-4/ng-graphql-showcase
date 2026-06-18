@@ -108,14 +108,14 @@ See `/docs/ARCHITECTURE.md` for detailed patterns.
 
 ## Documentation Structure
 
-| File                                  | Purpose                                                 |
-| ------------------------------------- | ------------------------------------------------------- |
-| **README.md**                         | Quickstart, setup, troubleshooting                      |
-| **docs/ARCHITECTURE.md**              | Design patterns, type-safety pipeline, Elsa integration |
-| **docs/DATABASE.md**                  | Database config, migrations, testing strategy           |
-| **docs/DEVELOPMENT.md**               | IDE setup, debugging, development workflow              |
-| **docs/PROCEDURES.md**                | PR review workflow, GitHub Copilot integration          |
-| **docs/HTTP-CLIENT-TESTING-GUIDE.md** | Manual GraphQL API testing via REST Client extension    |
+| File                                  | Purpose                                                   |
+| ------------------------------------- | --------------------------------------------------------- |
+| **README.md**                         | Quickstart, setup, troubleshooting                        |
+| **docs/ARCHITECTURE.md**              | Design patterns, type-safety pipeline, Elsa integration   |
+| **docs/DATABASE.md**                  | Database config, migrations, testing strategy             |
+| **docs/DEVELOPMENT.md**               | IDE setup, debugging, development workflow                |
+| **docs/PROCEDURES.md**                | PR review workflow, GitHub Copilot integration            |
+| **docs/HTTP-CLIENT-TESTING-GUIDE.md** | GraphQL API testing via JetBrains HTTP Client (IDE + CLI) |
 
 ---
 

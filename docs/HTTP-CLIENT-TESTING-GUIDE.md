@@ -1,45 +1,78 @@
 # HTTP Client Testing Guide
 
-Complete guide to testing the Factory App GraphQL API using the REST Client extension (VS Code) and 8 comprehensive HTTP request files.
+Complete guide to testing the Factory App GraphQL API using **JetBrains HTTP Client** (IDE integration or CLI) and 8 comprehensive HTTP request files.
 
 ---
 
 ## 1. Setup & Prerequisites
 
-### Required Tools
+### JetBrains IDE (Recommended for Development)
 
-- **VS Code** (any recent version)
-- **REST Client Extension** — Install from VS Code extensions marketplace
-  - ID: `humao.rest-client`
-  - Free, open-source HTTP client for VS Code
+**Supported IDEs:**
+
+- **JetBrains Rider** (C# / .NET development) — Recommended
+- **WebStorm** (JavaScript/TypeScript development)
+- **IntelliJ IDEA Ultimate** (Java development)
+
+**HTTP Client is built-in** — No installation needed. Open `.http` files directly; run buttons appear in editor gutter.
+
+### JetBrains HTTP Client CLI (For Automation/CI)
+
+**Installation:**
+
+**macOS (Homebrew):**
+
+```bash
+brew install --cask jetbrains-toolbox
+# Then download ijhttp via Toolbox
+```
+
+**ZIP Archive (All platforms):**
+
+```bash
+# Download from https://www.jetbrains.com/help/webstorm/http-client-cli.html
+# Requires JDK 21+
+unzip ijhttp.zip
+cd ijhttp/bin
+./ijhttp myrequest.http  # macOS/Linux
+ijhttp.bat myrequest.http  # Windows
+```
+
+**Docker:**
+
+```bash
+docker pull jetbrains/ijhttp
+docker run --rm -v $(pwd):/home/user jetbrains/ijhttp /home/user/myrequest.http
+```
 
 ### System Requirements
 
 - **Backend running on port 5000**
   - Start with: `pnpm dev:backend` (or `cd backend && dotnet watch run`)
-  - Verify: Open http://localhost:5000/graphql in browser (should show GraphQL Playground if enabled)
+  - Verify: Open http://localhost:5000/graphql in browser
 
 - **SQL Server running** (via Docker)
   - Start with: `pnpm docker:up`
-  - Verify: `docker ps` should show `ng-graphql-sql-server` container
+  - Verify: `docker ps` shows `ng-graphql-sql-server` container
 
-### Getting Started
+### Getting Started (IDE)
 
-1. Install REST Client extension in VS Code
-2. Clone/open the repository in VS Code
-3. Navigate to `backend/src/FactoryApp.WebApi/` directory
-4. Open any `.http` file — REST Client shows "Send Request" button above each request
-5. Click "Send Request" to execute GraphQL query/mutation
+1. Open repository in Rider/WebStorm
+2. Navigate to `backend/src/FactoryApp.WebApi/` directory
+3. Open any `.http` file (e.g., `01-authentication.http`)
+4. Click green **Run** button in editor gutter → Request executes
+5. Response shows in right panel
 
 ---
 
 ## 2. Basics: Sending Your First Request
 
-### HTTP File Anatomy
+### HTTP File Anatomy (JetBrains Format)
 
 ```http
 @import http-client.env.json
 
+### Section comment
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -47,20 +80,54 @@ Authorization: Bearer {{token}}
 {
   "query": "query { build(id: \"123\") { id name } }"
 }
+
+> {%
+  client.test("Response status is 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    var jsonResponse = response.body;
+    client.assert(!jsonResponse.errors, "Got errors: " + JSON.stringify(jsonResponse.errors));
+  });
+%}
 ```
 
 **Components:**
 
 - `@import http-client.env.json` — Import shared variables (baseUrl, graphqlUrl)
+- `### Comment` — Section header (supported in IDE + CLI)
 - `POST` — HTTP method (all GraphQL requests use POST)
-- `{{graphqlUrl}}` — Variable reference (defined in http-client.env.json)
-- `Content-Type: application/json` — Required header for JSON body
-- `Authorization: Bearer {{token}}` — JWT token for authenticated requests (optional for login)
+- `{{graphqlUrl}}` — Variable reference (from http-client.env.json)
+- Headers — `Content-Type`, `Authorization` (with Bearer token)
 - Request body — GraphQL query/mutation in JSON format
+- `> {% ... %}` — Response handling script (JavaScript ES6, IDE + CLI support)
+
+### Response Validation Scripts
+
+JetBrains HTTP Client supports **JavaScript ES6 response handlers** (both IDE and CLI):
+
+```javascript
+> {%
+  client.test("Status OK", function() {
+    client.assert(response.status === 200);
+  });
+
+  client.test("Has data", function() {
+    var json = response.body;
+    client.assert(json.data !== null);
+  });
+
+  // Save token for reuse
+  client.global.set("token", response.body.data.login.token);
+%}
+```
+
+Use `client.global.set(key, value)` to store response values for subsequent requests.
 
 ### GraphQL Request Structure
 
-All requests follow this pattern:
+Standard GraphQL format:
 
 ```json
 {
@@ -68,7 +135,7 @@ All requests follow this pattern:
 }
 ```
 
-Or with variables (advanced):
+With variables:
 
 ```json
 {
@@ -79,7 +146,7 @@ Or with variables (advanced):
 
 ### Reading Response
 
-Success response:
+Success:
 
 ```json
 {
@@ -92,117 +159,153 @@ Success response:
 }
 ```
 
-Error response:
+Error:
 
 ```json
 {
   "errors": [
     {
       "message": "Build name cannot be empty",
-      "extensions": {
-        "code": "VALIDATION_ERROR"
-      }
+      "extensions": { "code": "VALIDATION_ERROR" }
     }
   ]
 }
 ```
 
-**Key:** GraphQL returns HTTP 200 even on errors. Check `errors` field to detect failures.
+**Key:** GraphQL returns HTTP 200 even on errors. Always check `errors` field.
 
 ---
 
 ## 3. Authentication & Token Management
 
-### Login Flow
+### Login Flow (JetBrains IDE)
 
-1. Open `01-authentication.http`
-2. Execute the first request: "Login with valid credentials"
+1. Open `01-authentication.http` in Rider/WebStorm
+2. Click **Run** on first request: "Login with valid credentials"
    - Email: `test@example.com`
    - Password: `SecurePassword123!`
-3. Copy JWT token from response `data.login.token`
+3. Response panel shows token in `data.login.token`
 
-### Using Token in Subsequent Requests
+### Token Reuse Across Requests
 
-Each `.http` file includes a variable at the top:
+**Method 1: Automatic with Response Handler (Recommended)**
 
-```http
-@token = paste_token_from_01_authentication_here
-```
-
-**Two ways to populate:**
-
-**Option A: Manual (easiest for testing)**
-
-1. Run login request in `01-authentication.http`
-2. Copy the token value from response
-3. Replace `@token = paste_token_from_01_authentication_here` with `@token = eyJhbGc...` (paste full token)
-4. Save file — other requests now use the real token
-
-**Option B: Automatic (REST Client feature)**
-REST Client can extract values from responses. Add this comment after login request:
+Add JavaScript handler after login request in `01-authentication.http`:
 
 ```http
-# @token = response.body.data.login.token
+> {%
+  if (response.status === 200 && response.body.data && response.body.data.login.token) {
+    client.global.set("token", response.body.data.login.token);
+    client.log("✓ Token saved: " + response.body.data.login.token.substring(0, 20) + "...");
+  }
+%}
 ```
 
-(Feature depends on REST Client version; manual copy/paste is more reliable)
+Then use `{{token}}` in subsequent requests:
+
+```http
+Authorization: Bearer {{token}}
+```
+
+**Method 2: Manual Variable (IDE-only)**
+
+At top of `.http` file:
+
+```http
+@token = paste_token_from_login_response_here
+```
+
+Copy token from response and replace placeholder.
 
 ### Token Expiration
 
-- Default expiration: 1 hour
-- Check `Jwt:ExpirationHours` in CLAUDE.md (set to 1)
-- If requests return `"Unauthorized"`, re-run login request to get fresh token
+- Default: 1 hour
+- Check `Jwt:ExpirationHours` in CLAUDE.md
+- If "Unauthorized" error: Re-run login to get fresh token
+- `client.global.set()` persists token for session (until IDE closes)
 
 ---
 
 ## 4. Common Workflows
 
-### Full CRUD Workflow
+### Full CRUD Workflow (IDE)
 
-**Goal:** Create a build, add parts, update status, submit test run.
+**Goal:** Create build → add parts → update status → submit test run → query results.
 
 **Steps:**
 
-1. **01-authentication.http** → Run login, extract token
-2. **02-create-build.http** → Run "Create build with valid name", copy `id` from response
-3. **06-add-part.http** → Run "Add part with valid inputs" (use copied build ID)
-4. **05-update-build-status.http** → Run "Update status PENDING → RUNNING"
-5. **07-submit-test-run.http** → Run "Submit test run with PASSED status"
-6. **04-query-build-with-relations.http** → Run "Query build with both parts and testRuns"
+1. Open `01-authentication.http` → Click Run on first request → Token saved via handler
+2. Open `02-create-build.http` → Run "Create build with valid name"
+   - Add response handler to save build ID:
+   ```javascript
+   > {%
+     client.global.set("buildId", response.body.data.createBuild.id);
+   %}
+   ```
+3. Open `06-add-part.http` → Run "Add part with valid inputs" (uses {{buildId}})
+4. Open `05-update-build-status.http` → Run "Update status PENDING → RUNNING"
+5. Open `07-submit-test-run.http` → Run "Submit test run with PASSED status"
+6. Open `04-query-build-with-relations.http` → Run "Query build with both parts and testRuns"
 
-**Result:** Full lifecycle from creation → test completion, with parts and test runs associated.
+**Result:** Full lifecycle from creation → completion, with all entities visible.
 
 ### Testing Error Scenarios
 
-1. Open `02-create-build.http`
-2. Run "Create build with empty name" → Verify error response format
-3. Open `03-query-builds.http`
-4. Run "Query builds with invalid limit (-1)" → Verify validation error
-5. Open `08-error-cases.http`
-6. Run all requests to see different error types
+**IDE:**
 
-**Expected:** All return HTTP 200 with `errors` array (not HTTP 400/500)
+1. Open `02-create-build.http` → Run "Create build with empty name"
+2. Response panel shows GraphQL `errors` array
+3. Open `08-error-cases.http` → Run all requests to see error types
 
-### Batch Queries (DataLoader Efficiency)
+**CLI:**
 
-1. Create multiple builds (repeat 02-create-build.http 3+ times)
+```bash
+ijhttp 02-create-build.http --env-file http-client.env.json
+# Runs all requests, shows errors in stdout
+```
+
+**Expected:** All return HTTP 200 with `errors` array (not HTTP 400/500).
+
+### Batch Queries with DataLoader Verification
+
+**IDE:**
+
+1. Create multiple builds (run 02-create-build.http 3+ times)
 2. Open `04-query-build-with-relations.http`
 3. Run "Query multiple builds to test DataLoader batching"
-4. Check backend logs (console output during `dotnet watch run`):
+4. Backend console (during `dotnet watch run`):
    - Should see: 1 query for builds + 1 batch query for parts (not N queries)
+
+**CLI:**
+
+```bash
+ijhttp 04-query-build-with-relations.http --env-file http-client.env.json -L VERBOSE
+# VERBOSE shows all queries in backend logs
+```
 
 ### Mutation with Event Emission
 
-1. Open `05-update-build-status.http`
-2. Run "Update status PENDING → RUNNING"
-3. Check backend logs — should see WebSocket event emission
-4. (Advanced) Open second terminal with `graphql-ws` client to see real-time event
+1. Open `05-update-build-status.http` → Run "Update status PENDING → RUNNING"
+2. Backend logs show WebSocket event: `buildStatusChanged` emitted
+3. (Advanced) Use `graphql-ws` CLI to subscribe to real-time updates:
+   ```bash
+   graphql-ws -u ws://localhost:5000/graphql
+   ```
 
 ---
 
-## 5. Response Interpretation
+## 5. Response Interpretation & Assertions
 
-### Success Response Format
+### Response Format (IDE)
+
+**JetBrains Response Panel shows:**
+
+- **Status** — HTTP status code (should be 200)
+- **Headers** — Response headers (Content-Type, etc.)
+- **Body** — JSON response (formatted)
+- **Time** — Request duration (ms)
+
+### Success Response
 
 ```json
 {
@@ -216,64 +319,66 @@ REST Client can extract values from responses. Add this comment after login requ
 }
 ```
 
-**Markers:**
-
-- `"data"` key present
-- `"errors"` key absent or empty
-- Requested fields populated
-
-### Error Response Format
+### Error Response
 
 ```json
 {
   "errors": [
     {
       "message": "Build name cannot be empty",
-      "extensions": {
-        "code": "VALIDATION_ERROR"
-      }
+      "extensions": { "code": "VALIDATION_ERROR" }
     }
   ],
   "data": null
 }
 ```
 
-**Markers:**
+### Testing with Assertions (IDE + CLI)
 
-- `"errors"` array with 1+ objects
-- `"message"` field describes problem
-- `"extensions.code"` categorizes error (VALIDATION_ERROR, NOT_FOUND, etc.)
-- `"data"` is null (no partial data on error)
+Add validation scripts after requests:
+
+```javascript
+> {%
+  // Test HTTP status
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200);
+  });
+
+  // Test GraphQL errors absent
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "Errors: " + JSON.stringify(response.body.errors));
+  });
+
+  // Test data present
+  client.test("Data returned", function() {
+    client.assert(response.body.data !== null);
+  });
+
+  // Test specific field
+  client.test("Build ID exists", function() {
+    client.assert(response.body.data.createBuild.id, "Missing buildId");
+  });
+%}
+```
+
+**CLI Test Reports:**
+
+```bash
+ijhttp 02-create-build.http --env-file http-client.env.json --report
+# Generates JUnit XML in reports/ directory
+# Use in CI/CD pipelines
+```
 
 ### HTTP Status vs GraphQL Status
 
-| HTTP Status | GraphQL Status         | Meaning                                       |
-| ----------- | ---------------------- | --------------------------------------------- |
-| 200         | `data` + no `errors`   | ✅ Success                                    |
-| 200         | `errors` array present | ✅ GraphQL validation error (check `message`) |
-| 400         | (malformed JSON)       | ❌ Client error (invalid HTTP request)        |
-| 500         | (backend crash)        | ❌ Server error (check backend logs)          |
+| HTTP | GraphQL              | Meaning                     |
+| ---- | -------------------- | --------------------------- |
+| 200  | `data` + no `errors` | ✅ Success                  |
+| 200  | `errors` array       | ✅ GraphQL validation error |
+| 400  | (malformed JSON)     | ❌ Invalid request          |
+| 500  | (backend crash)      | ❌ Server error             |
 
-**Rule:** Always check `errors` field first, regardless of HTTP status.
-
-### Extensions Field
-
-`extensions` contains metadata:
-
-```json
-{
-  "data": { ... },
-  "extensions": {
-    "duration": 12,
-    "code": "VALIDATION_ERROR"
-  }
-}
-```
-
-- `duration` — Query execution time in milliseconds
-- `code` — Error category (VALIDATION_ERROR, NOT_FOUND, UNAUTHORIZED)
-
-Use `duration` to compare performance (see Section 6 for profiling).
+**Rule:** GraphQL returns HTTP 200 even on validation errors. Always check `errors` field.
 
 ---
 
@@ -281,69 +386,89 @@ Use `duration` to compare performance (see Section 6 for profiling).
 
 ### DataLoader Verification (No N+1 Queries)
 
-**Test Goal:** Confirm parts are batch-loaded, not loaded 1-per-build.
+**IDE:**
 
-**Steps:**
+1. Create 3 builds (run `02-create-build.http` 3 times)
+2. For each build, add 2 parts (run `06-add-part.http` twice per build)
+3. Open `04-query-build-with-relations.http` → Run "Query multiple builds"
+4. Check backend console (terminal running `dotnet watch run`):
 
-1. Open `02-create-build.http`, create 3 builds
-2. For each build, run `06-add-part.http` twice (add 2 parts per build)
-3. Open `04-query-build-with-relations.http`
-4. Run "Query multiple builds to test DataLoader batching"
-5. Check backend console during request:
-
-**Correct output (with DataLoader):**
+**Correct (with DataLoader):**
 
 ```
 info: Executing query...
 info: Build query executed (1 database call)
 info: Parts batch loader executed (1 database call)
-info: Total: 2 database calls for 3 builds with 6 parts
+info: Total: 2 queries for 3 builds + 6 parts
 ```
 
-**Incorrect output (N+1 problem, if unfixed):**
+**Incorrect (N+1 problem):**
 
 ```
-info: Build query executed (1 database call)
-info: Loading parts for build 1 (1 database call)
-info: Loading parts for build 2 (1 database call)
-info: Loading parts for build 3 (1 database call)
-info: Total: 4 database calls (1 + N)
+info: Build query (1 call)
+info: Loading parts for build 1 (1 call)
+info: Loading parts for build 2 (1 call)
+info: Loading parts for build 3 (1 call)
+info: Total: 4 queries (1 + N) ❌
 ```
 
-**If you see N+1:** Verify BuildType.cs has DataLoader configured for parts.
+**CLI with Verbose Logging:**
 
-### NoTracking Optimization Baseline
+```bash
+ijhttp 04-query-build-with-relations.http --env-file http-client.env.json -L VERBOSE
+# Shows all database queries in output
+```
 
-**Test Goal:** Measure query response time with/without EF Core tracking.
+### Query Performance Measurement
 
-**Steps:**
+**IDE Response Times:**
 
-1. Open `03-query-builds.http`
-2. Run "Query paginated builds - first page"
-3. Check response `extensions.duration` (e.g., 25ms)
-4. Run "Query paginated builds - first page" 5 more times, note average
-5. This is your baseline (queries use NoTracking for performance)
+Open `03-query-builds.http` → Run same request 5 times:
 
-**Expected:** Queries return in 20-50ms (depending on database size)
+| Run | Time (ms) | Status     |
+| --- | --------- | ---------- |
+| 1   | 45        | Cold cache |
+| 2   | 12        | Warm cache |
+| 3   | 11        | Warm cache |
+| 4   | 13        | Warm cache |
+| 5   | 12        | Warm cache |
+
+Average warm: ~12ms (expected for 20-50 items)
+
+**Assertions for Performance:**
+
+```javascript
+> {%
+  client.test("Query time < 100ms", function() {
+    var duration = parseFloat(response.responseTime) || 0;
+    client.assert(duration < 100, "Slow query: " + duration + "ms");
+  });
+%}
+```
 
 ### Pagination Best Practices
 
-- **Max limit:** 1000 items per page (enforced in code)
-- **Recommended:** 10-100 items per page for UI
-- **Test:** Run `03-query-builds.http` with limit=1, 10, 100, 1000
-- **Measure:** Notice response time increases with limit (more data to serialize)
+- **Max limit:** 1000 items (enforced by validation)
+- **Recommended:** 10-100 items for UI
+- **Test varying limits:**
+  ```bash
+  # Create 15 builds then run:
+  ijhttp 03-query-builds.http --env limit=5 --env offset=0
+  ijhttp 03-query-builds.http --env limit=10 --env offset=10
+  ijhttp 03-query-builds.http --env limit=100 --env offset=0
+  ```
 
-### Connection Metrics
+### Backend Logging
 
-Check backend console during requests:
+Check database query logs:
 
 ```
-info: Executing query: SELECT ... FROM Builds WHERE ... (Duration: 8ms)
-info: Loading related data via DataLoader (Duration: 4ms)
-info: Total query time: 12ms
+info: Query: SELECT * FROM Builds... (Duration: 8ms)
+info: Query: SELECT * FROM Parts... [BATCH for 3 builds] (Duration: 4ms)
+info: Total: 12ms
 ```
 
-Compare slow queries (>100ms) against code to find bottlenecks.
+Compare slow queries (>100ms) to find bottlenecks.
 
 ---
 
@@ -351,9 +476,9 @@ Compare slow queries (>100ms) against code to find bottlenecks.
 
 ### Subscriptions (Real-Time Updates)
 
-**Limitation:** REST Client extension doesn't natively support WebSocket subscriptions.
+**Limitation:** JetBrains HTTP Client doesn't natively support WebSocket subscriptions in .http files.
 
-**Workaround:** Use `graphql-ws` CLI tool to test subscriptions:
+**Workaround:** Use `graphql-ws` CLI to test subscriptions:
 
 ```bash
 npm install -g graphql-ws
@@ -372,74 +497,121 @@ subscription {
 }
 ```
 
-**Note:** Backend must emit WebSocket events via `ITopicEventSender` (configured in Mutations).
+**Note:** Backend emits events via `ITopicEventSender` (configured in Mutations).
 
-### Concurrent Mutations (Transaction Isolation)
+### Concurrent Mutations (IDE)
 
-**Test Goal:** Verify concurrent operations don't interfere.
+**Test Goal:** Verify concurrent operations don't deadlock.
 
-**Steps:**
+**Steps (Rider/WebStorm):**
 
-1. Create 2 builds
+1. Create 2 builds (run `02-create-build.http` twice)
 2. Open `05-update-build-status.http` in two editor tabs
-3. Change buildId in each tab to different build
-4. Execute both "Update status PENDING → RUNNING" simultaneously
-5. Both should succeed independently
+3. Set different buildIds in each tab
+4. Click Run on both simultaneously
+5. Both should complete independently
 
-**Expected:** Both mutations complete without deadlock.
+**Expected:** No deadlock errors; both succeed.
+
+**CLI Concurrent Test:**
+
+```bash
+# Run multiple requests in parallel
+ijhttp 05-update-build-status.http --env buildId=id-1 &
+ijhttp 05-update-build-status.http --env buildId=id-2 &
+wait
+```
 
 ### Large Payloads
 
-**Test Goal:** Verify parsing of large result/fileUrl fields.
-
-**Steps:**
+**IDE:**
 
 1. Open `07-submit-test-run.http`
-2. Run "Submit test run with large result payload" (includes detailed test output)
-3. Verify response completes successfully
+2. Run "Submit test run with large result payload"
+3. Response panel shows full result + fileUrl stored
 
-**Expected:** Large payloads (1MB+) should parse without timeout.
+**CLI:**
 
-### Multi-Stage Workflows
+```bash
+ijhttp 07-submit-test-run.http --env-file http-client.env.json -L VERBOSE
+# Large payload logged in output
+```
 
-**Test Goal:** Execute entire feature workflow programmatically.
+**Expected:** Large payloads (1MB+) parse without timeout.
 
-**Pseudocode:**
+### Automated Workflows (CLI)
 
-1. Login → get token
-2. Create build → get buildId
-3. Loop 5 times: Add part to build
-4. Update status PENDING → RUNNING
-5. Loop 3 times: Submit test run (status varies: RUNNING, PASSED, FAILED)
-6. Query final build state with all relations
+**Run full CRUD sequence via CLI:**
 
-**Expected:** All steps complete atomically; final query shows all parts and test runs.
+```bash
+# Create environment file with test data
+cat > test-env.json <<EOF
+{
+  "baseUrl": "http://localhost:5000",
+  "graphqlUrl": "http://localhost:5000/graphql",
+  "token": ""
+}
+EOF
+
+# Run workflow: login → create → add parts → update → test
+ijhttp 01-authentication.http --env-file test-env.json
+ijhttp 02-create-build.http --env-file test-env.json
+ijhttp 06-add-part.http --env-file test-env.json --env iterations=2
+ijhttp 05-update-build-status.http --env-file test-env.json
+ijhttp 07-submit-test-run.http --env-file test-env.json
+
+# Generate test report
+ijhttp *.http --env-file test-env.json --report
+# Output: JUnit XML in reports/ directory for CI/CD
+```
 
 ---
 
 ## 8. Troubleshooting & Common Issues
 
-### "Unknown variable: buildId"
+### "Unknown variable: buildId" (IDE)
 
-**Cause:** Forgot to create a build first, or `@buildId` variable not set.
+**Cause:** Variable referenced before populated or `.http` file not saved after assignment.
 
-**Fix:**
+**Fix (Rider/WebStorm):**
 
-1. Run `02-create-build.http` → "Create build with valid name"
-2. Copy `id` from response
-3. At top of `.http` file, change `@buildId = paste_build_id...` to actual ID
-4. Save file and retry
+1. Open `02-create-build.http` → Click Run → Copy `id` from response panel
+2. Add handler to save buildId:
+   ```javascript
+   > {%
+     client.global.set("buildId", response.body.data.createBuild.id);
+   %}
+   ```
+3. Save file → Automatic for subsequent requests using `{{buildId}}`
+
+**Fix (CLI):**
+
+```bash
+ijhttp 02-create-build.http --env-file http-client.env.json -V buildId=<actual-uuid>
+```
 
 ### "Unauthorized" Response
 
-**Cause:** JWT token missing or expired (default: 1-hour window).
+**Cause:** JWT token missing, expired (1-hour default), or malformed.
 
-**Fix:**
+**Fix (IDE):**
 
-1. Run `01-authentication.http` → "Login with valid credentials"
-2. Copy new token from `data.login.token`
-3. Update `@token` variable in affected `.http` file
-4. Retry request
+1. Run `01-authentication.http` → First request
+2. Add response handler:
+   ```javascript
+   > {%
+     client.global.set("token", response.body.data.login.token);
+   %}
+   ```
+3. Reuse via `Authorization: Bearer {{token}}` in subsequent requests
+
+**Fix (CLI):**
+
+```bash
+# Re-run login, extract token, pass to next request
+TOKEN=$(ijhttp 01-authentication.http ... | jq '.data.login.token')
+ijhttp 02-create-build.http --env token=$TOKEN ...
+```
 
 ### "Internal Server Error" or Backend Crash
 
@@ -447,53 +619,49 @@ subscription {
 
 **Fix:**
 
-1. Check backend console (window running `pnpm dev:backend`)
+1. Check backend console (terminal running `pnpm dev:backend`)
 2. Look for stack trace and exception message
 3. Common causes:
-   - Null reference exception (accessing deleted entity)
+   - Null reference exception
    - Database connection lost (SQL Server not running)
-   - Validation error not caught (add try-catch)
+   - Validation error not caught
 
-**Action:** Fix C# code, save (hot reload should apply), retry request.
+**Action:** Fix C# code, save (hot reload applies), retry request.
 
-### "Port 5000 Refused" Connection Error
+### "Connection refused: Port 5000"
 
 **Cause:** Backend not running.
 
 **Fix:**
 
-1. Terminal 1: `cd backend && dotnet watch run` (or `pnpm dev:backend`)
+1. Terminal: `pnpm dev:backend` (or `cd backend && dotnet watch run`)
 2. Wait 10-15 seconds for startup
-3. Verify: `curl http://localhost:5000/health` (or open GraphQL Playground)
-4. Retry HTTP request
+3. Verify: `curl http://localhost:5000/health`
+4. Retry request
 
-### "Invalid JSON" in Request Body
+### "Unable to parse response" (CLI)
 
-**Cause:** Missing quotes, unescaped characters, or malformed GraphQL query.
+**Cause:** Invalid JSON or unexpected response format.
 
 **Fix:**
 
-1. Check for mismatched braces `{}`
-2. Verify strings wrapped in double quotes `""`
-3. Escape quotes in queries: `\"` for literal quote inside string
-4. Use REST Client inline JSON syntax highlight (SHIFT+ALT+F to format)
+1. Run with verbose logging:
+   ```bash
+   ijhttp 02-create-build.http --env-file http-client.env.json -L VERBOSE
+   ```
+2. Check response body in output
+3. Verify GraphQL query syntax (mismatched braces, unescaped quotes)
 
 ### "No Response" or Timeout
 
-**Cause:** Long-running query, database deadlock, or infinite loop.
+**Cause:** Long-running query, database deadlock, or network issue.
 
 **Fix:**
 
-1. Check backend logs for warnings
-2. Simplify query (reduce limit or remove nested relations)
-3. Check SQL Server status: `docker logs ng-graphql-sql-server`
-4. If deadlock: Verify EF Core + Dapper share same DbTransaction (see CLAUDE.md)
-
-### "CORS Error" (if frontend accessing API)
-
-**Not applicable for HTTP Client testing** — REST Client is local tool without browser CORS restrictions.
-
-**But:** If testing from frontend browser code, ensure backend has CORS configured (it should be in Program.cs).
+1. Check backend logs for warnings/deadlocks
+2. Simplify query (reduce limit, remove relations)
+3. Check SQL Server: `docker logs ng-graphql-sql-server`
+4. If deadlock: Verify EF Core + Dapper share DbTransaction (CLAUDE.md)
 
 ### "Query depth exceeds limit"
 
@@ -501,9 +669,9 @@ subscription {
 
 **Fix:**
 
-1. Reduce nesting: split multi-level query into separate queries
-2. Example: Instead of build → parts → subcomponent → subcomponent → subcomponent
-3. Use: build query, then separate parts query
+1. Split into separate queries (e.g., fetch build, then fetch parts)
+2. Example: `build { id parts { id } }` → separate parts query
+3. Use DataLoaders instead of deep nesting
 
 ---
 
@@ -549,7 +717,22 @@ subscription {
 - **Frontend Operations:** `frontend/src/app/graphql/build.graphql` — Example queries/mutations
 - **Architecture Guide:** `docs/ARCHITECTURE.md` — System design, DataLoaders, type-safety
 - **Resolver Code:** `backend/src/FactoryApp.GraphQL/` — Mutation/query implementations
+- **JetBrains HTTP Client Docs:** https://www.jetbrains.com/help/webstorm/http-client-in-product-code-editor.html
+- **JetBrains HTTP Client CLI:** https://www.jetbrains.com/help/webstorm/http-client-cli.html
+
+## IDE & CLI Comparison
+
+| Feature             | Rider/WebStorm IDE | ijhttp CLI            |
+| ------------------- | ------------------ | --------------------- |
+| **Visual Editor**   | ✅ Yes             | ❌ No                 |
+| **Run Button**      | ✅ Yes             | ✅ Yes (command line) |
+| **Response Panel**  | ✅ Yes             | ✅ STDOUT             |
+| **Variables**       | ✅ global.set/get  | ✅ --env-file, --env  |
+| **Test Assertions** | ✅ Yes             | ✅ Yes                |
+| **Test Reports**    | ✅ HTML/JSON       | ✅ JUnit XML          |
+| **Automation**      | ⚠️ Manual          | ✅ Scripts/CI         |
+| **Real-time Sync**  | ✅ Yes             | ❌ No                 |
 
 ---
 
-**Last Updated:** 2026-06-17
+**Last Updated:** 2026-06-18 | **Tools:** JetBrains Rider, WebStorm, ijhttp CLI
