@@ -153,13 +153,27 @@ pnpm dev
 
 ### Testing GraphQL API with HTTP Client
 
-Use the **REST Client** VS Code extension to test GraphQL mutations and queries manually:
+Use **JetBrains HTTP Client** to test GraphQL mutations and queries:
 
-- **Install:** `humao.rest-client` from VS Code extensions marketplace
-- **Location:** `backend/src/FactoryApp.WebApi/` (8 organized `.http` files)
-- **Guide:** [**docs/HTTP-CLIENT-TESTING-GUIDE.md**](./docs/HTTP-CLIENT-TESTING-GUIDE.md)
+**IDE Integration (Recommended for development):**
 
-Example: Open `01-authentication.http` → Click "Send Request" above any GraphQL query.
+- **Rider** (C#/.NET) — Built-in, no installation needed
+- **WebStorm** (TypeScript/JavaScript) — Built-in, no installation needed
+- Open `backend/src/FactoryApp.WebApi/*.http` files → Click Run button in editor gutter
+
+**CLI (For automation/CI/CD):**
+
+```bash
+# Install ijhttp (JetBrains HTTP Client CLI)
+brew install --cask jetbrains-toolbox  # macOS
+# or download ZIP from https://www.jetbrains.com/help/webstorm/http-client-cli.html
+
+# Run requests
+ijhttp 01-authentication.http --env-file http-client.env.json
+ijhttp 02-create-build.http --env-file http-client.env.json --report
+```
+
+**Guide:** [**docs/HTTP-CLIENT-TESTING-GUIDE.md**](./docs/HTTP-CLIENT-TESTING-GUIDE.md) — 8 sections covering IDE + CLI usage, workflows, performance profiling, troubleshooting
 
 ### Stop Services
 
