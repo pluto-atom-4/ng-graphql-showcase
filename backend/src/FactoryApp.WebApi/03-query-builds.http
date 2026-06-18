@@ -1,0 +1,107 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+@buildId = paste_build_id_from_02_create_build_here
+
+###
+### 03. QUERY BUILDS - PAGINATION & FILTERING
+### Single build queries and paginated list queries
+### Note: Run 01-authentication.http then 02-create-build.http first
+###
+
+### Query single build by ID with all fields
+### Verify: id, name, description, status, createdAt, updatedAt present
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"{{buildId}}\") { id name description status createdAt updatedAt } }"
+}
+
+###
+### Query single build with invalid ID
+### Should return null (build not found)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"00000000-0000-0000-0000-000000000000\") { id name } }"
+}
+
+###
+### Query paginated builds - first page
+### Verify: items array, totalCount, hasNextPage, hasPreviousPage
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 10, offset: 0) { items { id name status } totalCount hasNextPage hasPreviousPage } }"
+}
+
+###
+### Query paginated builds - second page
+### offset=10 should skip first 10 items
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 10, offset: 10) { items { id name } totalCount hasNextPage hasPreviousPage } }"
+}
+
+###
+### Query with small page size
+### Verify pagination logic with limit=5
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 5, offset: 0) { items { id name } totalCount hasNextPage } }"
+}
+
+###
+### Query builds with invalid limit (negative)
+### Should return GraphQL validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: -1, offset: 0) { items { id } } }"
+}
+
+###
+### Query builds with invalid offset (negative)
+### Should return GraphQL validation error
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 10, offset: -1) { items { id } } }"
+}
+
+###
+### Query builds with limit exceeding maximum (1001)
+### Should return validation error (max limit: 1000)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 1001, offset: 0) { items { id } } }"
+}
+
+###
+### Empty result query
+### Query with high offset to verify empty pagination response
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { builds(limit: 10, offset: 10000) { items { id } totalCount hasNextPage } }"
+}
