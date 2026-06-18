@@ -1,0 +1,86 @@
+@import http-client.env.json
+@token = paste_token_from_01_authentication_here
+@buildId = paste_build_id_from_02_create_build_here
+
+###
+### 05. UPDATE BUILD STATUS - State Transitions & Mutations
+### Test all status transitions: PENDING → RUNNING → COMPLETE → FAILED
+### Note: Run 01-authentication.http then 02-create-build.http first
+###
+
+### Update status PENDING → RUNNING
+### Verify: status updated, updatedAt timestamp changed
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: RUNNING) { id status updatedAt } }"
+}
+
+###
+### Update status RUNNING → COMPLETE
+### Verify: status changed successfully
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: COMPLETE) { id status updatedAt } }"
+}
+
+###
+### Update status COMPLETE → FAILED
+### Verify: status transition allowed (testing state machine)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: FAILED) { id status updatedAt } }"
+}
+
+###
+### Update status back to PENDING
+### Verify: can transition from FAILED to PENDING
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: PENDING) { id status } }"
+}
+
+###
+### Update status with invalid build ID
+### Should return GraphQL error (build not found)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"00000000-0000-0000-0000-000000000000\", status: RUNNING) { id status } }"
+}
+
+###
+### Update build status and verify complete object returned
+### Returns all Build fields after mutation
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: RUNNING) { id name description status createdAt updatedAt } }"
+}
+
+###
+### Test WebSocket event emission (optional)
+### UpdateBuildStatus should emit buildStatusChanged event
+### Note: Requires separate WebSocket subscription setup to verify
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: COMPLETE) { id status } }"
+}
