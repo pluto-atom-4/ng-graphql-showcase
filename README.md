@@ -124,7 +124,7 @@ pnpm setup
 
 ```bash
 pnpm dev:backend
-# Runs: dotnet watch run on Port 5000
+# Runs: dotnet watch run on Port 5275
 ```
 
 **Terminal 2: Frontend (Angular with HMR)**
@@ -147,7 +147,7 @@ pnpm dev
 
 | Service              | URL                                                         |
 | -------------------- | ----------------------------------------------------------- |
-| **GraphQL Endpoint** | `http://localhost:5000/graphql`                             |
+| **GraphQL Endpoint** | `http://localhost:5275/graphql`                             |
 | **Angular Frontend** | `http://localhost:4200`                                     |
 | **SQL Server**       | `Server=localhost,1433; User Id=sa; Password=P@ssw0rd1234!` |
 

@@ -23,7 +23,7 @@ pnpm setup              # Starts Docker + applies migrations
 
 ```bash
 pnpm dev               # Concurrent backend + frontend watchers
-# Terminal 1: pnpm dev:backend  (Port 5000)
+# Terminal 1: pnpm dev:backend  (Port 5275)
 # Terminal 2: pnpm dev:frontend (Port 4200)
 ```
 

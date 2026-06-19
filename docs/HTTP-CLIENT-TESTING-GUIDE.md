@@ -47,9 +47,9 @@ docker run --rm -v $(pwd):/home/user jetbrains/ijhttp /home/user/myrequest.http
 
 ### System Requirements
 
-- **Backend running on port 5000**
+- **Backend running on port 5275**
   - Start with: `pnpm dev:backend` (or `cd backend && dotnet watch run`)
-  - Verify: Open http://localhost:5000/graphql in browser
+  - Verify: Open http://localhost:5275/graphql in browser
 
 - **SQL Server running** (via Docker)
   - Start with: `pnpm docker:up`
@@ -68,6 +68,17 @@ docker run --rm -v $(pwd):/home/user jetbrains/ijhttp /home/user/myrequest.http
 ## 2. Basics: Sending Your First Request
 
 ### HTTP File Anatomy (JetBrains Format)
+
+File: `http-client.env.json` defines baseUrl and graphqlUrl
+
+```json
+{
+  "baseUrl": "http://localhost:5275",
+  "graphqlUrl": "http://localhost:5275/graphql"
+}
+```
+
+Example `.http` request:
 
 ```http
 @import http-client.env.json
@@ -289,7 +300,7 @@ ijhttp 04-query-build-with-relations.http --env-file http-client.env.json -L VER
 2. Backend logs show WebSocket event: `buildStatusChanged` emitted
 3. (Advanced) Use `graphql-ws` CLI to subscribe to real-time updates:
    ```bash
-   graphql-ws -u ws://localhost:5000/graphql
+   graphql-ws -u ws://localhost:5275/graphql
    ```
 
 ---
@@ -482,7 +493,7 @@ Compare slow queries (>100ms) to find bottlenecks.
 
 ```bash
 npm install -g graphql-ws
-graphql-ws -u ws://localhost:5000/graphql
+graphql-ws -u ws://localhost:5275/graphql
 ```
 
 Then subscribe:
@@ -547,8 +558,8 @@ ijhttp 07-submit-test-run.http --env-file http-client.env.json -L VERBOSE
 # Create environment file with test data
 cat > test-env.json <<EOF
 {
-  "baseUrl": "http://localhost:5000",
-  "graphqlUrl": "http://localhost:5000/graphql",
+  "baseUrl": "http://localhost:5275",
+  "graphqlUrl": "http://localhost:5275/graphql",
   "token": ""
 }
 EOF
@@ -636,7 +647,7 @@ ijhttp 02-create-build.http --env token=$TOKEN ...
 
 1. Terminal: `pnpm dev:backend` (or `cd backend && dotnet watch run`)
 2. Wait 10-15 seconds for startup
-3. Verify: `curl http://localhost:5000/health`
+3. Verify: `curl http://localhost:5275/health`
 4. Retry request
 
 ### "Unable to parse response" (CLI)
@@ -694,8 +705,8 @@ ijhttp 02-create-build.http --env token=$TOKEN ...
 
 | Variable     | Value                           | Used In                    |
 | ------------ | ------------------------------- | -------------------------- |
-| `baseUrl`    | `http://localhost:5000`         | All files                  |
-| `graphqlUrl` | `http://localhost:5000/graphql` | All files                  |
+| `baseUrl`    | `http://localhost:5275`         | All files                  |
+| `graphqlUrl` | `http://localhost:5275/graphql` | All files                  |
 | `token`      | JWT from login                  | All authenticated requests |
 | `buildId`    | UUID from create build          | Parts, updates, test runs  |
 
