@@ -41,10 +41,20 @@ Instead of local markdown files, document requirements, findings, and acceptance
 - **No manual briefing needed.** Both you and the agent construct understanding from authoritative sources
 - Issues stay current (unlike stale local docs that diverge from code)
 
+**How to Create the Issue: GitHub Copilot CLI**
+
+Use `gh copilot` to draft the issue body:
+
+```bash
+gh copilot -p "Read BuildQuery.cs and BuildMutation.cs, review against ARCHITECTURE.md and DATABASE.md, then draft a detailed GitHub issue body with critical issues, impact assessment, and remediation checklist."
+```
+
+Copilot generates the analysis → you paste into GitHub Issue → both you and Claude Code read it for context.
+
 **The GitHub Issue UI itself becomes your tracking dashboard:**
 
 - Title: What's the problem?
-- Body: Complete analysis with checklist
+- Body: Complete analysis with checklist (drafted by Copilot, edited by you)
 - Comments: Agent's closure evidence + your questions
 - Linked PRs: See which changes address which issues
 
@@ -187,14 +197,36 @@ When you do this:
 
 ---
 
+## GitHub Copilot + Claude Code: Division of Labor
+
+In this workflow, **Copilot and Claude Code handle different tasks:**
+
+| Task                  | Tool                                       | Why                                             |
+| --------------------- | ------------------------------------------ | ----------------------------------------------- |
+| **Draft issue body**  | GitHub Copilot CLI (`gh copilot -p "..."`) | Fast inline analysis; you edit and post         |
+| **Implement the fix** | Claude Code (PR implementation)            | Full context window; multi-file refactoring     |
+| **Review & verify**   | Claude Code (reads issue + PRs)            | Understands original requirements + all changes |
+| **Script execution**  | Bash (`summary_pr.sh`)                     | Simple, deterministic; GitHub native            |
+
+**Workflow Pattern:**
+
+1. You identify the issue
+2. Copilot CLI drafts analysis → you refine → post as GitHub issue
+3. Claude Code reads issue + repo → implements 4 focused PRs
+4. You run `summary_pr.sh` → Claude Code reviews all PRs against issue → closure comment
+
+---
+
 ## Takeaway for Solo Developers
 
 If you're using Claude Code + GitHub Copilot as a solo developer:
 
-1. **Put requirements in GitHub Issues** (grip context there, not in local brain/docs)
-2. **Break large work into focused PRs** (easier to review, easier to verify each piece works)
-3. **Let the AI agent close the loop** (via GitHub comment, not email; stays in the issue)
-4. **Use scripts to consolidate** (e.g., summary_pr.sh) to give agent + yourself the full picture
+1. **Use Copilot CLI to draft GitHub issues** (fast analysis → you refine it)
+2. **Put requirements in GitHub Issues** (grip context there, not in local brain/docs)
+3. **Use Claude Code to implement** (full context window for multi-file refactoring)
+4. **Break large work into focused PRs** (easier to review, easier to verify each piece works)
+5. **Let Claude Code close the loop** (via GitHub comment, not email; stays in the issue)
+6. **Use scripts to consolidate** (e.g., summary_pr.sh) to give Claude Code + yourself the full picture
 
 You'll ship faster, maintain your own context better, and give future-you a clear trail of how the codebase evolved.
 
