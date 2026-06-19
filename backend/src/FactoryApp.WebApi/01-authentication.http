@@ -1,5 +1,3 @@
-@import http-client.env.json
-
 ###
 ### 01. AUTHENTICATION WORKFLOWS
 ### JWT login flows and token extraction
