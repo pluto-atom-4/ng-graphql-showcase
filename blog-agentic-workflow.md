@@ -1,4 +1,4 @@
-# Agentic Coding with Claude Code: Three Lessons from Issue #75
+# GitHub-Centric Agentic Development: Using Copilot CLI + Claude Code for Solo Developers
 
 **Published:** 2026-06-19  
 **Context:** GraphQL compliance overhaul (Issue #75 → 4 PRs, 58 tests, 0 failures)
