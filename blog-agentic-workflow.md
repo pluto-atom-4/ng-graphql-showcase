@@ -49,7 +49,7 @@ Use `gh copilot` to draft the issue body:
 gh copilot -p "Read BuildQuery.cs and BuildMutation.cs, review against ARCHITECTURE.md and DATABASE.md, then draft a detailed GitHub issue body with critical issues, impact assessment, and remediation checklist."
 ```
 
-Copilot generates the analysis → you paste into GitHub Issue → both you and Claude Code read it for context.
+Workflow: Copilot creates GitHub Issue → Claude Code generates detailed analysis → add as comment to Issue → Claude Code implements and creates focused PRs → consolidate PR content with script → final Review against Issue criteria.
 
 **The GitHub Issue UI itself becomes your tracking dashboard:**
 
