@@ -69,16 +69,41 @@ docker run --rm -v $(pwd):/home/user jetbrains/ijhttp /home/user/myrequest.http
 
 ### HTTP File Anatomy (JetBrains Format)
 
-File: `http-client.env.json` defines baseUrl and graphqlUrl
+**Environment Files:**
+
+`http-client.env.json` — Public variables (dev, production profiles):
 
 ```json
 {
-  "baseUrl": "http://localhost:5275",
-  "graphqlUrl": "http://localhost:5275/graphql"
+  "dev": {
+    "baseUrl": "http://localhost:5275",
+    "graphqlUrl": "http://localhost:5275/graphql",
+    "token": ""
+  },
+  "production": {
+    "baseUrl": "https://api.example.com",
+    "graphqlUrl": "https://api.example.com/graphql",
+    "token": ""
+  }
 }
 ```
 
-Example `.http` request:
+`http-client.private.env.json` — Sensitive data (token values, passwords). Automatically takes precedence over public file:
+
+```json
+{
+  "dev": {
+    "token": "eyJhbGc..."
+  },
+  "production": {
+    "token": "prod-token..."
+  }
+}
+```
+
+To use environment, click dropdown in IDE gutter or pass `--env dev` to CLI.
+
+\*\*Example `.http` request:
 
 ```http
 @import http-client.env.json
@@ -271,8 +296,12 @@ Copy token from response and replace placeholder.
 **CLI:**
 
 ```bash
-ijhttp 02-create-build.http --env-file http-client.env.json
+# Run with dev environment (default)
+ijhttp 02-create-build.http --env dev
 # Runs all requests, shows errors in stdout
+
+# Run with production environment
+ijhttp 02-create-build.http --env production
 ```
 
 **Expected:** All return HTTP 200 with `errors` array (not HTTP 400/500).
@@ -375,7 +404,7 @@ Add validation scripts after requests:
 **CLI Test Reports:**
 
 ```bash
-ijhttp 02-create-build.http --env-file http-client.env.json --report
+ijhttp 02-create-build.http --env dev --report
 # Generates JUnit XML in reports/ directory
 # Use in CI/CD pipelines
 ```
@@ -426,8 +455,8 @@ info: Total: 4 queries (1 + N) ❌
 **CLI with Verbose Logging:**
 
 ```bash
-ijhttp 04-query-build-with-relations.http --env-file http-client.env.json -L VERBOSE
-# Shows all database queries in output
+ijhttp 04-query-build-with-relations.http --env dev -L VERBOSE
+# -L VERBOSE shows all database queries in output
 ```
 
 ### Query Performance Measurement
@@ -703,12 +732,12 @@ ijhttp 02-create-build.http --env token=$TOKEN ...
 
 ### Useful Variables
 
-| Variable     | Value                           | Used In                    |
-| ------------ | ------------------------------- | -------------------------- |
-| `baseUrl`    | `http://localhost:5275`         | All files                  |
-| `graphqlUrl` | `http://localhost:5275/graphql` | All files                  |
-| `token`      | JWT from login                  | All authenticated requests |
-| `buildId`    | UUID from create build          | Parts, updates, test runs  |
+| Variable     | Dev Value                        | Production Value                                     | Scope                         |
+| ------------ | -------------------------------- | ---------------------------------------------------- | ----------------------------- |
+| `baseUrl`    | `http://localhost:5275`          | `https://api.example.com`                            | http-client.env.json          |
+| `graphqlUrl` | `http://localhost:5275/graphql`  | `https://api.example.com/graphql`                    | http-client.env.json          |
+| `token`      | JWT from login (empty initially) | Stored in http-client.private.env.json (not in repo) | Sensitive: private env        |
+| `buildId`    | UUID from create build response  | UUID from create build response                      | Set via `client.global.set()` |
 
 ### Response Status Codes
 
