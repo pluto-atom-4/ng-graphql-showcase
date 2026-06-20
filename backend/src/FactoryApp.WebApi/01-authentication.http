@@ -12,6 +12,22 @@ Content-Type: application/json
   "query": "mutation { login(email: \"test@example.com\", password: \"SecurePassword123!\") { token user { id email } } }"
 }
 
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Token returned", function() {
+    client.assert(response.body.data.login.token, "Missing token");
+  });
+
+  client.global.set("token", response.body.data.login.token);
+%}
+
 ###
 ### Login with invalid email format
 ### Should return GraphQL validation error
@@ -21,6 +37,12 @@ Content-Type: application/json
 {
   "query": "mutation { login(email: \"not-an-email\", password: \"SecurePassword123!\") { token user { id email } } }"
 }
+
+> {%
+  client.test("GraphQL validation error present", function() {
+    client.assert(response.body.errors, "Expected validation error for invalid email");
+  });
+%}
 
 ###
 ### Login with weak password
@@ -32,6 +54,12 @@ Content-Type: application/json
   "query": "mutation { login(email: \"test@example.com\", password: \"Short1!\") { token user { id email } } }"
 }
 
+> {%
+  client.test("GraphQL validation error present", function() {
+    client.assert(response.body.errors, "Expected validation error for weak password");
+  });
+%}
+
 ###
 ### Login with empty credentials
 ### Should return validation error for empty email
@@ -41,6 +69,12 @@ Content-Type: application/json
 {
   "query": "mutation { login(email: \"\", password: \"SecurePassword123!\") { token user { id email } } }"
 }
+
+> {%
+  client.test("GraphQL validation error present", function() {
+    client.assert(response.body.errors, "Expected validation error for empty email");
+  });
+%}
 
 ###
 ### Extract token from successful login response

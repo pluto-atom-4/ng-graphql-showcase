@@ -18,6 +18,22 @@ Authorization: Bearer {{token}}
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"All assertions passed\", fileUrl: \"https://example.com/test-results/build-001.json\") { id buildId status result fileUrl completedAt createdAt } }"
 }
 
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("TestRun ID returned", function() {
+    client.assert(response.body.data.submitTestRun.id, "Missing testRunId");
+  });
+
+  client.global.set("testRunId", response.body.data.submitTestRun.id);
+%}
+
 ###
 ### Submit test run with RUNNING status
 ### Verify: status can be RUNNING (in-progress test)
@@ -28,6 +44,16 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: RUNNING, result: null, fileUrl: null) { id status } }"
 }
+
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Status is RUNNING", function() {
+    client.assert(response.body.data.submitTestRun.status === "RUNNING", "Expected RUNNING, got " + response.body.data.submitTestRun.status);
+  });
+%}
 
 ###
 ### Submit test run with FAILED status and result
@@ -40,6 +66,16 @@ Authorization: Bearer {{token}}
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: FAILED, result: \"Assertion failed: expected true but got false at line 42\", fileUrl: \"https://example.com/logs/failure-001.log\") { id status result } }"
 }
 
+> {%
+  client.test("Status is FAILED", function() {
+    client.assert(response.body.data.submitTestRun.status === "FAILED", "Expected FAILED, got " + response.body.data.submitTestRun.status);
+  });
+
+  client.test("Result preserved", function() {
+    client.assert(response.body.data.submitTestRun.result, "Expected result text");
+  });
+%}
+
 ###
 ### Submit test run with FAILED status but no result
 ### Should return validation error (failed tests require result explanation)
@@ -50,6 +86,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: FAILED, result: null, fileUrl: null) { id } }"
 }
+
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for FAILED without result");
+  });
+%}
 
 ###
 ### Submit test run with FAILED status and empty result
@@ -62,6 +104,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: FAILED, result: \"\", fileUrl: null) { id } }"
 }
 
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for empty result");
+  });
+%}
+
 ###
 ### Submit test run with invalid fileUrl
 ### Should return validation error (must be valid URL)
@@ -72,6 +120,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Pass\", fileUrl: \"not-a-url\") { id } }"
 }
+
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for invalid fileUrl");
+  });
+%}
 
 ###
 ### Submit test run with valid fileUrl and PASSED status
@@ -84,6 +138,16 @@ Authorization: Bearer {{token}}
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Test passed\", fileUrl: \"https://storage.example.com/results/test-2026-06-17.zip\") { id fileUrl } }"
 }
 
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("FileUrl stored", function() {
+    client.assert(response.body.data.submitTestRun.fileUrl, "Expected fileUrl");
+  });
+%}
+
 ###
 ### Submit test run without fileUrl
 ### Verify: fileUrl is optional
@@ -94,6 +158,16 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Pass without file\", fileUrl: null) { id fileUrl status } }"
 }
+
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("FileUrl optional", function() {
+    client.assert(response.body.data.submitTestRun.status === "PASSED", "Expected PASSED status");
+  });
+%}
 
 ###
 ### Submit test run with large result payload
@@ -106,6 +180,13 @@ Authorization: Bearer {{token}}
   "query": "mutation { submitTestRun(buildId: \"{{buildId}}\", status: PASSED, result: \"Test results: \\n1. Voltage test passed: 12.0V ± 0.1V \\n2. Current draw acceptable: 2.5A max \\n3. Temperature within limits: 45°C \\n4. Signal integrity verified \\n5. All subsystems operational\", fileUrl: \"https://example.com/detailed-results.json\") { id result } }"
 }
 
+> {%
+  client.test("Large payload handled", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+    client.assert(response.body.data.submitTestRun.result, "Expected result");
+  });
+%}
+
 ###
 ### Query build with submitted test runs
 ### Verify: test runs accessible via DataLoader
@@ -116,3 +197,9 @@ Authorization: Bearer {{token}}
 {
   "query": "query { build(id: \"{{buildId}}\") { id name testRuns { id status result fileUrl completedAt } } }"
 }
+
+> {%
+  client.test("TestRuns accessible", function() {
+    client.assert(Array.isArray(response.body.data.build.testRuns), "Expected testRuns array");
+  });
+%}

@@ -17,6 +17,22 @@ Authorization: Bearer {{token}}
   "query": "query { build(id: \"{{buildId}}\") { id name description status createdAt updatedAt } }"
 }
 
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Build fields present", function() {
+    client.assert(response.body.data.build.id, "Missing buildId");
+    client.assert(response.body.data.build.name, "Missing name");
+    client.assert(response.body.data.build.status, "Missing status");
+  });
+%}
+
 ###
 ### Query single build with invalid ID
 ### Should return null (build not found)
@@ -27,6 +43,16 @@ Authorization: Bearer {{token}}
 {
   "query": "query { build(id: \"00000000-0000-0000-0000-000000000000\") { id name } }"
 }
+
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Build is null", function() {
+    client.assert(response.body.data.build === null, "Expected null for invalid ID");
+  });
+%}
 
 ###
 ### Query paginated builds - first page
@@ -39,6 +65,19 @@ Authorization: Bearer {{token}}
   "query": "query { builds(limit: 10, offset: 0) { items { id name status } totalCount hasNextPage hasPreviousPage } }"
 }
 
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("Pagination fields present", function() {
+    client.assert(response.body.data.builds.items, "Missing items array");
+    client.assert(typeof response.body.data.builds.totalCount === "number", "Missing totalCount");
+    client.assert(typeof response.body.data.builds.hasNextPage === "boolean", "Missing hasNextPage");
+    client.assert(typeof response.body.data.builds.hasPreviousPage === "boolean", "Missing hasPreviousPage");
+  });
+%}
+
 ###
 ### Query paginated builds - second page
 ### offset=10 should skip first 10 items
@@ -49,6 +88,12 @@ Authorization: Bearer {{token}}
 {
   "query": "query { builds(limit: 10, offset: 10) { items { id name } totalCount hasNextPage hasPreviousPage } }"
 }
+
+> {%
+  client.test("Pagination offset applied", function() {
+    client.assert(typeof response.body.data.builds.hasPreviousPage === "boolean", "Missing hasPreviousPage");
+  });
+%}
 
 ###
 ### Query with small page size
@@ -61,6 +106,12 @@ Authorization: Bearer {{token}}
   "query": "query { builds(limit: 5, offset: 0) { items { id name } totalCount hasNextPage } }"
 }
 
+> {%
+  client.test("Limit applied correctly", function() {
+    client.assert(response.body.data.builds.items.length <= 5, "Expected <= 5 items, got " + response.body.data.builds.items.length);
+  });
+%}
+
 ###
 ### Query builds with invalid limit (negative)
 ### Should return GraphQL validation error
@@ -71,6 +122,12 @@ Authorization: Bearer {{token}}
 {
   "query": "query { builds(limit: -1, offset: 0) { items { id } } }"
 }
+
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for negative limit");
+  });
+%}
 
 ###
 ### Query builds with invalid offset (negative)
@@ -83,6 +140,12 @@ Authorization: Bearer {{token}}
   "query": "query { builds(limit: 10, offset: -1) { items { id } } }"
 }
 
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for negative offset");
+  });
+%}
+
 ###
 ### Query builds with limit exceeding maximum (1001)
 ### Should return validation error (max limit: 1000)
@@ -94,6 +157,12 @@ Authorization: Bearer {{token}}
   "query": "query { builds(limit: 1001, offset: 0) { items { id } } }"
 }
 
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for limit > 1000");
+  });
+%}
+
 ###
 ### Empty result query
 ### Query with high offset to verify empty pagination response
@@ -104,3 +173,9 @@ Authorization: Bearer {{token}}
 {
   "query": "query { builds(limit: 10, offset: 10000) { items { id } totalCount hasNextPage } }"
 }
+
+> {%
+  client.test("Empty result handling", function() {
+    client.assert(Array.isArray(response.body.data.builds.items), "Expected items array");
+  });
+%}

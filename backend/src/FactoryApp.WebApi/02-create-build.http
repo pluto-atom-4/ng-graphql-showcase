@@ -16,6 +16,22 @@ Authorization: Bearer {{token}}
   "query": "mutation { createBuild(name: \"Manufacturing Build A\", description: \"High-volume production run for Q2 2026\") { id name description status createdAt updatedAt } }"
 }
 
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Build ID returned", function() {
+    client.assert(response.body.data.createBuild.id, "Missing buildId");
+  });
+
+  client.global.set("buildId", response.body.data.createBuild.id);
+%}
+
 ###
 ### Create build with valid name, no description
 ### Description is optional
@@ -26,6 +42,16 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { createBuild(name: \"Quick Build B\") { id name description status } }"
 }
+
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+%}
 
 ###
 ### Create build with empty name
@@ -38,6 +64,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { createBuild(name: \"\", description: \"Description without name\") { id name } }"
 }
 
+> {%
+  client.test("GraphQL validation error present", function() {
+    client.assert(response.body.errors, "Expected validation error for empty name");
+  });
+%}
+
 ###
 ### Create build with name exceeding 256 characters
 ### Should return validation error (max length: 256)
@@ -48,6 +80,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { createBuild(name: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", description: \"Too long name\") { id name } }"
 }
+
+> {%
+  client.test("GraphQL validation error present", function() {
+    client.assert(response.body.errors, "Expected validation error for name > 256");
+  });
+%}
 
 ###
 ### Create build with description exceeding 1000 characters
@@ -60,6 +98,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { createBuild(name: \"Valid Name\", description: \"Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliquua\") { id } }"
 }
 
+> {%
+  client.test("GraphQL validation error present", function() {
+    client.assert(response.body.errors, "Expected validation error for description > 1000");
+  });
+%}
+
 ###
 ### Build status after creation
 ### Default status is PENDING
@@ -70,3 +114,9 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { createBuild(name: \"Status Check Build\", description: \"Verifying default status\") { id status } }"
 }
+
+> {%
+  client.test("Default status is PENDING", function() {
+    client.assert(response.body.data.createBuild.status === "PENDING", "Expected PENDING status, got " + response.body.data.createBuild.status);
+  });
+%}

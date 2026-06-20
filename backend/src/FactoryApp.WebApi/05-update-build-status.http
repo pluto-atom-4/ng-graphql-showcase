@@ -17,6 +17,16 @@ Authorization: Bearer {{token}}
   "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: RUNNING) { id status updatedAt } }"
 }
 
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Status updated to RUNNING", function() {
+    client.assert(response.body.data.updateBuildStatus.status === "RUNNING", "Expected RUNNING, got " + response.body.data.updateBuildStatus.status);
+  });
+%}
+
 ###
 ### Update status RUNNING → COMPLETE
 ### Verify: status changed successfully
@@ -27,6 +37,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: COMPLETE) { id status updatedAt } }"
 }
+
+> {%
+  client.test("Status updated to COMPLETE", function() {
+    client.assert(response.body.data.updateBuildStatus.status === "COMPLETE", "Expected COMPLETE, got " + response.body.data.updateBuildStatus.status);
+  });
+%}
 
 ###
 ### Update status COMPLETE → FAILED
@@ -39,6 +55,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: FAILED) { id status updatedAt } }"
 }
 
+> {%
+  client.test("Status updated to FAILED", function() {
+    client.assert(response.body.data.updateBuildStatus.status === "FAILED", "Expected FAILED, got " + response.body.data.updateBuildStatus.status);
+  });
+%}
+
 ###
 ### Update status back to PENDING
 ### Verify: can transition from FAILED to PENDING
@@ -49,6 +71,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: PENDING) { id status } }"
 }
+
+> {%
+  client.test("Status updated to PENDING", function() {
+    client.assert(response.body.data.updateBuildStatus.status === "PENDING", "Expected PENDING, got " + response.body.data.updateBuildStatus.status);
+  });
+%}
 
 ###
 ### Update status with invalid build ID
@@ -61,6 +89,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { updateBuildStatus(id: \"00000000-0000-0000-0000-000000000000\", status: RUNNING) { id status } }"
 }
 
+> {%
+  client.test("GraphQL error for invalid ID", function() {
+    client.assert(response.body.errors, "Expected error for invalid buildId");
+  });
+%}
+
 ###
 ### Update build status and verify complete object returned
 ### Returns all Build fields after mutation
@@ -71,6 +105,14 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: RUNNING) { id name description status createdAt updatedAt } }"
 }
+
+> {%
+  client.test("Build object returned", function() {
+    client.assert(response.body.data.updateBuildStatus.id, "Missing id");
+    client.assert(response.body.data.updateBuildStatus.name, "Missing name");
+    client.assert(response.body.data.updateBuildStatus.status, "Missing status");
+  });
+%}
 
 ###
 ### Test WebSocket event emission (optional)
@@ -83,3 +125,9 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { updateBuildStatus(id: \"{{buildId}}\", status: COMPLETE) { id status } }"
 }
+
+> {%
+  client.test("Status mutation successful", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+%}
