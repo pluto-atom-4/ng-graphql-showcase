@@ -16,6 +16,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { createBuild(description: \"Missing name argument\") { id } }"
 }
 
+> {%
+  client.test("GraphQL error present", function() {
+    client.assert(response.body.errors, "Expected GraphQL error for missing argument");
+  });
+%}
+
 ###
 ### Invalid GraphQL syntax - unmatched brace
 ### Should return parse error
@@ -26,6 +32,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { createBuild(name: \"Test\") { id name } }"
 }
+
+> {%
+  client.test("GraphQL parse error", function() {
+    client.assert(response.body.errors, "Expected parse error");
+  });
+%}
 
 ###
 ### Requesting non-existent field
@@ -38,6 +50,12 @@ Authorization: Bearer {{token}}
   "query": "query { build(id: \"123\") { id name nonExistentField } }"
 }
 
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for non-existent field");
+  });
+%}
+
 ###
 ### Using wrong type for argument
 ### Expected: Int, Got: String
@@ -48,6 +66,12 @@ Authorization: Bearer {{token}}
 {
   "query": "query { builds(limit: \"not-a-number\", offset: 0) { items { id } } }"
 }
+
+> {%
+  client.test("GraphQL type error", function() {
+    client.assert(response.body.errors, "Expected type error");
+  });
+%}
 
 ###
 ### Empty query body
@@ -60,6 +84,12 @@ Authorization: Bearer {{token}}
   "query": ""
 }
 
+> {%
+  client.test("GraphQL error for empty query", function() {
+    client.assert(response.body.errors, "Expected error for empty query");
+  });
+%}
+
 ###
 ### Malformed JSON (missing closing brace)
 ### Should return HTTP 400 or JSON parse error
@@ -71,6 +101,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { createBuild(name: \"Test\") { id }"
 }
 
+> {%
+  client.test("Malformed query error", function() {
+    client.assert(response.body.errors, "Expected error for malformed query");
+  });
+%}
+
 ###
 ### No authorization header (if required)
 ### Should return 401 Unauthorized or GraphQL auth error
@@ -80,6 +116,12 @@ Content-Type: application/json
 {
   "query": "mutation { createBuild(name: \"Unauthorized\", description: \"No token\") { id } }"
 }
+
+> {%
+  client.test("Auth error or rejection", function() {
+    client.assert(response.status === 401 || response.body.errors, "Expected auth error");
+  });
+%}
 
 ###
 ### Invalid token format
@@ -92,6 +134,12 @@ Authorization: Bearer invalid.token.format
   "query": "mutation { createBuild(name: \"Test\", description: null) { id } }"
 }
 
+> {%
+  client.test("Invalid token rejected", function() {
+    client.assert(response.status === 401 || response.body.errors, "Expected token validation error");
+  });
+%}
+
 ###
 ### Request to non-existent endpoint
 ### Should return 404 Not Found
@@ -102,6 +150,12 @@ Authorization: Bearer {{token}}
 {
   "query": "query { build(id: \"123\") { id } }"
 }
+
+> {%
+  client.test("404 for non-existent endpoint", function() {
+    client.assert(response.status === 404, "Expected 404, got " + response.status);
+  });
+%}
 
 ###
 ### Invalid enum value
@@ -114,6 +168,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { updateBuildStatus(id: \"123\", status: INVALID_STATUS) { id } }"
 }
 
+> {%
+  client.test("GraphQL enum validation error", function() {
+    client.assert(response.body.errors, "Expected enum validation error");
+  });
+%}
+
 ###
 ### Null when non-null expected
 ### buildId is required (non-null), cannot pass null
@@ -124,6 +184,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { updateBuildStatus(id: null, status: RUNNING) { id } }"
 }
+
+> {%
+  client.test("GraphQL non-null constraint error", function() {
+    client.assert(response.body.errors, "Expected non-null constraint error");
+  });
+%}
 
 ###
 ### Query timeout scenario (intentionally deep nesting)
@@ -136,6 +202,12 @@ Authorization: Bearer {{token}}
   "query": "query { builds(limit: 10, offset: 0) { items { id parts { id name testRuns { id status result fileUrl { url { domain { name { value } } } } } } } } }"
 }
 
+> {%
+  client.test("Depth limit enforced", function() {
+    client.assert(response.body.errors, "Expected depth limit error");
+  });
+%}
+
 ###
 ### Check error response format
 ### Successful error response should contain: errors array with message and extensions
@@ -146,3 +218,12 @@ Authorization: Bearer {{token}}
 {
   "query": "query { build(id: \"\") { id } }"
 }
+
+> {%
+  client.test("Error response format", function() {
+    client.assert(response.body.errors && Array.isArray(response.body.errors), "Expected errors array");
+    if (response.body.errors.length > 0) {
+      client.assert(response.body.errors[0].message, "Expected error message");
+    }
+  });
+%}

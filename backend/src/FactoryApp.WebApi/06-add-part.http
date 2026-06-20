@@ -17,6 +17,22 @@ Authorization: Bearer {{token}}
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Precision Bearing\", sku: \"SKU-PB-001\", quantity: 5) { id buildId name sku quantity createdAt } }"
 }
 
+> {%
+  client.test("HTTP 200", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Part ID returned", function() {
+    client.assert(response.body.data.addPart.id, "Missing partId");
+  });
+
+  client.global.set("partId", response.body.data.addPart.id);
+%}
+
 ###
 ### Add second part to same build
 ### Verify: multiple parts can belong to same build
@@ -27,6 +43,16 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Control Module\", sku: \"SKU-CM-042\", quantity: 2) { id buildId name sku quantity } }"
 }
+
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Part belongs to correct build", function() {
+    client.assert(response.body.data.addPart.buildId === client.global.get("buildId"), "buildId mismatch");
+  });
+%}
 
 ###
 ### Add part with zero quantity
@@ -39,6 +65,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Invalid Part\", sku: \"SKU-INV\", quantity: 0) { id name } }"
 }
 
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for zero quantity");
+  });
+%}
+
 ###
 ### Add part with negative quantity
 ### Should return validation error
@@ -49,6 +81,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Negative Part\", sku: \"SKU-NEG\", quantity: -10) { id } }"
 }
+
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for negative quantity");
+  });
+%}
 
 ###
 ### Add part to non-existent build
@@ -61,6 +99,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { addPart(buildId: \"00000000-0000-0000-0000-000000000000\", name: \"Orphan Part\", sku: \"SKU-ORP\", quantity: 5) { id } }"
 }
 
+> {%
+  client.test("GraphQL error for non-existent build", function() {
+    client.assert(response.body.errors, "Expected error for invalid buildId");
+  });
+%}
+
 ###
 ### Add part with empty name
 ### Should return validation error
@@ -71,6 +115,12 @@ Authorization: Bearer {{token}}
 {
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"\", sku: \"SKU-EMPTY\", quantity: 1) { id } }"
 }
+
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for empty name");
+  });
+%}
 
 ###
 ### Add part with empty SKU
@@ -83,6 +133,12 @@ Authorization: Bearer {{token}}
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"No SKU Part\", sku: \"\", quantity: 1) { id } }"
 }
 
+> {%
+  client.test("GraphQL validation error", function() {
+    client.assert(response.body.errors, "Expected validation error for empty SKU");
+  });
+%}
+
 ###
 ### Add part with large quantity
 ### Verify: supports high quantity values (e.g., 10000)
@@ -94,6 +150,16 @@ Authorization: Bearer {{token}}
   "query": "mutation { addPart(buildId: \"{{buildId}}\", name: \"Bulk Component\", sku: \"SKU-BULK-999\", quantity: 10000) { id quantity } }"
 }
 
+> {%
+  client.test("No GraphQL errors", function() {
+    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("Quantity stored correctly", function() {
+    client.assert(response.body.data.addPart.quantity === 10000, "Expected quantity 10000, got " + response.body.data.addPart.quantity);
+  });
+%}
+
 ###
 ### Query build with newly added parts
 ### Verify: parts visible via DataLoader
@@ -104,3 +170,9 @@ Authorization: Bearer {{token}}
 {
   "query": "query { build(id: \"{{buildId}}\") { id name parts { id name sku quantity } } }"
 }
+
+> {%
+  client.test("Parts accessible via query", function() {
+    client.assert(Array.isArray(response.body.data.build.parts), "Expected parts array");
+  });
+%}
