@@ -41,9 +41,9 @@ public class FixtureSeeder
     /// </summary>
     public static async Task SeedAllAsync(FactoryDbContext dbContext)
     {
-        // Hash passwords using bcrypt (matching expected format)
-        // Both test and admin users use: SecurePassword123!
-        const string hashedPassword = "$2a$11$K3v5Yh.CowdS2c1P5nBQhu1Y5iBJ3dNLHKh8hZRqcmMHPVa6LWlue";
+        // Generate bcrypt hash for test password: SecurePassword123!
+        // Hash is regenerated each call (safe for idempotent seeding due to WHERE check in SeedTestUsersAsync)
+        string hashedPassword = BCrypt.Net.BCrypt.HashPassword("SecurePassword123!");
 
         await SeedTestUsersAsync(dbContext, hashedPassword);
         await SeedTestBuildsAsync(dbContext);
@@ -83,9 +83,16 @@ public class FixtureSeeder
 
         foreach (var user in users)
         {
-            if (!await dbContext.AuthUsers.AnyAsync(u => u.Email == user.Email))
+            var existing = await dbContext.AuthUsers.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (existing == null)
             {
                 dbContext.AuthUsers.Add(user);
+            }
+            else
+            {
+                // Ensure password hash is current (idempotent)
+                existing.PasswordHash = hashedPassword;
+                dbContext.AuthUsers.Update(existing);
             }
         }
 

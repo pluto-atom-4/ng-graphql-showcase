@@ -19,14 +19,22 @@ Content-Type: application/json
     client.assert(response.status === 200, "Expected 200, got " + response.status);
   });
 
+  client.log("Response: " + JSON.stringify(response.body));
+
   errorValidator.assertNoErrors(response);
 
-  client.test("Token returned", function() {
-    client.assert(response.body.data.login.token, "Missing token");
+  client.test("Data object exists", function() {
+    client.assert(response.body.data, "Missing data. Errors: " + JSON.stringify(response.body.errors));
   });
 
-  tokenManager.saveToken("dev", response.body.data.login.token);
-  client.global.set("token", response.body.data.login.token);
+  client.test("Token returned", function() {
+    client.assert(response.body.data && response.body.data.login && response.body.data.login.token, "Missing token");
+  });
+
+  if (response.body.data && response.body.data.login && response.body.data.login.token) {
+    tokenManager.saveToken("dev", response.body.data.login.token);
+    client.global.set("token", response.body.data.login.token);
+  }
 %}
 
 ###

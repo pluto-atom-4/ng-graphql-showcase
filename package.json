@@ -14,7 +14,7 @@
     "dev:backend": "cd backend/src/FactoryApp.WebApi && dotnet watch run",
     "dev:frontend": "pnpm --filter frontend run ng serve",
     "build": "pnpm build:backend && pnpm build:frontend",
-    "build:backend": "dotnet build ./backend/FactoryApp.slnx",
+    "build:backend": "cd backend && dotnet build",
     "build:frontend": "pnpm --filter frontend run build",
     "test": "pnpm test:backend && pnpm test:frontend",
     "test:backend": "dotnet test ./backend/src",
