@@ -29,6 +29,10 @@ jobs:
         env:
           SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
         run: |
+          # 0. Pre-warm SQL Server image to reduce cold-start initialization time
+          echo "Pre-warming SQL Server Docker image..."
+          docker pull mcr.microsoft.com/mssql/server:2022-latest
+
           # 1. Start container with explicit port mapping and background daemon flags
           docker run -d \
             -p 1433:1433 \
