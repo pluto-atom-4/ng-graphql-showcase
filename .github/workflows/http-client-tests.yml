@@ -42,18 +42,18 @@ jobs:
             --name sql-server \
             mcr.microsoft.com/mssql/server:2022-latest
 
-          # 2. Wait up to 180 seconds for SQL Server to accept connections
+          # 2. Wait up to 300 seconds for SQL Server to accept connections
           echo "Waiting for SQL Server to boot completely..."
           SERVER_READY=false
 
-          for i in {1..180}; do
+          for i in {1..300}; do
             # Use docker exec to check health natively inside the container matrix
             if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
               echo "SQL Server is ready and accepting connections after $i seconds!"
               SERVER_READY=true
               break
             fi
-            echo "Still booting... ($i/180)"
+            echo "Still booting... ($i/300)"
             sleep 1
           done
 
@@ -73,7 +73,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "24"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
