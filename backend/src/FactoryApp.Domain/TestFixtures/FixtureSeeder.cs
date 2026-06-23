@@ -1,4 +1,3 @@
-using BCrypt.Net;
 using FactoryApp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,7 +43,7 @@ public class FixtureSeeder
     {
         // Generate bcrypt hash for test password: SecurePassword123!
         // Hash is regenerated each call (safe for idempotent seeding due to WHERE check in SeedTestUsersAsync)
-        string hashedPassword = BCrypt.HashPassword("SecurePassword123!");
+        string hashedPassword = BCrypt.Net.BCrypt.HashPassword("SecurePassword123!");
 
         await SeedTestUsersAsync(dbContext, hashedPassword);
         await SeedTestBuildsAsync(dbContext);
