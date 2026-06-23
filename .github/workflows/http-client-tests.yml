@@ -2,16 +2,18 @@ name: HTTP Client API Tests
 
 on:
   push:
-    branches: [main, develop]
-    paths:
-      - "backend/src/FactoryApp.WebApi/http-tests/**"
-      - "backend/src/**/*.cs"
-      - ".github/workflows/http-client-tests.yml"
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - "backend/src/FactoryApp.WebApi/http-tests/**"
-      - "backend/src/**/*.cs"
+    branches: ["fix/github-action-http-client-test"]
+
+  #    branches: [main, develop]
+  #    paths:
+  #      - "backend/src/FactoryApp.WebApi/http-tests/**"
+  #      - "backend/src/**/*.cs"
+  #      - ".github/workflows/http-client-tests.yml"
+  #  pull_request:
+  #    branches: [main, develop]
+  #    paths:
+  #      - "backend/src/FactoryApp.WebApi/http-tests/**"
+  #      - "backend/src/**/*.cs"
   workflow_dispatch:
 
 jobs:
@@ -19,24 +21,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    services:
-      sql-server:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: Y
-          SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
-          MSSQL_PID: Express
-        options: >-
-          --health-cmd="/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '${{ secrets.SQL_SA_PASSWORD }}' -Q 'SELECT 1'"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        ports:
-          - 1433:1433
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Spin up SQL Server Container
+        env:
+          SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
+        run: |
+          docker run -e "ACCEPT_EULA=Y" -e "MSSQL_PID=Express" -e "SA_PASSWORD=$SA_PASSWORD" \
+            -p 1433:1433 \
+            --name sql-server \
+            -d mcr.microsoft.com/mssql/server:2022-latest
+
+          # Wait for SQL Server to accept connections
+          echo "Waiting for SQL Server to boot..."
+          for i in {1..30}; do
+            if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server is ready!"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "SQL Server startup timed out"
+          exit 1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -66,7 +74,7 @@ jobs:
         run: |
           dotnet tool install --global dotnet-ef || true
           dotnet ef database update \
-            --connection "Server=localhost;Database=FactoryApp;User Id=sa;Password=$SQL_SA_PASSWORD;Encrypt=false;" \
+            --connection "Server=127.0.0.1,1433;Database=FactoryApp;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=false;TrustServerCertificate=true;" \
             --project ../FactoryApp.Domain/FactoryApp.Domain.csproj
 
       - name: Install ijhttp CLI
