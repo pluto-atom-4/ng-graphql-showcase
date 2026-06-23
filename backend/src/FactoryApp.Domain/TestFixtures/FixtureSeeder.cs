@@ -83,9 +83,16 @@ public class FixtureSeeder
 
         foreach (var user in users)
         {
-            if (!await dbContext.AuthUsers.AnyAsync(u => u.Email == user.Email))
+            var existing = await dbContext.AuthUsers.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (existing == null)
             {
                 dbContext.AuthUsers.Add(user);
+            }
+            else
+            {
+                // Ensure password hash is current (idempotent)
+                existing.PasswordHash = hashedPassword;
+                dbContext.AuthUsers.Update(existing);
             }
         }
 
