@@ -1,4 +1,5 @@
 using FactoryApp.Domain;
+using FactoryApp.Domain.TestFixtures;
 using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,17 @@ builder.Services
 
 var app = builder.Build();
 
-// 4. Map the GraphQL endpoint (Defaults to /graphql)
+// 4. Seed test data in development or when TEST_SEED_DATA is set
+if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("TEST_SEED_DATA") == "true")
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<FactoryDbContext>();
+        FixtureSeeder.SeedAllAsync(dbContext).Wait();
+    }
+}
+
+// 5. Map the GraphQL endpoint (Defaults to /graphql)
 app.MapGraphQL();
 
 app.Run();
