@@ -24,8 +24,16 @@ public class BuildMutationType
         {
             loggingService.LogMutationStart(nameof(Login), args);
 
-            ValidationService.ValidateEmail(email);
-            ValidationService.ValidatePassword(password);
+            try
+            {
+                ValidationService.ValidateEmail(email);
+                ValidationService.ValidatePassword(password);
+            }
+            catch (GraphQLException validationEx)
+            {
+                loggingService.LogValidationError(nameof(Login), validationEx.Message);
+                throw;
+            }
 
             var user = await dbContext.AuthUsers
                 .FirstOrDefaultAsync(u => u.Email == email);
@@ -75,8 +83,16 @@ public class BuildMutationType
         {
             loggingService.LogMutationStart(nameof(CreateBuild), args);
 
-            ValidationService.ValidateBuildName(name);
-            ValidationService.ValidateBuildDescription(description);
+            try
+            {
+                ValidationService.ValidateBuildName(name);
+                ValidationService.ValidateBuildDescription(description);
+            }
+            catch (GraphQLException validationEx)
+            {
+                loggingService.LogValidationError(nameof(CreateBuild), validationEx.Message);
+                throw;
+            }
 
             var build = new Build
             {
@@ -175,9 +191,17 @@ public class BuildMutationType
         {
             loggingService.LogMutationStart(nameof(AddPart), args);
 
-            ValidationService.ValidatePartName(name);
-            ValidationService.ValidateSKU(sku);
-            ValidationService.ValidateQuantity(quantity);
+            try
+            {
+                ValidationService.ValidatePartName(name);
+                ValidationService.ValidateSKU(sku);
+                ValidationService.ValidateQuantity(quantity);
+            }
+            catch (GraphQLException validationEx)
+            {
+                loggingService.LogValidationError(nameof(AddPart), validationEx.Message);
+                throw;
+            }
 
             var build = await dbContext.Builds.FindAsync(buildId);
             if (build == null)
@@ -235,8 +259,16 @@ public class BuildMutationType
         {
             loggingService.LogMutationStart(nameof(SubmitTestRun), args);
 
-            ValidationService.ValidateTestResult(result, status == TestStatus.Failed);
-            ValidationService.ValidateFileUrl(fileUrl);
+            try
+            {
+                ValidationService.ValidateTestResult(result, status == TestStatus.Failed);
+                ValidationService.ValidateFileUrl(fileUrl);
+            }
+            catch (GraphQLException validationEx)
+            {
+                loggingService.LogValidationError(nameof(SubmitTestRun), validationEx.Message);
+                throw;
+            }
 
             var build = await dbContext.Builds.FindAsync(buildId);
             if (build == null)
