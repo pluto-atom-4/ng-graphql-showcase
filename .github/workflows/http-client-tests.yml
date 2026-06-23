@@ -42,18 +42,18 @@ jobs:
             --name sql-server \
             mcr.microsoft.com/mssql/server:2022-latest
 
-          # 2. Wait up to 90 seconds for SQL Server to accept connections
+          # 2. Wait up to 180 seconds for SQL Server to accept connections
           echo "Waiting for SQL Server to boot completely..."
           SERVER_READY=false
 
-          for i in {1..90}; do
+          for i in {1..180}; do
             # Use docker exec to check health natively inside the container matrix
             if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
               echo "SQL Server is ready and accepting connections after $i seconds!"
               SERVER_READY=true
               break
             fi
-            echo "Still booting... ($i/90)"
+            echo "Still booting... ($i/180)"
             sleep 1
           done
 
