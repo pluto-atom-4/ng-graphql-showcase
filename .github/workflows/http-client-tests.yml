@@ -29,22 +29,37 @@ jobs:
         env:
           SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
         run: |
-          docker run -e "ACCEPT_EULA=Y" -e "MSSQL_PID=Express" -e "SA_PASSWORD=$SA_PASSWORD" \
+          # 1. Start container with explicit port mapping and background daemon flags
+          docker run -d \
             -p 1433:1433 \
+            -e "ACCEPT_EULA=Y" \
+            -e "MSSQL_PID=Express" \
+            -e "SA_PASSWORD=$SA_PASSWORD" \
             --name sql-server \
-            -d mcr.microsoft.com/mssql/server:2022-latest
+            mcr.microsoft.com/mssql/server:2022-latest
 
-          # Wait for SQL Server to accept connections
-          echo "Waiting for SQL Server to boot..."
-          for i in {1..30}; do
+          # 2. Wait up to 90 seconds for SQL Server to accept connections
+          echo "Waiting for SQL Server to boot completely..."
+          SERVER_READY=false
+
+          for i in {1..90}; do
+            # Use docker exec to check health natively inside the container matrix
             if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
-              echo "SQL Server is ready!"
-              exit 0
+              echo "SQL Server is ready and accepting connections after $i seconds!"
+              SERVER_READY=true
+              break
             fi
+            echo "Still booting... ($i/90)"
             sleep 1
           done
-          echo "SQL Server startup timed out"
-          exit 1
+
+          # 3. If it times out, dump the container logs into the CI terminal to diagnose the crash
+          if [ "$SERVER_READY" != "true" ]; then
+            echo "❌ Error: SQL Server startup timed out"
+            echo "=== CONTAINER LOGS ==="
+            docker logs sql-server
+            exit 1
+          fi
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
