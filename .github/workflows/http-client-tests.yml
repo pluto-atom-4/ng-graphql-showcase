@@ -42,21 +42,21 @@ jobs:
             --name sql-server \
             mcr.microsoft.com/mssql/server:2022-latest
 
-          # 2. Wait up to 300 seconds for SQL Server to accept connections
-          echo "Waiting for SQL Server to boot completely..."
-          sleep 10  # Initial buffer for sa account initialization
+          # 2. Wait for SQL Server sa account to be fully initialized
+          echo "Waiting for SQL Server sa account initialization..."
+          sleep 30  # Extended buffer: sa account delayed in container even after "ready" message
           SERVER_READY=false
 
-          for i in {1..300}; do
-            # Use docker exec to check health natively inside the container matrix
-            if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S . -U sa -P "$SA_PASSWORD" -i NUL > /dev/null 2>&1; then
-              ELAPSED=$((i + 10))  # Add initial buffer to elapsed time
-              echo "✅ SQL Server ready after ~${ELAPSED}s (attempt $i)"
+          for i in {1..150}; do
+            # Check if sa account accepts connections (xp_msver forces full init check)
+            if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S . -U sa -P "$SA_PASSWORD" -Q "SELECT @@VERSION" > /dev/null 2>&1; then
+              ELAPSED=$((i + 30))  # Add initial buffer to elapsed time
+              echo "✅ SQL Server sa account ready after ~${ELAPSED}s (polling attempt $i)"
               SERVER_READY=true
               break
             fi
-            if [ $((i % 10)) -eq 0 ]; then
-              echo "Still booting... ($i/300 attempts)"
+            if [ $((i % 20)) -eq 0 ]; then
+              echo "  Polling... attempt $i/150"
             fi
             sleep 1
           done
