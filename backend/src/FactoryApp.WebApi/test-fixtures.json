@@ -1,0 +1,216 @@
+{
+  "testUsers": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "email": "test@example.com",
+      "password": "SecurePassword123!",
+      "passwordHash": "$2a$11$abcdef123456789..."
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "email": "admin@example.com",
+      "password": "AdminPassword123!",
+      "passwordHash": "$2a$11$abcdef123456789..."
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "email": "user@example.com",
+      "password": "UserPassword123!",
+      "passwordHash": "$2a$11$abcdef123456789..."
+    }
+  ],
+  "testBuilds": [
+    {
+      "id": "10000000-0000-0000-0000-000000000001",
+      "name": "Q2 2026 Production Run",
+      "description": "High-volume manufacturing build for Q2 2026",
+      "status": "PENDING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000002",
+      "name": "Legacy System Migration",
+      "description": "Update legacy system components",
+      "status": "RUNNING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000003",
+      "name": "Testing Phase Build",
+      "description": "Comprehensive test coverage phase",
+      "status": "RUNNING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000004",
+      "name": "Completed Build A",
+      "description": "Successfully finished build",
+      "status": "COMPLETE"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000005",
+      "name": "Failed Build B",
+      "description": "Build failed during testing phase",
+      "status": "FAILED"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000006",
+      "name": "DataLoader Test Build",
+      "description": "Build with 10+ parts for N+1 testing",
+      "status": "PENDING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000007",
+      "name": "Pagination Test Build",
+      "description": "Build for pagination boundary testing",
+      "status": "PENDING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000008",
+      "name": "Transaction Test Build",
+      "description": "Build for EF Core + Dapper transaction testing",
+      "status": "PENDING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000009",
+      "name": "Edge Case Build 1",
+      "description": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "status": "PENDING"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000010",
+      "name": "Edge Case Build 2",
+      "description": "Edge case: empty description",
+      "status": "PENDING"
+    }
+  ],
+  "testParts": [
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Precision Bearing",
+      "sku": "SKU-PB-001",
+      "quantity": 5
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Control Module",
+      "sku": "SKU-CM-042",
+      "quantity": 2
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Power Supply Unit",
+      "sku": "SKU-PSU-003",
+      "quantity": 1
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Connector Assembly",
+      "sku": "SKU-CA-015",
+      "quantity": 8
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Sensor Module",
+      "sku": "SKU-SM-007",
+      "quantity": 3
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Communication Board",
+      "sku": "SKU-CB-021",
+      "quantity": 1
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Thermal Interface",
+      "sku": "SKU-TI-009",
+      "quantity": 4
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Mounting Hardware",
+      "sku": "SKU-MH-012",
+      "quantity": 50
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Cable Assembly A",
+      "sku": "SKU-CAB-A-001",
+      "quantity": 2
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000006",
+      "name": "Cable Assembly B",
+      "sku": "SKU-CAB-B-002",
+      "quantity": 3
+    }
+  ],
+  "testRuns": [
+    {
+      "buildId": "10000000-0000-0000-0000-000000000004",
+      "status": "PASSED",
+      "result": "All assertions passed - 150/150 tests successful",
+      "fileUrl": "https://example.com/test-results/build-004-passed.json"
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000004",
+      "status": "PASSED",
+      "result": "Regression tests passed - no performance degradation",
+      "fileUrl": "https://example.com/test-results/build-004-perf.json"
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000005",
+      "status": "FAILED",
+      "result": "Assertion failed at line 42: expected voltage 12.0V ± 0.1V, got 11.8V",
+      "fileUrl": "https://example.com/test-logs/build-005-failure.log"
+    },
+    {
+      "buildId": "10000000-0000-0000-0000-000000000005",
+      "status": "RUNNING",
+      "result": null,
+      "fileUrl": null
+    }
+  ],
+  "pagination": {
+    "maxPageSize": 1000,
+    "defaultPageSize": 10,
+    "testPageSizes": [1, 5, 10, 50, 100, 1000]
+  },
+  "stateTransitions": [
+    "PENDING->RUNNING",
+    "PENDING->FAILED",
+    "RUNNING->COMPLETE",
+    "RUNNING->FAILED",
+    "COMPLETE->PENDING",
+    "FAILED->PENDING"
+  ],
+  "constraints": {
+    "buildName": {
+      "minLength": 1,
+      "maxLength": 256,
+      "testValues": [
+        "",
+        "a",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    "buildDescription": {
+      "minLength": 0,
+      "maxLength": 1000,
+      "testValues": ["", "short"]
+    },
+    "partQuantity": {
+      "minValue": 1,
+      "maxValue": 999999,
+      "testValues": [0, 1, 500, 999999, 1000000]
+    },
+    "partName": {
+      "minLength": 1,
+      "maxLength": 256,
+      "testValues": ["", "a"]
+    },
+    "sku": {
+      "minLength": 1,
+      "maxLength": 50,
+      "testValues": ["", "SKU-001"]
+    }
+  }
+}
