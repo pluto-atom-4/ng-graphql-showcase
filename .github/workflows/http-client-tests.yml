@@ -44,16 +44,20 @@ jobs:
 
           # 2. Wait up to 300 seconds for SQL Server to accept connections
           echo "Waiting for SQL Server to boot completely..."
+          sleep 10  # Initial buffer for sa account initialization
           SERVER_READY=false
 
           for i in {1..300}; do
             # Use docker exec to check health natively inside the container matrix
-            if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
-              echo "SQL Server is ready and accepting connections after $i seconds!"
+            if docker exec sql-server /opt/mssql-tools/bin/sqlcmd -S . -U sa -P "$SA_PASSWORD" -i NUL > /dev/null 2>&1; then
+              ELAPSED=$((i + 10))  # Add initial buffer to elapsed time
+              echo "✅ SQL Server ready after ~${ELAPSED}s (attempt $i)"
               SERVER_READY=true
               break
             fi
-            echo "Still booting... ($i/300)"
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Still booting... ($i/300 attempts)"
+            fi
             sleep 1
           done
 
