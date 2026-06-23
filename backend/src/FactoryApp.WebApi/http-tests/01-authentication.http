@@ -13,18 +13,19 @@ Content-Type: application/json
 }
 
 > {%
+  import { tokenManager, errorValidator } from "./helpers.js";
+
   client.test("HTTP 200", function() {
     client.assert(response.status === 200, "Expected 200, got " + response.status);
   });
 
-  client.test("No GraphQL errors", function() {
-    client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
-  });
+  errorValidator.assertNoErrors(response);
 
   client.test("Token returned", function() {
     client.assert(response.body.data.login.token, "Missing token");
   });
 
+  tokenManager.saveToken("dev", response.body.data.login.token);
   client.global.set("token", response.body.data.login.token);
 %}
 

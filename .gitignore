@@ -25,6 +25,7 @@ node_modules/
 *.local
 .claude/settings.local.json
 **/http-client.private.env.json
+backend/src/FactoryApp.WebApi/http-tests/http-client.private.env.json
 
 # Database
 *.db
