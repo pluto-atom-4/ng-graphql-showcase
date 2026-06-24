@@ -1,5 +1,5 @@
 @token = paste_token_from_01_authentication_here
-@buildId = paste_build_id_from_02_create_build_here
+@buildId = 10000000-0000-0000-0000-000000000006
 
 ###
 ### 04. QUERY BUILD WITH RELATIONS - DataLoader Verification
@@ -79,13 +79,13 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 10, offset: 0) { items { id name parts { id name sku } testRuns { id status } } totalCount } }"
+  "query": "query { buildsPaginated(limit: 10, offset: 0) { items { id name parts { id name sku } testRuns { id status } } totalCount } }"
 }
 
 > {%
   client.test("Batch loading verified", function() {
-    client.assert(response.body.data.builds.items.length > 0, "Expected builds");
-    response.body.data.builds.items.forEach(function(build) {
+    client.assert(response.body.data.buildsPaginated.items.length > 0, "Expected builds");
+    response.body.data.buildsPaginated.items.forEach(function(build) {
       client.assert(Array.isArray(build.parts), "Expected parts array for build");
       client.assert(Array.isArray(build.testRuns), "Expected testRuns array for build");
     });
