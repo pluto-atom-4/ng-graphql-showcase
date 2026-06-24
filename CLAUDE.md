@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working in this repository. See 
 
 A **full-stack monorepo** for managing long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
 
-**Stack:** Angular 17+ | Hot Chocolate GraphQL | ASP.NET Core (.NET 8/9) | Elsa Workflows v3 | SQL Server | EF Core + Dapper
+**Stack:** Angular 19+ | Hot Chocolate GraphQL | ASP.NET Core (.NET 10) | Elsa Workflows v3 | SQL Server | EF Core + Dapper
 
 ---
 
@@ -116,6 +116,7 @@ See `/docs/ARCHITECTURE.md` for detailed patterns.
 | **docs/DEVELOPMENT.md**               | IDE setup, debugging, development workflow                |
 | **docs/PROCEDURES.md**                | PR review workflow, GitHub Copilot integration            |
 | **docs/HTTP-CLIENT-TESTING-GUIDE.md** | GraphQL API testing via JetBrains HTTP Client (IDE + CLI) |
+| **docs/GITHUB-ACTIONS.md**            | CI/CD workflows & automation; HTTP test workflow status   |
 
 ---
 
@@ -182,4 +183,4 @@ See **docs/DATABASE.md** for detailed troubleshooting.
 
 ---
 
-**Last Updated:** 2026-06-16 | **Stack:** .NET 9 + Angular 17 + SQL Server 2022
+**Last Updated:** 2026-06-23 | **Stack:** .NET 10 + Angular 19 + SQL Server 2022
