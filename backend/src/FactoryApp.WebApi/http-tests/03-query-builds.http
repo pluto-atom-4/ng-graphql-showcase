@@ -1,5 +1,5 @@
 @token = paste_token_from_01_authentication_here
-@buildId = paste_build_id_from_02_create_build_here
+@buildId = 00000000-0000-0000-0000-000000000001
 
 ###
 ### 03. QUERY BUILDS - PAGINATION & FILTERING
@@ -62,7 +62,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 10, offset: 0) { items { id name status } totalCount hasNextPage hasPreviousPage } }"
+  "query": "query { buildsPaginated(limit: 10, offset: 0) { items { id name status } totalCount hasNextPage hasPreviousPage } }"
 }
 
 > {%
@@ -71,10 +71,10 @@ Authorization: Bearer {{token}}
   });
 
   client.test("Pagination fields present", function() {
-    client.assert(response.body.data.builds.items, "Missing items array");
-    client.assert(typeof response.body.data.builds.totalCount === "number", "Missing totalCount");
-    client.assert(typeof response.body.data.builds.hasNextPage === "boolean", "Missing hasNextPage");
-    client.assert(typeof response.body.data.builds.hasPreviousPage === "boolean", "Missing hasPreviousPage");
+    client.assert(response.body.data.buildsPaginated.items, "Missing items array");
+    client.assert(typeof response.body.data.buildsPaginated.totalCount === "number", "Missing totalCount");
+    client.assert(typeof response.body.data.buildsPaginated.hasNextPage === "boolean", "Missing hasNextPage");
+    client.assert(typeof response.body.data.buildsPaginated.hasPreviousPage === "boolean", "Missing hasPreviousPage");
   });
 %}
 
@@ -86,12 +86,12 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 10, offset: 10) { items { id name } totalCount hasNextPage hasPreviousPage } }"
+  "query": "query { buildsPaginated(limit: 10, offset: 10) { items { id name } totalCount hasNextPage hasPreviousPage } }"
 }
 
 > {%
   client.test("Pagination offset applied", function() {
-    client.assert(typeof response.body.data.builds.hasPreviousPage === "boolean", "Missing hasPreviousPage");
+    client.assert(typeof response.body.data.buildsPaginated.hasPreviousPage === "boolean", "Missing hasPreviousPage");
   });
 %}
 
@@ -103,12 +103,12 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 5, offset: 0) { items { id name } totalCount hasNextPage } }"
+  "query": "query { buildsPaginated(limit: 5, offset: 0) { items { id name } totalCount hasNextPage } }"
 }
 
 > {%
   client.test("Limit applied correctly", function() {
-    client.assert(response.body.data.builds.items.length <= 5, "Expected <= 5 items, got " + response.body.data.builds.items.length);
+    client.assert(response.body.data.buildsPaginated.items.length <= 5, "Expected <= 5 items, got " + response.body.data.buildsPaginated.items.length);
   });
 %}
 
@@ -120,7 +120,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: -1, offset: 0) { items { id } } }"
+  "query": "query { buildsPaginated(limit: -1, offset: 0) { items { id } } }"
 }
 
 > {%
@@ -137,7 +137,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 10, offset: -1) { items { id } } }"
+  "query": "query { buildsPaginated(limit: 10, offset: -1) { items { id } } }"
 }
 
 > {%
@@ -154,7 +154,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 1001, offset: 0) { items { id } } }"
+  "query": "query { buildsPaginated(limit: 1001, offset: 0) { items { id } } }"
 }
 
 > {%
@@ -171,11 +171,11 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "query": "query { builds(limit: 10, offset: 10000) { items { id } totalCount hasNextPage } }"
+  "query": "query { buildsPaginated(limit: 10, offset: 10000) { items { id } totalCount hasNextPage } }"
 }
 
 > {%
   client.test("Empty result handling", function() {
-    client.assert(Array.isArray(response.body.data.builds.items), "Expected items array");
+    client.assert(Array.isArray(response.body.data.buildsPaginated.items), "Expected items array");
   });
 %}
