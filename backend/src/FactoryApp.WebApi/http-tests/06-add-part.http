@@ -1,5 +1,5 @@
 @token = paste_token_from_01_authentication_here
-@buildId = paste_build_id_from_02_create_build_here
+@buildId = 10000000-0000-0000-0000-000000000001
 
 ###
 ### 06. ADD PART - Part Management & Validation
@@ -31,6 +31,7 @@ Authorization: Bearer {{token}}
   });
 
   client.global.set("partId", response.body.data.addPart.id);
+  client.global.set("buildId", response.body.data.addPart.buildId);
 %}
 
 ###
@@ -50,7 +51,9 @@ Authorization: Bearer {{token}}
   });
 
   client.test("Part belongs to correct build", function() {
-    client.assert(response.body.data.addPart.buildId === client.global.get("buildId"), "buildId mismatch");
+    var responseBuildId = response.body.data.addPart.buildId;
+    var expectedBuildId = client.global.get("buildId");
+    client.assert(responseBuildId === expectedBuildId, "buildId mismatch: got " + responseBuildId + ", expected " + expectedBuildId);
   });
 %}
 
