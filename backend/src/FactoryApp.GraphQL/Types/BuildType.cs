@@ -1,7 +1,7 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
-using FactoryApp.GraphQL.DataLoaders;
 using HotChocolate;
+using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL.Types;
 
@@ -15,20 +15,22 @@ public class BuildPayload
     public DateTime UpdatedAt { get; set; }
 
     public async Task<List<Part>> GetParts(
-        [Service] BuildDataLoaders dataLoaders,
         [Service] FactoryDbContext context,
         CancellationToken ct)
     {
-        var parts = await dataLoaders.GetPartsByBuildId(new[] { Id }, context, ct);
-        return parts.TryGetValue(Id, out var buildParts) ? buildParts : new List<Part>();
+        return await context.Parts
+            .Where(p => p.BuildId == Id)
+            .AsNoTracking()
+            .ToListAsync(ct);
     }
 
     public async Task<List<TestRun>> GetTestRuns(
-        [Service] BuildDataLoaders dataLoaders,
         [Service] FactoryDbContext context,
         CancellationToken ct)
     {
-        var testRuns = await dataLoaders.GetTestRunsByBuildId(new[] { Id }, context, ct);
-        return testRuns.TryGetValue(Id, out var buildTestRuns) ? buildTestRuns : new List<TestRun>();
+        return await context.TestRuns
+            .Where(t => t.BuildId == Id)
+            .AsNoTracking()
+            .ToListAsync(ct);
     }
 }
