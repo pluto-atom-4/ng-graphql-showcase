@@ -1,5 +1,5 @@
 @token = paste_token_from_01_authentication_here
-@buildId = paste_build_id_from_02_create_build_here
+@buildId = 10000000-0000-0000-0000-000000000002
 
 ###
 ### 07. SUBMIT TEST RUN - Transaction Testing & Atomicity
@@ -51,7 +51,7 @@ Authorization: Bearer {{token}}
   });
 
   client.test("Status is RUNNING", function() {
-    client.assert(response.body.data.submitTestRun.status === "RUNNING", "Expected RUNNING, got " + response.body.data.submitTestRun.status);
+    client.assert(response.body.data.submitTestRun.status === "Running", "Expected RUNNING, got " + response.body.data.submitTestRun.status);
   });
 %}
 
@@ -68,7 +68,7 @@ Authorization: Bearer {{token}}
 
 > {%
   client.test("Status is FAILED", function() {
-    client.assert(response.body.data.submitTestRun.status === "FAILED", "Expected FAILED, got " + response.body.data.submitTestRun.status);
+    client.assert(response.body.data.submitTestRun.status === "Failed", "Expected FAILED, got " + response.body.data.submitTestRun.status);
   });
 
   client.test("Result preserved", function() {
@@ -165,7 +165,7 @@ Authorization: Bearer {{token}}
   });
 
   client.test("FileUrl optional", function() {
-    client.assert(response.body.data.submitTestRun.status === "PASSED", "Expected PASSED status");
+    client.assert(response.body.data.submitTestRun.status === "Passed", "Expected PASSED status");
   });
 %}
 
