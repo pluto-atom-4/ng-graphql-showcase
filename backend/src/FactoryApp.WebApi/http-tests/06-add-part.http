@@ -31,6 +31,7 @@ Authorization: Bearer {{token}}
   });
 
   client.global.set("partId", response.body.data.addPart.id);
+  client.global.set("buildId", response.body.data.addPart.buildId);
 %}
 
 ###
