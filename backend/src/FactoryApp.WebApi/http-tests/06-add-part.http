@@ -1,5 +1,5 @@
 @token = paste_token_from_01_authentication_here
-@buildId = paste_build_id_from_02_create_build_here
+@buildId = 10000000-0000-0000-0000-000000000001
 
 ###
 ### 06. ADD PART - Part Management & Validation
