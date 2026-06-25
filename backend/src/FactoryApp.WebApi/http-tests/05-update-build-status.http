@@ -1,5 +1,5 @@
 @token = paste_token_from_01_authentication_here
-@buildId = paste_build_id_from_02_create_build_here
+@buildId = 10000000-0000-0000-0000-000000000001
 
 ###
 ### 05. UPDATE BUILD STATUS - State Transitions & Mutations
@@ -23,7 +23,7 @@ Authorization: Bearer {{token}}
   });
 
   client.test("Status updated to RUNNING", function() {
-    client.assert(response.body.data.updateBuildStatus.status === "RUNNING", "Expected RUNNING, got " + response.body.data.updateBuildStatus.status);
+    client.assert(response.body.data.updateBuildStatus.status === "Running", "Expected RUNNING, got " + response.body.data.updateBuildStatus.status);
   });
 %}
 
@@ -40,7 +40,7 @@ Authorization: Bearer {{token}}
 
 > {%
   client.test("Status updated to COMPLETE", function() {
-    client.assert(response.body.data.updateBuildStatus.status === "COMPLETE", "Expected COMPLETE, got " + response.body.data.updateBuildStatus.status);
+    client.assert(response.body.data.updateBuildStatus.status === "Complete", "Expected COMPLETE, got " + response.body.data.updateBuildStatus.status);
   });
 %}
 
@@ -57,7 +57,7 @@ Authorization: Bearer {{token}}
 
 > {%
   client.test("Status updated to FAILED", function() {
-    client.assert(response.body.data.updateBuildStatus.status === "FAILED", "Expected FAILED, got " + response.body.data.updateBuildStatus.status);
+    client.assert(response.body.data.updateBuildStatus.status === "Failed", "Expected FAILED, got " + response.body.data.updateBuildStatus.status);
   });
 %}
 
@@ -74,7 +74,7 @@ Authorization: Bearer {{token}}
 
 > {%
   client.test("Status updated to PENDING", function() {
-    client.assert(response.body.data.updateBuildStatus.status === "PENDING", "Expected PENDING, got " + response.body.data.updateBuildStatus.status);
+    client.assert(response.body.data.updateBuildStatus.status === "Pending", "Expected PENDING, got " + response.body.data.updateBuildStatus.status);
   });
 %}
 
