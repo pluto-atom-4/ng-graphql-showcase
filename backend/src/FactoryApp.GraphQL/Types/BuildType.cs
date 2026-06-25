@@ -1,9 +1,30 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.GraphQL.DataLoaders;
 using HotChocolate;
-using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL.Types;
+
+public class BuildType
+{
+    public async Task<ICollection<Part>> GetParts(
+        [Parent] Build build,
+        [Service] BuildDataLoaders dataLoaders,
+        CancellationToken ct)
+    {
+        var parts = await dataLoaders.GetPartsByBuildId(new[] { build.Id }, ct: ct);
+        return parts.TryGetValue(build.Id, out var buildParts) ? buildParts : new List<Part>();
+    }
+
+    public async Task<ICollection<TestRun>> GetTestRuns(
+        [Parent] Build build,
+        [Service] BuildDataLoaders dataLoaders,
+        CancellationToken ct)
+    {
+        var testRuns = await dataLoaders.GetTestRunsByBuildId(new[] { build.Id }, ct: ct);
+        return testRuns.TryGetValue(build.Id, out var buildTestRuns) ? buildTestRuns : new List<TestRun>();
+    }
+}
 
 public class BuildPayload
 {
@@ -15,22 +36,18 @@ public class BuildPayload
     public DateTime UpdatedAt { get; set; }
 
     public async Task<List<Part>> GetParts(
-        [Service] FactoryDbContext context,
+        [Service] BuildDataLoaders dataLoaders,
         CancellationToken ct)
     {
-        return await context.Parts
-            .Where(p => p.BuildId == Id)
-            .AsNoTracking()
-            .ToListAsync(ct);
+        var parts = await dataLoaders.GetPartsByBuildId(new[] { Id }, ct: ct);
+        return parts.TryGetValue(Id, out var buildParts) ? buildParts : new List<Part>();
     }
 
     public async Task<List<TestRun>> GetTestRuns(
-        [Service] FactoryDbContext context,
+        [Service] BuildDataLoaders dataLoaders,
         CancellationToken ct)
     {
-        return await context.TestRuns
-            .Where(t => t.BuildId == Id)
-            .AsNoTracking()
-            .ToListAsync(ct);
+        var testRuns = await dataLoaders.GetTestRunsByBuildId(new[] { Id }, ct: ct);
+        return testRuns.TryGetValue(Id, out var buildTestRuns) ? buildTestRuns : new List<TestRun>();
     }
 }
