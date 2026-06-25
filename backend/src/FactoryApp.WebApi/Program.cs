@@ -1,6 +1,7 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.TestFixtures;
 using FactoryApp.GraphQL;
+using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,10 @@ builder.Services.AddDbContext<FactoryDbContext>(options =>
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
 
-// 3. Register Hot Chocolate GraphQL Server with domain resolvers
+// 3. Register DataLoaders for N+1 prevention
+builder.Services.AddDataLoader<BuildDataLoaders>();
+
+// 4. Register Hot Chocolate GraphQL Server with domain resolvers
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<BuildQueryType>()
