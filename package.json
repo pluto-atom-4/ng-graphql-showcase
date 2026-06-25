@@ -17,7 +17,7 @@
     "build:backend": "cd backend && dotnet build",
     "build:frontend": "pnpm --filter frontend run build",
     "test": "pnpm test:backend && pnpm test:frontend",
-    "test:backend": "dotnet test ./backend/src",
+    "test:backend": "cd backend && dotnet test",
     "test:frontend": "pnpm --filter frontend run test",
     "codegen": "pnpm --filter frontend run codegen",
     "lint": "pnpm --filter frontend run lint",
