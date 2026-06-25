@@ -1,36 +1,56 @@
 using FactoryApp.Domain.Entities;
+using FactoryApp.GraphQL.Events;
+using HotChocolate;
 
 namespace FactoryApp.GraphQL;
 
 public class BuildSubscription
 {
-    // TODO: Implement real-time subscriptions using HotChocolate ITopicEventSender
-    // Subscribe to build status updates via WebSocket/SSE
-    // Integration point with Elsa Workflows for long-running processes
-
-    public BuildStatusUpdate GetBuildStatus(Guid buildId)
+    public async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
+        Guid buildId,
+        [EventMessage] BuildStatusChangedEvent message)
     {
-        // Placeholder: in production, this would subscribe to Elsa workflow events
-        // via ITopicEventSender and emit status updates as they occur
-
-        return new BuildStatusUpdate
+        if (message.BuildId == buildId)
         {
-            Status = BuildStatus.Running,
-            Progress = 50,
-            TestsPassed = 5,
-            TestsTotal = 10,
-            Duration = 120,
-            Timestamp = DateTime.UtcNow
-        };
+            yield return new BuildStatusUpdate
+            {
+                BuildId = buildId,
+                OldStatus = message.OldStatus,
+                NewStatus = message.NewStatus,
+                Timestamp = message.Timestamp
+            };
+        }
+    }
+
+    public async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
+        Guid buildId,
+        [EventMessage] TestRunCompletedEvent message)
+    {
+        if (message.BuildId == buildId)
+        {
+            yield return new TestRunUpdate
+            {
+                TestRunId = message.TestRunId,
+                BuildId = message.BuildId,
+                Status = message.Status,
+                Timestamp = message.Timestamp
+            };
+        }
     }
 }
 
 public class BuildStatusUpdate
 {
-    public BuildStatus Status { get; set; }
-    public int Progress { get; set; }
-    public int TestsPassed { get; set; }
-    public int TestsTotal { get; set; }
-    public int Duration { get; set; }
+    public Guid BuildId { get; set; }
+    public BuildStatus OldStatus { get; set; }
+    public BuildStatus NewStatus { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+public class TestRunUpdate
+{
+    public Guid TestRunId { get; set; }
+    public Guid BuildId { get; set; }
+    public TestStatus Status { get; set; }
     public DateTime Timestamp { get; set; }
 }

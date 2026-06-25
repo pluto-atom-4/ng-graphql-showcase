@@ -1,7 +1,6 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
 using HotChocolate;
-using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL.Types;
