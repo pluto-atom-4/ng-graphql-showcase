@@ -50,7 +50,9 @@ Authorization: Bearer {{token}}
   });
 
   client.test("Part belongs to correct build", function() {
-    client.assert(response.body.data.addPart.buildId === client.global.get("buildId"), "buildId mismatch");
+    var responseBuildId = response.body.data.addPart.buildId;
+    var expectedBuildId = client.global.get("buildId");
+    client.assert(responseBuildId === expectedBuildId, "buildId mismatch: got " + responseBuildId + ", expected " + expectedBuildId);
   });
 %}
 
