@@ -1,83 +1,61 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in this repository. See `/docs/` for detailed documentation.
+AI agent guidance router. Modular rules + skills. See `/docs/` for detailed documentation.
 
 ## Project Overview
 
-A **full-stack monorepo** for managing long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
+Full-stack monorepo for long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
 
 **Stack:** Angular 19+ | Hot Chocolate GraphQL | ASP.NET Core (.NET 10) | Elsa Workflows v3 | SQL Server | EF Core + Dapper
 
 ---
 
-## Quick Start
+## ⚠️ NEVER DO THIS
 
-### Setup (One-Time)
-
-```bash
-pnpm install
-pnpm setup              # Starts Docker + applies migrations
-```
-
-### Development
-
-```bash
-pnpm dev               # Concurrent backend + frontend watchers
-# Terminal 1: pnpm dev:backend  (Port 5275)
-# Terminal 2: pnpm dev:frontend (Port 4200)
-```
-
-### Database
-
-```bash
-pnpm docker:up         # Start SQL Server
-pnpm db:migrate        # Apply EF Core migrations
-pnpm docker:down       # Stop containers
-```
-
-### Build & Test
-
-```bash
-pnpm build            # Build both stacks
-pnpm test             # Run all tests
-pnpm lint             # Lint code
-```
-
-See **README.md** for service URLs and access details.
+- ❌ Return raw EF Core entities in GraphQL (use DTOs)
+- ❌ EF Core + Dapper writes without shared `DbTransaction` (causes deadlocks)
+- ❌ Mock DbContext in tests (use real SQL Server)
+- ❌ Edit `graphql.ts` manually (auto-generated, regenerate with `pnpm codegen`)
+- ❌ Store complex objects in Elsa workflow variables (use primitives only: Guid, string)
+- ❌ GraphQL queries > 5 layers deep (split into separate requests)
+- ❌ `*ngFor` without `trackBy` function (performance killer)
 
 ---
 
-## Critical Rules
+## Quick Start
 
-### 1. Shared Transaction Rule
-
-EF Core + Dapper writes in same operation **must** share an explicit `DbTransaction`:
-
-```csharp
-using var transaction = await context.Database.BeginTransactionAsync();
-// EF Core ops...
-// Dapper ops (pass transaction)...
-await transaction.CommitAsync();
+```bash
+pnpm install && pnpm setup      # Setup + Docker + migrations
+pnpm dev                         # Concurrent backend + frontend (ports 5275, 4200)
+pnpm docker:up                   # Start SQL Server
+pnpm db:migrate                  # Apply migrations
+pnpm build && pnpm test          # Build + test
+pnpm lint                        # Lint code
 ```
 
-Forgetting this causes factory-floor deadlocks.
+See **README.md** for service URLs.
 
-### 2. GraphQL Query Depth
+---
 
-Max nesting: 5 layers. Use DataLoaders + separate requests, not deeply nested queries.
+## Rules Router
 
-### 3. Entity Exposure
+Domain-specific patterns in `.claude/rules/`:
 
-Never return raw EF Core entities in GraphQL resolvers. Map to DTOs first.
+- **[database-rules.md](.claude/rules/database-rules.md)** — Transactions, testing (real DB, no mocks), EF Core + Dapper
+- **[graphql-patterns.md](.claude/rules/graphql-patterns.md)** — Query depth, entity exposure, type safety pipeline, subscriptions
+- **[backend-patterns.md](.claude/rules/backend-patterns.md)** — ASP.NET Core, testing, DataLoaders, projections
+- **[frontend-patterns.md](.claude/rules/frontend-patterns.md)** — Angular, trackBy, buffering, codegen sync, subscriptions
+- **[workflow-integration.md](.claude/rules/workflow-integration.md)** — Elsa v3, primitive-only state, activity patterns
 
-### 4. Elsa Workflow State
+---
 
-Store only primitive keys (Guid, string) in workflow variables. Fetch fresh domain state on activity execution.
+## Skills
 
-### 5. Generated Files
+Atomic workflow playbooks in `.claude/skills/`:
 
-- `schema.graphql` — Auto-emitted on `dotnet build`; commit to repo
-- `graphql.ts` — Auto-generated from schema; never edit manually
+- **[pr-review-workflow](./claude/skills/pr-review-workflow/)** — Automated PR review (quality, security, tests)
+- **[migration-generator](./claude/skills/migration-generator/)** — Safe EF Core migrations with validation
+- **[codegen-sync](./claude/skills/codegen-sync/)** — Sync schema.graphql → graphql.ts
 
 ---
 
@@ -95,102 +73,47 @@ Store only primitive keys (Guid, string) in workflow variables. Fetch fresh doma
 
 ---
 
-## Architecture Highlights
+## IDE & Tools
 
-- **Type Safety Pipeline**: C# entity → schema.graphql → graphql.ts (automatic on build)
-- **Hybrid Data Access**: EF Core (reads/migrations) + Dapper (high-velocity writes)
-- **Projections & DataLoaders**: Prevent N+1 queries; optimize SQL SELECT columns
-- **Real-Time**: Hot Chocolate subscriptions via WebSockets/SSE to Angular
+**Recommended:** JetBrains Rider 2024.x (C# debugging, SQL profiler)  
+**Also works:** VS Code (requires extensions)
 
-See `/docs/ARCHITECTURE.md` for detailed patterns.
+**Required:**
+
+- .NET SDK 8.0+ (9.0 for .slnx)
+- Node.js 18+, pnpm 8+
+- Docker Desktop (SQL Server)
+- `dotnet tool install --global dotnet-ef`
 
 ---
 
 ## Documentation Structure
 
-| File                                  | Purpose                                                   |
-| ------------------------------------- | --------------------------------------------------------- |
-| **README.md**                         | Quickstart, setup, troubleshooting                        |
-| **docs/ARCHITECTURE.md**              | Design patterns, type-safety pipeline, Elsa integration   |
-| **docs/DATABASE.md**                  | Database config, migrations, testing strategy             |
-| **docs/DEVELOPMENT.md**               | IDE setup, debugging, development workflow                |
-| **docs/PROCEDURES.md**                | PR review workflow, GitHub Copilot integration            |
-| **docs/HTTP-CLIENT-TESTING-GUIDE.md** | GraphQL API testing via JetBrains HTTP Client (IDE + CLI) |
-| **docs/GITHUB-ACTIONS.md**            | CI/CD workflows & automation; HTTP test workflow status   |
+| File                                  | Purpose                                 |
+| ------------------------------------- | --------------------------------------- |
+| **README.md**                         | Quickstart, setup, troubleshooting      |
+| **docs/ARCHITECTURE.md**              | Design patterns, type-safety, Elsa      |
+| **docs/DATABASE.md**                  | Migrations, testing strategy            |
+| **docs/DEVELOPMENT.md**               | IDE setup, debugging                    |
+| **docs/PROCEDURES.md**                | PR workflow, GitHub Copilot             |
+| **docs/HTTP-CLIENT-TESTING-GUIDE.md** | GraphQL testing (JetBrains HTTP Client) |
+| **docs/GITHUB-ACTIONS.md**            | CI/CD workflows                         |
 
 ---
 
-## IDE & Tools
+## Troubleshooting
 
-**Recommended:** JetBrains Rider 2024.x (C# debugging, SQL profiler, Elsa visualization)
+| Issue                  | Solution                                                      |
+| ---------------------- | ------------------------------------------------------------- |
+| "SQL Server not ready" | Wait 15s after `pnpm docker:up`                               |
+| "dotnet-ef not found"  | `dotnet tool install --global dotnet-ef`                      |
+| "Type doesn't exist"   | `dotnet build` → `pnpm codegen`                               |
+| "N+1 queries"          | Add DataLoader + `[UseProjection]` (see [[backend-patterns]]) |
+| "Deadlock error"       | Share `DbTransaction` (see [[database-rules]])                |
 
-**Also works:** VS Code (requires additional extensions)
-
-**Required tools:**
-
-- .NET SDK 8.0+ (or 9.0 for .slnx support)
-- Node.js 18+
-- pnpm 8+
-- Docker Desktop (for SQL Server)
-- dotnet-ef (install: `dotnet tool install --global dotnet-ef`)
+See **docs/DATABASE.md** for more.
 
 ---
 
-## Testing
-
-- **Backend:** `dotnet test backend/src` (unit + integration with real SQL Server)
-  - **Integration tests:** Connect to docker-compose SQL Server (port 1433)
-  - **Test database:** Auto-created per test run in `FactoryAppDb_Test_*` namespace
-  - **Fixtures:** FixtureSeeder auto-runs; deterministic test GUIDs for repeatability
-  - **Isolation:** Each test gets dedicated database; auto-cleanup on dispose
-  - **Prerequisites:** `pnpm docker:up` (SQL Server container must be running)
-- **Frontend:** `pnpm --filter frontend run test` (Vitest + Testing Library)
-
-**Database Testing Strategy:**
-
-- Use real SQL Server (docker-compose) for integration tests, NOT mocks
-- Avoid mocking DbContext; test actual EF Core + SQL Server behavior
-- Transaction tests verify atomicity against real database engine
-- Connection string: `Server=localhost,1433;Database=FactoryAppDb_Test;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;`
-
----
-
-## Performance Checklist
-
-- [ ] EF Core context: `QueryTrackingBehavior.NoTracking` by default
-- [ ] DataLoaders for child entities (Build → Parts → TestRuns)
-- [ ] Angular subscriptions: `bufferTime(250)` for high-frequency updates
-- [ ] All `*ngFor`: explicit `trackBy` functions
-- [ ] SQL indexes: foreign keys + Status/CreatedAt columns
-- [ ] Dapper: telemetry writes only (never domain queries)
-
----
-
-## Skills & CLI
-
-Available skills in Claude Code sessions:
-
-- `factory-app-session-blog` — Document work as portfolio blog posts
-- `fix-github-issues` — Auto-fix GitHub issues
-- `secure-github-repo` — Repository security hardening
-- `update-config` — Configure Claude Code settings
-
-Invoke via `/skill-name` in Claude Code.
-
----
-
-## Common Issues
-
-| Issue                  | Solution                                                                   |
-| ---------------------- | -------------------------------------------------------------------------- |
-| "SQL Server not ready" | Wait 15s after `pnpm docker:up`; check `docker logs ng-graphql-sql-server` |
-| "dotnet-ef not found"  | `dotnet tool install --global dotnet-ef`                                   |
-| "Type doesn't exist"   | Run `dotnet build` → `pnpm codegen`                                        |
-| "N+1 queries"          | Add DataLoader to resolver + `[UseProjection]`                             |
-| "Deadlock error"       | Ensure EF Core + Dapper share same `DbTransaction`                         |
-
-See **docs/DATABASE.md** for detailed troubleshooting.
-
----
-
-**Last Updated:** 2026-06-23 | **Stack:** .NET 10 + Angular 19 + SQL Server 2022
+**Architecture:** Type safety pipeline (C# → schema.graphql → graphql.ts auto-generated)  
+**Stack:** .NET 10 | Angular 19 | SQL Server 2022 | Elsa v3
