@@ -138,10 +138,20 @@ See `/docs/ARCHITECTURE.md` for detailed patterns.
 
 ## Testing
 
-- **Backend:** `dotnet test backend/src` (unit + integration with real LocalDB)
+- **Backend:** `dotnet test backend/src` (unit + integration with real SQL Server)
+  - **Integration tests:** Connect to docker-compose SQL Server (port 1433)
+  - **Test database:** Auto-created per test run in `FactoryAppDb_Test_*` namespace
+  - **Fixtures:** FixtureSeeder auto-runs; deterministic test GUIDs for repeatability
+  - **Isolation:** Each test gets dedicated database; auto-cleanup on dispose
+  - **Prerequisites:** `pnpm docker:up` (SQL Server container must be running)
 - **Frontend:** `pnpm --filter frontend run test` (Vitest + Testing Library)
 
-Avoid mocking database in EF Core tests; use real LocalDB instead.
+**Database Testing Strategy:**
+
+- Use real SQL Server (docker-compose) for integration tests, NOT mocks
+- Avoid mocking DbContext; test actual EF Core + SQL Server behavior
+- Transaction tests verify atomicity against real database engine
+- Connection string: `Server=localhost,1433;Database=FactoryAppDb_Test;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;`
 
 ---
 
