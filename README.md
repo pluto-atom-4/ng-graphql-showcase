@@ -101,6 +101,55 @@ Type safety is fully automated during a local build. Changing a backend C# DTO o
 
 ---
 
+## 🤖 AI Agent Guidance Architecture
+
+This repository uses a **Progressive Disclosure** model for AI agent guidance, minimizing context pollution while maximizing agent effectiveness.
+
+### Structure
+
+**Layer 1: Router** (`./CLAUDE.md`)
+
+- Project overview, stack, NEVER DO THIS section
+- Quick-start commands, essential references
+- <200 lines, acts as entry point
+
+**Layer 2: Domain Rules** (`.claude/rules/` + `.ai/rules/`)
+
+- `database-rules.md` — Transactions, testing strategy, EF Core + Dapper
+- `graphql-patterns.md` — Query depth, entity exposure, type safety pipeline
+- `backend-patterns.md` — ASP.NET Core patterns, DataLoaders, projections
+- `frontend-patterns.md` — Angular patterns, trackBy, buffering, codegen sync
+- `workflow-integration.md` — Elsa v3 state management, activity patterns
+
+**Layer 3: Executable Skills** (`.claude/skills/`)
+
+- `pr-review-workflow/` — Automated PR quality, security, testing checks
+- `migration-generator/` — Safe EF Core migration generation
+- `codegen-sync/` — Sync schema.graphql → graphql.ts type generation
+
+**Layer 4: Cross-Platform Unification** (`.ai/`)
+
+- Canonical rule location: `.ai/rules/`
+- Symlinks: `.claude/rules/` → `.ai/rules/`, `.cursor/rules/` → `.ai/rules/`
+- Ensures Claude Code + Cursor use identical guidance
+
+### Usage
+
+1. **Review CLAUDE.md** for quick ref + NEVER DO THIS patterns
+2. **Navigate to `.claude/rules/`** for domain-specific deep dives
+3. **Use `.claude/skills/`** for automated workflows (migrations, PR reviews, codegen)
+4. **Cross-reference** via `[[rule-name]]` links for related patterns
+
+### Why Progressive Disclosure
+
+✅ Agents load context efficiently (router-first)  
+✅ Rules isolated by domain (easier to maintain)  
+✅ Explicit anti-patterns prevent common mistakes  
+✅ Skills codify repeatable workflows  
+✅ Unified across Claude Code + Cursor (`.ai/` symlinks)
+
+---
+
 ## 🚀 Quickstart Local Environment
 
 ### Prerequisites
