@@ -2,6 +2,7 @@ using FactoryApp.Domain;
 using FactoryApp.Domain.TestFixtures;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace FactoryApp.Tests.Fixtures;
 
@@ -56,7 +57,28 @@ public class TestDatabaseFixture : IAsyncLifetime
 
     private static string BuildConnectionString(string database)
     {
-        var saPassword = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD") ?? "P@ssw0rd1234!";
+        // Load configuration from appsettings (matches main app pattern)
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        // Extract password from appsettings connection string
+        var defaultConn = config.GetConnectionString("DefaultConnection");
+        string saPassword;
+
+        if (!string.IsNullOrEmpty(defaultConn))
+        {
+            // Extract password from "Password=xxx;" pattern
+            var match = System.Text.RegularExpressions.Regex.Match(defaultConn, @"Password=([^;]+)");
+            saPassword = match.Success ? match.Groups[1].Value : "P@ssw0rd1234!";
+        }
+        else
+        {
+            // Fallback to environment variable (for CI/CD)
+            saPassword = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD") ?? "P@ssw0rd1234!";
+        }
+
         return $"Server=localhost,1433;Database={database};User Id=sa;Password={saPassword};TrustServerCertificate=true;";
     }
 }
