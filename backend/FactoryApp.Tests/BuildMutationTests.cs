@@ -2,8 +2,8 @@ using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
+using FactoryApp.Tests.Mocks;
 using HotChocolate;
-using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -223,15 +223,3 @@ public class BuildMutationTests : IAsyncLifetime
     }
 }
 
-public class MockTopicEventSender : ITopicEventSender
-{
-    public ValueTask SendAsync<TMessage>(string topicName, TMessage message, CancellationToken cancellationToken = default)
-    {
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask CompleteAsync(string topicName)
-    {
-        return ValueTask.CompletedTask;
-    }
-}

@@ -72,6 +72,92 @@ export class BuildDetailComponent implements OnInit {
 
 ---
 
+## Backend Configuration & Secrets
+
+### Environment-Based Credentials
+
+Backend reads sensitive configuration from environment variables (production-safe):
+
+**SQL Server Credentials:**
+
+```bash
+# Set SA password for docker-compose SQL Server
+export MSSQL_SA_PASSWORD="P@ssw0rd1234!"
+
+# Overrides password in appsettings.Development.json
+pnpm dev:backend  # Uses env var if present
+```
+
+**JWT Secret:**
+
+```bash
+# Set JWT signing key (must be ≥32 chars)
+export JWT_SECRET="your-super-secret-key-min-32-chars-development!"
+
+# Overrides Jwt:Secret in appsettings.Development.json
+pnpm dev:backend
+```
+
+**Resolution Order (Priority):**
+
+1. Environment variables (JWT_SECRET, MSSQL_SA_PASSWORD)
+2. appsettings.Development.json (local config)
+3. appsettings.json (defaults)
+
+**Important:** appsettings.Development.json is in `.gitignore` and must never be committed.
+
+### Local Setup
+
+**Option 1: Using docker-compose (Recommended)**
+
+```bash
+pnpm docker:up        # Sets MSSQL_SA_PASSWORD automatically
+pnpm dev:backend      # Backend reads env var
+```
+
+**Option 2: Manual configuration**
+
+1. Copy template:
+
+```bash
+cp backend/src/FactoryApp.WebApi/appsettings.Development.example.json \
+   backend/src/FactoryApp.WebApi/appsettings.Development.json
+```
+
+2. Edit with your credentials:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=FactoryDb;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True"
+  },
+  "Jwt": {
+    "Secret": "your-super-secret-key-min-32-chars-development!"
+  }
+}
+```
+
+3. Never commit this file (it's in `.gitignore`)
+
+### CI/CD Integration
+
+Set environment variables in your CI system:
+
+- **GitHub Actions:** Secrets → `Settings > Secrets and variables`
+- **Azure DevOps:** Pipelines → `Library > Secure files`
+- **Docker:** `docker-compose.override.yml` or `--env-file`
+
+Example (docker-compose.override.yml):
+
+```yaml
+services:
+  sql-server:
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-P@ssw0rd1234!}
+```
+
+---
+
 ## IDE Setup
 
 ### JetBrains Rider (Recommended)

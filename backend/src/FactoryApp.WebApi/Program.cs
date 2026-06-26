@@ -9,10 +9,22 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Register Entity Framework Core with SQL Server
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Allow password override via environment variable (for Docker/CI)
+if (!string.IsNullOrEmpty(connectionString) && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD")))
+{
+    var saPassword = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD");
+    connectionString = System.Text.RegularExpressions.Regex.Replace(
+        connectionString,
+        @"Password=[^;]+",
+        $"Password={saPassword}");
+}
+
+connectionString ??= "Server=(localdb)\\mssqllocaldb;Database=FactoryAppDb;Trusted_Connection=true;";
+
 builder.Services.AddDbContext<FactoryDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? "Server=(localdb)\\mssqllocaldb;Database=FactoryAppDb;Trusted_Connection=true;"));
+    options.UseSqlServer(connectionString));
 
 // 2. Register application services
 builder.Services.AddScoped<AuthService>();
