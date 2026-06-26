@@ -56,6 +56,7 @@ public class TestDatabaseFixture : IAsyncLifetime
 
     private static string BuildConnectionString(string database)
     {
-        return $"Server=localhost,1433;Database={database};User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;";
+        var saPassword = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD") ?? "P@ssw0rd1234!";
+        return $"Server=localhost,1433;Database={database};User Id=sa;Password={saPassword};TrustServerCertificate=true;";
     }
 }
