@@ -23,8 +23,10 @@ public class AuthService
 
     public string GenerateToken(Guid userId, string email)
     {
-        var secretKey = _config["Jwt:Secret"]
-            ?? throw new InvalidOperationException("Missing Jwt:Secret in configuration");
+        // Read JWT secret from environment variable (priority) or configuration
+        var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
+            ?? _config["Jwt:Secret"]
+            ?? throw new InvalidOperationException("Missing JWT_SECRET environment variable or Jwt:Secret in configuration");
 
         var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey));
 
