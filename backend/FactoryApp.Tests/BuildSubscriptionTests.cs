@@ -147,7 +147,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
         );
 
         Assert.NotNull(result);
-        Assert.Equal(TestStatus.Passed, result.Status);
+        Assert.Equal("PASSED", result.Status);
         Assert.Single(_eventSender.SentMessages);
         Assert.Equal("testRunCompleted", _eventSender.SentMessages[0].Topic);
 
