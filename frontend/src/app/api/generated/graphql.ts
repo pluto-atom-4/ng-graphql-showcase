@@ -226,17 +226,6 @@ export enum TestStatus {
   Running = 'RUNNING'
 }
 
-export type BuildStatus =
-  | 'COMPLETE'
-  | 'FAILED'
-  | 'PENDING'
-  | 'RUNNING';
-
-export type TestStatus =
-  | 'FAILED'
-  | 'PASSED'
-  | 'PENDING'
-  | 'RUNNING';
 
 export type GetBuildQueryVariables = Exact<{
   id: string | number;

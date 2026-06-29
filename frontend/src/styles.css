@@ -1,34 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer components {
-  /* Custom component classes for manufacturing UI */
-  .btn-factory {
-    @apply btn btn-primary font-semibold transition-all;
-  }
-
-  .card-factory {
-    @apply card bg-base-100 shadow-lg border border-base-300;
-  }
-
-  .form-factory {
-    @apply w-full;
-  }
-
-  .status-active {
-    @apply badge badge-success;
-  }
-
-  .status-pending {
-    @apply badge badge-warning;
-  }
-
-  .status-error {
-    @apply badge badge-error;
-  }
-
-  .status-info {
-    @apply badge badge-info;
-  }
-}
