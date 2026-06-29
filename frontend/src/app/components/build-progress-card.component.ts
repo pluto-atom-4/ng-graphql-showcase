@@ -1,11 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop'; // Required import
-import { computed } from '@angular/core'; // Required import
-import { interval, Observable } from 'rxjs';
-import { map, bufferTime, startWith } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { computed } from '@angular/core';
+import { map, startWith } from 'rxjs/operators';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
+import { BuildStatusService } from '../api/build-status.service';
 
 /**
  * BuildProgressCard: Complete daisyUI + GraphQL + RxJS Integration Example
@@ -23,6 +23,7 @@ import { CardComponent, BadgeComponent, ButtonComponent } from './index';
   selector: 'app-build-progress-card',
   standalone: true,
   imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- 1. Check for value availability safely -->
     <app-card *ngIf="buildStatus()" [title]="buildName" [description]="buildId">
@@ -87,30 +88,73 @@ export class BuildProgressCardComponent implements OnInit {
   @Input() buildName = 'Build #42';
   @Input() buildId = 'build-uuid-123';
 
-  // 4. Declare a readonly Signal instead of an Observable
+  private buildStatusService = inject(BuildStatusService);
+
   buildStatus!: () => BuildStatus;
 
   ngOnInit(): void {
-    const rawStream$ = this.mockBuildProgress$().pipe(
-      bufferTime(250),
-      map(statuses => statuses[statuses.length - 1] || {
-        status: 'idle', progress: 0, testsPassed: 0,
-        testsTotal: 0, duration: 0, timestamp: new Date()
+    // Subscribe to real GraphQL subscription for build status updates
+    this.buildStatusService.subscribeToBuildStatus(this.buildId);
+
+    const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
+      map(updates => {
+        const latestUpdate = updates[updates.length - 1];
+        if (!latestUpdate) {
+          return {
+            status: 'Starting' as const,
+            progress: 0,
+            testsPassed: 0,
+            testsTotal: 0,
+            duration: 0,
+            timestamp: new Date()
+          };
+        }
+
+        // Map GraphQL subscription update to local BuildStatus interface
+        return {
+          status: this.mapSubscriptionStatus(latestUpdate.newStatus),
+          progress: 0,
+          testsPassed: 0,
+          testsTotal: 0,
+          duration: 0,
+          timestamp: latestUpdate.timestamp
+        };
+      }),
+      startWith({
+        status: 'Starting' as const,
+        progress: 0,
+        testsPassed: 0,
+        testsTotal: 0,
+        duration: 0,
+        timestamp: new Date()
       })
     );
 
-    // 5. Convert the stream to a Signal.
-    // We pass an initial value so the template has data immediately.
-    this.buildStatus = toSignal(rawStream$, {
+    // Convert stream to Signal with initial value
+    this.buildStatus = toSignal(buildStatusStream$, {
       initialValue: {
         status: 'Starting',
         progress: 0,
         testsPassed: 0,
-        testsTotal: 150,
+        testsTotal: 0,
         duration: 0,
         timestamp: new Date()
       }
     });
+  }
+
+  private mapSubscriptionStatus(subscriptionStatus: string): BuildStatus['status'] {
+    const statusMap: Record<string, BuildStatus['status']> = {
+      'PENDING': 'Starting',
+      'Pending': 'Starting',
+      'RUNNING': 'In Progress',
+      'Running': 'In Progress',
+      'COMPLETE': 'Complete',
+      'Complete': 'Complete',
+      'FAILED': 'Failed',
+      'Failed': 'Failed'
+    };
+    return statusMap[subscriptionStatus] || 'Starting';
   }
 
   // 6. Use 'computed' signals for derived state.
@@ -134,50 +178,6 @@ export class BuildProgressCardComponent implements OnInit {
   });
 
 
-  /**
-   * Mock GraphQL subscription emitting build status updates
-   * In production, replace with real GraphQL subscription:
-   *
-   * private buildService.buildSubscription(buildId: string) {
-   *   return this.apollo.subscribe<BuildStatusUpdate>({
-   *     query: BUILD_STATUS_SUBSCRIPTION,
-   *     variables: { buildId }
-   *   }).pipe(
-   *     map(result => result.data.buildStatus),
-   *     bufferTime(250)
-   *   );
-   * }
-   */
-  private mockBuildProgress$(): Observable<BuildStatus> {
-    return interval(100).pipe(
-      map(tick => {
-        const progress = Math.min(tick * 5, 100);
-        const testsPassed = Math.floor(progress * 1.5);
-        const testsTotal = 150;
-
-        // Fixed: Explicit type forces TypeScript to see literal values instead of 'string'
-        const status: BuildStatus['status'] = progress < 50 ? 'In Progress' : progress < 100 ? 'Finalizing' : 'Complete';
-
-        return {
-          status,
-          progress,
-          testsPassed: Math.min(testsPassed, testsTotal),
-          testsTotal,
-          duration: tick,
-          timestamp: new Date(),
-        };
-      }),
-      // Fixed: Explicit type prevents type-widening inside the operator
-      startWith({
-        status: 'Starting' as const, // or 'Starting' as BuildStatus['status']
-        progress: 0,
-        testsPassed: 0,
-        testsTotal: 150,
-        duration: 0,
-        timestamp: new Date(),
-      })
-    );
-  }
 
   viewLogs(): void {
     console.log('Opening logs for', this.buildId);
