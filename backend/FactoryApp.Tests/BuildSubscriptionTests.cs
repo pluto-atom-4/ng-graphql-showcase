@@ -69,8 +69,8 @@ public class BuildSubscriptionTests : IAsyncLifetime
         );
 
         Assert.NotNull(result);
-        Assert.Equal(BuildStatus.Running, result.Status);
-        Assert.Equal(1, _eventSender.SentMessages.Count);
+        Assert.Equal("RUNNING", result.Status);
+        Assert.Single(_eventSender.SentMessages);
         Assert.Equal("buildStatusChanged", _eventSender.SentMessages[0].Topic);
 
         var sentEvent = _eventSender.SentMessages[0].Message as BuildStatusChangedEvent;
@@ -148,7 +148,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
 
         Assert.NotNull(result);
         Assert.Equal(TestStatus.Passed, result.Status);
-        Assert.Equal(1, _eventSender.SentMessages.Count);
+        Assert.Single(_eventSender.SentMessages);
         Assert.Equal("testRunCompleted", _eventSender.SentMessages[0].Topic);
 
         var sentEvent = _eventSender.SentMessages[0].Message as TestRunCompletedEvent;
