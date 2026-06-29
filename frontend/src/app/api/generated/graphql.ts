@@ -14,14 +14,6 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  /**
-   * Manufacturing Workflow GraphQL Schema
-   *
-   * Domain Model:
-   * - Build: Top-level manufacturing item
-   * - Part: Components in a Build
-   * - TestRun: Test execution results with file references
-   */
   DateTime: { input: Date; output: Date; }
 };
 
@@ -68,95 +60,30 @@ export enum BuildStatus {
   Running = 'RUNNING'
 }
 
+/** Build status update from subscription */
 export type BuildStatusUpdate = {
   __typename?: 'BuildStatusUpdate';
-  /** Build duration in seconds */
-  duration: Scalars['Int']['output'];
-  /** Progress percentage (0-100) */
-  progress: Scalars['Int']['output'];
-  /** Build current status */
-  status: BuildStatus;
-  /** Number of tests passed */
-  testsPassed: Scalars['Int']['output'];
-  /** Total number of tests */
-  testsTotal: Scalars['Int']['output'];
+  /** Build ID being updated */
+  buildId: Scalars['ID']['output'];
+  /** New build status */
+  newStatus: BuildStatus;
+  /** Previous build status */
+  oldStatus: BuildStatus;
   /** Timestamp of update */
   timestamp: Scalars['DateTime']['output'];
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  /**
-   * Add a part to a build.
-   *
-   * Example:
-   *   mutation {
-   *     addPart(buildId: "abc123", name: "Valve", sku: "V-001", quantity: 2) {
-   *       id
-   *       buildId
-   *       name
-   *       sku
-   *     }
-   *   }
-   */
+  /** Add a part to a build */
   addPart: Part;
-  /**
-   * Create a new build.
-   *
-   * Example:
-   *   mutation {
-   *     createBuild(name: "Build-2026-001", description: "Q2 production run") {
-   *       id
-   *       name
-   *       status
-   *     }
-   *   }
-   */
+  /** Create a new build */
   createBuild: Build;
-  /**
-   * Authenticate user with email and password.
-   * Returns JWT token valid for 24 hours.
-   *
-   * Example:
-   *   mutation {
-   *     login(email: "user@example.com", password: "password123") {
-   *       token
-   *       user { id email }
-   *     }
-   *   }
-   */
+  /** Authenticate user with email and password */
   login: AuthPayload;
-  /**
-   * Submit a test run for a build.
-   *
-   * fileUrl should point to Express /upload endpoint result.
-   * Emits testRunCompleted event to Express event bus for real-time SSE.
-   *
-   * Example:
-   *   mutation {
-   *     submitTestRun(buildId: "abc123", status: PASSED, result: "All tests passed", fileUrl: "http://localhost:5000/uploads/test-result.txt") {
-   *       id
-   *       status
-   *       result
-   *       completedAt
-   *     }
-   *   }
-   */
+  /** Submit a test run for a build */
   submitTestRun: TestRun;
-  /**
-   * Update build status.
-   *
-   * Emits buildStatusChanged event to Express event bus for real-time SSE.
-   *
-   * Example:
-   *   mutation {
-   *     updateBuildStatus(id: "abc123", status: RUNNING) {
-   *       id
-   *       status
-   *       updatedAt
-   *     }
-   *   }
-   */
+  /** Update build status and emit buildStatusUpdated subscription event */
   updateBuildStatus: Build;
 };
 
@@ -224,7 +151,9 @@ export type Part = {
 
 export type Query = {
   __typename?: 'Query';
+  /** Fetch a build by ID */
   build?: Maybe<Build>;
+  /** Fetch paginated builds */
   builds: PaginatedBuilds;
 };
 
@@ -241,26 +170,19 @@ export type QueryBuildsArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  /**
-   * Subscribe to real-time build status updates for a specific build.
-   *
-   * Example:
-   *   subscription {
-   *     buildStatus(buildId: "abc123") {
-   *       status
-   *       progress
-   *       testsPassed
-   *       testsTotal
-   *       duration
-   *       timestamp
-   *     }
-   *   }
-   */
-  buildStatus: BuildStatusUpdate;
+  /** Subscribe to real-time build status updates for a specific build */
+  buildStatusUpdated: BuildStatusUpdate;
+  /** Subscribe to test run completion events for a specific build */
+  testRunCompleted: TestRunUpdate;
 };
 
 
-export type SubscriptionBuildStatusArgs = {
+export type SubscriptionBuildStatusUpdatedArgs = {
+  buildId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionTestRunCompletedArgs = {
   buildId: Scalars['ID']['input'];
 };
 
@@ -272,7 +194,7 @@ export type TestRun = {
   completedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Timestamp when test was created */
   createdAt: Scalars['DateTime']['output'];
-  /** URL to test result file (Express backend /upload) */
+  /** URL to test result file */
   fileUrl?: Maybe<Scalars['String']['output']>;
   /** TestRun unique identifier */
   id: Scalars['ID']['output'];
@@ -284,6 +206,19 @@ export type TestRun = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** Test run completion update from subscription */
+export type TestRunUpdate = {
+  __typename?: 'TestRunUpdate';
+  /** Build ID */
+  buildId: Scalars['ID']['output'];
+  /** Test status */
+  status: TestStatus;
+  /** Test run ID */
+  testRunId: Scalars['ID']['output'];
+  /** Timestamp of update */
+  timestamp: Scalars['DateTime']['output'];
+};
+
 export enum TestStatus {
   Failed = 'FAILED',
   Passed = 'PASSED',
@@ -291,17 +226,6 @@ export enum TestStatus {
   Running = 'RUNNING'
 }
 
-export type BuildStatus =
-  | 'COMPLETE'
-  | 'FAILED'
-  | 'PENDING'
-  | 'RUNNING';
-
-export type TestStatus =
-  | 'FAILED'
-  | 'PASSED'
-  | 'PENDING'
-  | 'RUNNING';
 
 export type GetBuildQueryVariables = Exact<{
   id: string | number;
@@ -354,12 +278,19 @@ export type SubmitTestRunMutationVariables = Exact<{
 
 export type SubmitTestRunMutation = { submitTestRun: { id: string, status: TestStatus, result: string | null, completedAt: Date | null } };
 
-export type BuildStatusUpdateSubscriptionVariables = Exact<{
+export type BuildStatusUpdatedSubscriptionVariables = Exact<{
   buildId: string | number;
 }>;
 
 
-export type BuildStatusUpdateSubscription = { buildStatus: { status: BuildStatus, progress: number, testsPassed: number, testsTotal: number, duration: number, timestamp: Date } };
+export type BuildStatusUpdatedSubscription = { buildStatusUpdated: { buildId: string, oldStatus: BuildStatus, newStatus: BuildStatus, timestamp: Date } };
+
+export type TestRunCompletedSubscriptionVariables = Exact<{
+  buildId: string | number;
+}>;
+
+
+export type TestRunCompletedSubscription = { testRunCompleted: { testRunId: string, buildId: string, status: TestStatus, timestamp: Date } };
 
 export const GetBuildDocument = gql`
     query GetBuild($id: ID!) {
@@ -510,14 +441,12 @@ export const SubmitTestRunDocument = gql`
       super(apollo);
     }
   }
-export const BuildStatusUpdateDocument = gql`
-    subscription BuildStatusUpdate($buildId: ID!) {
-  buildStatus(buildId: $buildId) {
-    status
-    progress
-    testsPassed
-    testsTotal
-    duration
+export const BuildStatusUpdatedDocument = gql`
+    subscription BuildStatusUpdated($buildId: ID!) {
+  buildStatusUpdated(buildId: $buildId) {
+    buildId
+    oldStatus
+    newStatus
     timestamp
   }
 }
@@ -526,8 +455,29 @@ export const BuildStatusUpdateDocument = gql`
   @Injectable({
     providedIn: 'root'
   })
-  export class BuildStatusUpdateGQL extends Apollo.Subscription<BuildStatusUpdateSubscription, BuildStatusUpdateSubscriptionVariables> {
-    document = BuildStatusUpdateDocument;
+  export class BuildStatusUpdatedGQL extends Apollo.Subscription<BuildStatusUpdatedSubscription, BuildStatusUpdatedSubscriptionVariables> {
+    document = BuildStatusUpdatedDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
+export const TestRunCompletedDocument = gql`
+    subscription TestRunCompleted($buildId: ID!) {
+  testRunCompleted(buildId: $buildId) {
+    testRunId
+    buildId
+    status
+    timestamp
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class TestRunCompletedGQL extends Apollo.Subscription<TestRunCompletedSubscription, TestRunCompletedSubscriptionVariables> {
+    document = TestRunCompletedDocument;
     
     constructor(apollo: Apollo.Apollo) {
       super(apollo);

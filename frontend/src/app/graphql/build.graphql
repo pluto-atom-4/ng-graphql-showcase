@@ -76,13 +76,20 @@ mutation SubmitTestRun($buildId: ID!, $status: TestStatus!, $result: String, $fi
 }
 
 # Subscriptions
-subscription BuildStatusUpdate($buildId: ID!) {
-    buildStatus(buildId: $buildId) {
+subscription BuildStatusUpdated($buildId: ID!) {
+    buildStatusUpdated(buildId: $buildId) {
+        buildId
+        oldStatus
+        newStatus
+        timestamp
+    }
+}
+
+subscription TestRunCompleted($buildId: ID!) {
+    testRunCompleted(buildId: $buildId) {
+        testRunId
+        buildId
         status
-        progress
-        testsPassed
-        testsTotal
-        duration
         timestamp
     }
 }
