@@ -4,6 +4,8 @@ using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.GraphQL.Types;
+using FactoryApp.Workflows.Activities;
+using Elsa;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +32,10 @@ builder.Services.AddDbContext<FactoryDbContext>(options =>
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<BuildDataLoaders>();
+
+// 2.5 Register Elsa Workflows (Phase 2 infrastructure)
+// TODO: Wire up Elsa v3 workflow registration when finalizing integration
+// Activities: PublishBuildStatusActivity, GetBuildActivity ready for workflow use
 
 // 3. Register Hot Chocolate GraphQL Server with domain resolvers
 builder.Services
