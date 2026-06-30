@@ -145,6 +145,46 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3O
 %}
 
 ###
+### Expired token (simulated with past exp claim)
+### Token with expiration in the past should be rejected (issue #90)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6InRlc3RAZXhhbXBsZS5jb20iLCJleHAiOjE2MjMwMDAwMDAsImlzcyI6ImZhY3RvcnktYXBwIiwiYXVkIjoiZmFjdG9yeS1hcHAtdXNlcnMifQ.signature_here
+
+{
+  "query": "mutation { createBuild(name: \"Expired\") { id } }"
+}
+
+> {%
+  client.test("Expired token rejected", function() {
+    client.assert(response.status === 401 || response.body.errors, "Expected 401 or GraphQL error for expired token");
+  });
+
+  client.log("✓ Expired token correctly rejected");
+%}
+
+###
+### Unicode/emoji in text fields
+### Should safely handle Unicode characters in build name and description (issue #90)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"🚀 Build with émojis 中文 العربية\", description: \"Testing Unicode: ñ ü ö ß ™ © ® 🎯 🔥\") { id name description } }"
+}
+
+> {%
+  client.test("Unicode in build name/description accepted", function() {
+    client.assert(!response.body.errors, "Unicode characters should be accepted");
+    client.assert(response.body.data?.createBuild?.name?.includes("🚀"), "Emoji should be preserved");
+    client.assert(response.body.data?.createBuild?.description?.includes("©"), "Special Unicode should be preserved");
+  });
+
+  client.log("✓ Unicode/emoji handling verified");
+%}
+
+###
 ### Request to non-existent endpoint
 ### Should return 404 Not Found
 POST {{baseUrl}}/graphql-not-found
