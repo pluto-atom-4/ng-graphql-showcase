@@ -175,7 +175,7 @@ public class BuildMutationType
         Guid buildId,
         string name,
         string sku,
-        int quantity,
+        decimal quantity,
         [Service] FactoryDbContext dbContext,
         [Service] LoggingService loggingService)
     {

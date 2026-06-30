@@ -15,6 +15,7 @@ const config: CodegenConfig = {
         strictScalars: true,
         scalars: {
           DateTime: 'Date',
+          Decimal: 'number',
         },
       },
     },

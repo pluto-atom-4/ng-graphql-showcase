@@ -58,7 +58,7 @@ public static class ValidationService
             throw new GraphQLException("SKU must be <= 100 characters");
     }
 
-    public static void ValidateQuantity(int quantity)
+    public static void ValidateQuantity(decimal quantity)
     {
         if (quantity <= 0)
             throw new GraphQLException("Quantity must be greater than 0");

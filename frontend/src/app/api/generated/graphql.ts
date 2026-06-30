@@ -15,6 +15,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   DateTime: { input: Date; output: Date; }
+  Decimal: { input: number; output: number; }
 };
 
 export type AuthPayload = {
@@ -91,7 +92,7 @@ export type Mutation = {
 export type MutationAddPartArgs = {
   buildId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
-  quantity: Scalars['Int']['input'];
+  quantity: Scalars['Decimal']['input'];
   sku: Scalars['String']['input'];
 };
 
@@ -144,7 +145,7 @@ export type Part = {
   /** Part name */
   name: Scalars['String']['output'];
   /** Quantity in build */
-  quantity: Scalars['Int']['output'];
+  quantity: Scalars['Decimal']['output'];
   /** Stock keeping unit */
   sku: Scalars['String']['output'];
 };
@@ -226,6 +227,17 @@ export enum TestStatus {
   Running = 'RUNNING'
 }
 
+export type BuildStatus =
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'PENDING'
+  | 'RUNNING';
+
+export type TestStatus =
+  | 'FAILED'
+  | 'PASSED'
+  | 'PENDING'
+  | 'RUNNING';
 
 export type GetBuildQueryVariables = Exact<{
   id: string | number;
@@ -394,7 +406,7 @@ export const UpdateBuildStatusDocument = gql`
     }
   }
 export const AddPartDocument = gql`
-    mutation AddPart($buildId: ID!, $name: String!, $sku: String!, $quantity: Int!) {
+    mutation AddPart($buildId: ID!, $name: String!, $sku: String!, $quantity: Decimal!) {
   addPart(buildId: $buildId, name: $name, sku: $sku, quantity: $quantity) {
     id
     buildId

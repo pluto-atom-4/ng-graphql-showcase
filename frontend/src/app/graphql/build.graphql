@@ -56,7 +56,7 @@ mutation UpdateBuildStatus($id: ID!, $status: BuildStatus!) {
     }
 }
 
-mutation AddPart($buildId: ID!, $name: String!, $sku: String!, $quantity: Int!) {
+mutation AddPart($buildId: ID!, $name: String!, $sku: String!, $quantity: Decimal!) {
     addPart(buildId: $buildId, name: $name, sku: $sku, quantity: $quantity) {
         id
         buildId
