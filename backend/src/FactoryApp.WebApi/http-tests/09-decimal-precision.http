@@ -1,0 +1,137 @@
+@token = paste_token_from_01_authentication_here
+
+###
+### 09. DECIMAL PRECISION TESTS
+### Verify fractional quantity support for manufacturing precision (issue #132)
+### Tests: 0.5, 1.5, 2.75 unit quantities
+###
+
+### Query decimal precision test build
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { build(id: \"10000000-0000-0000-0000-000000000011\") { id name parts { id name sku quantity } } }"
+}
+
+> {%
+  client.test("Decimal precision build retrieved", function() {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+    client.assert(!response.body.errors, "Expected no errors");
+  });
+
+  client.test("Half unit component found (0.5)", function() {
+    var parts = response.body.data.build.parts;
+    var halfUnit = parts.find(p => p.sku === "SKU-HALF-001");
+    client.assert(halfUnit, "Half unit component not found");
+    client.assert(halfUnit.quantity === 0.5, "Expected quantity 0.5, got " + halfUnit.quantity);
+  });
+
+  client.test("1.5 unit component found", function() {
+    var parts = response.body.data.build.parts;
+    var oneAndHalf = parts.find(p => p.sku === "SKU-1.5-002");
+    client.assert(oneAndHalf, "1.5 unit component not found");
+    client.assert(oneAndHalf.quantity === 1.5, "Expected quantity 1.5, got " + oneAndHalf.quantity);
+  });
+
+  client.test("2.75 unit component found", function() {
+    var parts = response.body.data.build.parts;
+    var twoAndThreeQuarters = parts.find(p => p.sku === "SKU-2.75-003");
+    client.assert(twoAndThreeQuarters, "2.75 unit component not found");
+    client.assert(twoAndThreeQuarters.quantity === 2.75, "Expected quantity 2.75, got " + twoAndThreeQuarters.quantity);
+  });
+
+  client.log("✓ All decimal precision parts verified");
+%}
+
+###
+### Add part with 0.5 quantity
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"10000000-0000-0000-0000-000000000011\", name: \"Test Half Unit\", sku: \"SKU-TEST-HALF\", quantity: 0.5) { id quantity } }"
+}
+
+> {%
+  client.test("Half quantity accepted", function() {
+    client.assert(!response.body.errors, "Expected no errors for 0.5 quantity");
+  });
+
+  client.test("Half quantity preserved", function() {
+    var quantity = response.body.data.addPart.quantity;
+    client.assert(quantity === 0.5, "Expected 0.5, got " + quantity);
+  });
+%}
+
+###
+### Add part with 1.5 quantity
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"10000000-0000-0000-0000-000000000011\", name: \"Test 1.5 Units\", sku: \"SKU-TEST-1.5\", quantity: 1.5) { id quantity } }"
+}
+
+> {%
+  client.test("1.5 quantity accepted", function() {
+    client.assert(!response.body.errors, "Expected no errors for 1.5 quantity");
+  });
+
+  client.test("1.5 quantity preserved", function() {
+    var quantity = response.body.data.addPart.quantity;
+    client.assert(quantity === 1.5, "Expected 1.5, got " + quantity);
+  });
+%}
+
+###
+### Add part with 2.75 quantity
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPart(buildId: \"10000000-0000-0000-0000-000000000011\", name: \"Test 2.75 Units\", sku: \"SKU-TEST-2.75\", quantity: 2.75) { id quantity } }"
+}
+
+> {%
+  client.test("2.75 quantity accepted", function() {
+    client.assert(!response.body.errors, "Expected no errors for 2.75 quantity");
+  });
+
+  client.test("2.75 quantity preserved", function() {
+    var quantity = response.body.data.addPart.quantity;
+    client.assert(quantity === 2.75, "Expected 2.75, got " + quantity);
+  });
+
+  client.log("✓ All decimal precision mutations succeeded");
+%}
+
+###
+### Verify precision not truncated (0.5 not rounded to 0 or 1)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { buildsPaginated(limit: 1, offset: 0) { items { id parts { sku quantity } } } }"
+}
+
+> {%
+  client.test("Precision not truncated", function() {
+    var build = response.body.data.buildsPaginated.items[0];
+    var parts = build.parts;
+
+    // Find fractional quantity parts
+    var hasHalf = parts.some(p => p.quantity === 0.5);
+    var hasOneAndHalf = parts.some(p => p.quantity === 1.5);
+    var hasDecimal = parts.some(p => p.quantity === 2.75);
+
+    client.assert(hasHalf || hasOneAndHalf || hasDecimal, "No decimal quantities found - precision may be truncated");
+  });
+
+  client.log("✓ Precision preserved across queries");
+%}
