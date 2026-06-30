@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using FactoryApp.Domain;
 using FactoryApp.Domain.TestFixtures;
 using FactoryApp.GraphQL;
@@ -5,6 +6,7 @@ using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.GraphQL.Types;
 using FactoryApp.Workflows.Activities;
+using FactoryApp.WebApi.Middleware;
 using Elsa;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,6 +35,13 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<BuildDataLoaders>();
 builder.Services.AddSingleton<SubscriptionRateLimiter>();
+builder.Services.AddHttpContextAccessor();
+
+// 2.1 Query diagnostics (for N+1 detection in HTTP tests)
+builder.Services.AddSingleton<QueryDiagnosticsService>();
+builder.Services.AddSingleton<DatabaseQueryListener>();
+builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
+    new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
 // 2.5 Elsa Workflows v3 (Phase 5B - Deferred)
 // ROADBLOCK: Elsa v3.5.3 ActivityExecutionContext lacks SetVariable/GetVariable API
@@ -50,6 +59,21 @@ builder.Services
     .AddInMemorySubscriptions();
 
 var app = builder.Build();
+
+// 3.5 Subscribe to EF Core diagnostics for query counting
+DiagnosticListener.AllListeners.Subscribe(
+    app.Services.GetRequiredService<IObserver<DiagnosticListener>>());
+
+// 3.6 Add middleware to initialize query diagnostics per request
+app.Use(async (context, next) =>
+{
+    var diagnosticsService = context.RequestServices.GetRequiredService<QueryDiagnosticsService>();
+    diagnosticsService.InitializeRequest();
+    await next();
+});
+
+// 3.7 Add middleware to inject diagnostics into GraphQL response extensions
+app.UseGraphQLDiagnostics();
 
 // 4. Seed test data in development or when TEST_SEED_DATA is set
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("TEST_SEED_DATA") == "true")
