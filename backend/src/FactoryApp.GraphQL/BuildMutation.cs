@@ -5,6 +5,7 @@ using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
@@ -71,6 +72,7 @@ public class BuildMutationType
         }
     }
 
+    [Authorize]
     public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
@@ -122,6 +124,7 @@ public class BuildMutationType
         }
     }
 
+    [Authorize]
     public async Task<BuildPayload> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
@@ -171,6 +174,7 @@ public class BuildMutationType
         }
     }
 
+    [Authorize]
     public async Task<PartPayload> AddPart(
         Guid buildId,
         string name,
@@ -238,6 +242,7 @@ public class BuildMutationType
         }
     }
 
+    [Authorize]
     public async Task<TestRunPayload> SubmitTestRun(
         Guid buildId,
         TestStatus status,
