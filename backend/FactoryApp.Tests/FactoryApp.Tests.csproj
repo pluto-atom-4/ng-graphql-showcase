@@ -11,13 +11,16 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.17" />
-    <PackageReference Include="Snappier" Version="1.3.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.17" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Snappier" Version="1.3.1" />
+    <PackageReference Include="Testcontainers" Version="3.8.0" />
+    <PackageReference Include="Testcontainers.MsSql" Version="3.8.0" />
     <PackageReference Include="xunit" Version="2.8.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1" />
   </ItemGroup>
@@ -27,7 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\src\FactoryApp.Domain\FactoryApp.Domain.csproj" />
+    <ProjectReference Include="..\src\FactoryApp.GraphQL\FactoryApp.GraphQL.csproj" />
     <ProjectReference Include="..\src\FactoryApp.WebApi\FactoryApp.WebApi.csproj" />
+    <ProjectReference Include="..\src\FactoryApp.Workflows\FactoryApp.Workflows.csproj" />
   </ItemGroup>
 
 </Project>
