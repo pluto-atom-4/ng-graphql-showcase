@@ -4,6 +4,7 @@ using FactoryApp.GraphQL;
 using FactoryApp.Tests.Collections;
 using FactoryApp.Tests.Fixtures;
 using FactoryApp.Tests.Mocks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.Tests.Mutations;
@@ -16,6 +17,7 @@ public class TestRunTransactionTests
     private readonly BuildMutationType _mutation;
     private readonly MockTopicEventSender _mockEventSender;
     private readonly MockLoggingService _mockLogging;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public TestRunTransactionTests(TestDatabaseFixture dbFixture)
     {
@@ -24,6 +26,7 @@ public class TestRunTransactionTests
         _mutation = new BuildMutationType();
         _mockEventSender = new MockTopicEventSender();
         _mockLogging = new MockLoggingService();
+        _httpContextAccessor = new MockHttpContextAccessor();
     }
 
     /// <summary>
@@ -41,7 +44,7 @@ public class TestRunTransactionTests
         // Act
         var response = await _mutation.SubmitTestRun(
             buildId, testStatus, result, fileUrl,
-            _context, _mockEventSender, _mockLogging);
+            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
 
         // Assert - Query database directly
         var testRun = await _context.TestRuns
@@ -71,7 +74,7 @@ public class TestRunTransactionTests
         var exception = await Assert.ThrowsAsync<GraphQLException>(async () =>
             await _mutation.SubmitTestRun(
                 buildId, TestStatus.Failed, null, null,  // null result fails validation
-                _context, _mockEventSender, _mockLogging));
+                _context, _mockEventSender, _mockLogging, _httpContextAccessor));
 
         // Assert
         Assert.Contains("result is required", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -107,7 +110,7 @@ public class TestRunTransactionTests
         var exception = await Assert.ThrowsAsync<GraphQLException>(async () =>
             await _mutation.SubmitTestRun(
                 buildId, TestStatus.Passed, "Test", "https://example.com/file.json",
-                _context, mockEventSenderWithFailure, _mockLogging));
+                _context, mockEventSenderWithFailure, _mockLogging, _httpContextAccessor));
 
         // Assert - Verify exception wraps the event sender failure
         Assert.Contains("Failed to submit test run", exception.Message);
@@ -131,7 +134,7 @@ public class TestRunTransactionTests
         // Act - PASSED status
         await _mutation.SubmitTestRun(
             buildId, TestStatus.Passed, "Pass", "https://example.com/1.json",
-            _context, _mockEventSender, _mockLogging);
+            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
 
         // Assert - completedAt set and recent
         var passedRun = await _context.TestRuns
@@ -143,7 +146,7 @@ public class TestRunTransactionTests
         // Act - RUNNING status
         await _mutation.SubmitTestRun(
             buildId, TestStatus.Running, null, null,
-            _context, _mockEventSender, _mockLogging);
+            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
 
         // Assert - completedAt null for RUNNING
         var runningRun = await _context.TestRuns
@@ -155,7 +158,7 @@ public class TestRunTransactionTests
         // Act - FAILED status with result
         await _mutation.SubmitTestRun(
             buildId, TestStatus.Failed, "Failed", "https://example.com/2.json",
-            _context, _mockEventSender, _mockLogging);
+            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
 
         // Assert - completedAt set for FAILED
         var failedRun = await _context.TestRuns
@@ -184,7 +187,7 @@ public class TestRunTransactionTests
         {
             var response = await _mutation.SubmitTestRun(
                 buildId, status, "Result", status == TestStatus.Running ? null : "https://example.com/file.json",
-                _context, _mockEventSender, _mockLogging);
+                _context, _mockEventSender, _mockLogging, _httpContextAccessor);
             testRunIds.Add(response.Id);
         }
 

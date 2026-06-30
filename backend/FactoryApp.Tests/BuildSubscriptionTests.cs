@@ -5,6 +5,7 @@ using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.Tests.Fixtures;
 using FactoryApp.Tests.Mocks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -20,6 +21,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
     private MockTopicEventSender _eventSender = null!;
     private LoggingService _loggingService = null!;
     private AuthService _authService = null!;
+    private IHttpContextAccessor _httpContextAccessor = null!;
 
     public async Task InitializeAsync()
     {
@@ -44,6 +46,8 @@ public class BuildSubscriptionTests : IAsyncLifetime
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         _loggingService = new LoggingService(loggerFactory.CreateLogger<LoggingService>());
 
+        _httpContextAccessor = new MockHttpContextAccessor();
+
         _mutation = new BuildMutationType();
         _subscription = new BuildSubscription();
     }
@@ -65,7 +69,8 @@ public class BuildSubscriptionTests : IAsyncLifetime
             BuildStatus.Running,
             _context,
             _eventSender,
-            _loggingService
+            _loggingService,
+            _httpContextAccessor
         );
 
         Assert.NotNull(result);
@@ -143,7 +148,8 @@ public class BuildSubscriptionTests : IAsyncLifetime
             "http://example.com/result.txt",
             _context,
             _eventSender,
-            _loggingService
+            _loggingService,
+            _httpContextAccessor
         );
 
         Assert.NotNull(result);
