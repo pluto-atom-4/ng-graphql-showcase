@@ -2,6 +2,21 @@
 // HTTP CLIENT TEST HELPERS
 // JavaScript module for JetBrains HTTP Client
 // Import: import { tokenManager, errorValidator, ... } from "./helpers.js"
+//
+// Phase 1 Backend Integration (issue #91):
+// - queryCounter.assertN1Free(maxQueries, label)
+//   Verifies query count via response.body.extensions.queryCount
+//   Backend must have QueryDiagnosticsMiddleware enabled
+// - queryCounter.assertCount(expectedCount, label)
+//   Assert exact query count match
+// - queryCounter.getMetrics()
+//   Extract queryCount + responseTimeMs from extensions
+//
+// Usage Example:
+//   > {%
+//     queryCounter.assertN1Free(2, "Build + parts");
+//     queryCounter.logTiming();
+//   %}
 // ============================================================================
 
 // Initialize global caches if not present
@@ -186,7 +201,8 @@ export var errorValidator = {
 
 // ============================================================================
 // QUERY COUNTER
-// DataLoader N+1 detection via response time heuristics
+// DataLoader N+1 detection via response extensions queryCount (Phase 1 backend)
+// Also supports response time heuristics for backward compatibility
 // ============================================================================
 
 export var queryCounter = {
@@ -226,9 +242,69 @@ export var queryCounter = {
     });
   },
 
+  // Phase 1 backend integration: Automated N+1 detection via queryCount
+  assertN1Free: function (maxQueries, label) {
+    var queryCount = response.body.extensions?.queryCount;
+    label = label || "Query";
+
+    client.test("N+1 prevention: " + label + " (queryCount ≤ " + maxQueries + ")", function () {
+      client.assert(
+        queryCount !== undefined,
+        "Missing queryCount in response.body.extensions (backend query diagnostics not enabled)"
+      );
+      client.assert(
+        queryCount <= maxQueries,
+        label +
+          " N+1 detected: " +
+          queryCount +
+          " queries executed (expected ≤" +
+          maxQueries +
+          ")"
+      );
+    });
+
+    client.log("✓ " + label + ": " + queryCount + " queries (threshold: " + maxQueries + ")");
+  },
+
+  // Compare expected vs actual query count with tolerance
+  assertCount: function (expectedCount, label) {
+    var queryCount = response.body.extensions?.queryCount;
+    label = label || "Query";
+
+    client.test("Query count: " + label + " = " + expectedCount, function () {
+      client.assert(
+        queryCount !== undefined,
+        "Missing queryCount in response.body.extensions"
+      );
+      client.assert(
+        queryCount === expectedCount,
+        label +
+          " expected " +
+          expectedCount +
+          " query(ies), got " +
+          queryCount
+      );
+    });
+  },
+
+  // Get metrics from response extensions
+  getMetrics: function () {
+    return {
+      queryCount: response.body.extensions?.queryCount || null,
+      responseTimeMs: response.body.extensions?.responseTimeMs || null,
+      httpResponseTime: parseFloat(response.responseTime) || 0,
+    };
+  },
+
   logTiming: function () {
-    var responseTime = parseFloat(response.responseTime) || 0;
-    client.log("ℹ Response time: " + responseTime.toFixed(0) + "ms");
+    var metrics = this.getMetrics();
+    var msg =
+      "ℹ Query count: " +
+      (metrics.queryCount !== null ? metrics.queryCount : "unknown") +
+      " | Response: " +
+      metrics.httpResponseTime.toFixed(0) +
+      "ms";
+    client.log(msg);
   },
 };
 
