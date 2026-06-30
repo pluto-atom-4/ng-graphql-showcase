@@ -73,7 +73,8 @@ app.Use(async (context, next) =>
 });
 
 // 3.7 Add middleware to inject diagnostics into GraphQL response extensions
-app.UseGraphQLDiagnostics();
+// DISABLED: Stream disposal issue. QueryCount tracking still functional via DatabaseQueryListener.
+// app.UseGraphQLDiagnostics();
 
 // 4. Seed test data in development or when TEST_SEED_DATA is set
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("TEST_SEED_DATA") == "true")
