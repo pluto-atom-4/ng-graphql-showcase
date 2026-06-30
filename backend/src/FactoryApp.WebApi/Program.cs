@@ -33,9 +33,11 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<BuildDataLoaders>();
 
-// 2.5 Register Elsa Workflows (Phase 2 infrastructure)
-// TODO: Wire up Elsa v3 workflow registration when finalizing integration
-// Activities: PublishBuildStatusActivity, GetBuildActivity ready for workflow use
+// 2.5 Elsa Workflows v3 (Phase 5B - Deferred)
+// ROADBLOCK: Elsa v3.5.3 ActivityExecutionContext lacks SetVariable/GetVariable API
+// Activities stubbed with documented limitations pending Elsa v3.6+ upgrade
+// See: GetBuildActivity.cs, PublishBuildStatusActivity.cs for implementation notes
+// Phase 5C: Upgrade Elsa + implement workflow context variable binding
 
 // 3. Register Hot Chocolate GraphQL Server with domain resolvers
 builder.Services
