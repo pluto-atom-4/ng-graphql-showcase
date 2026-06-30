@@ -56,6 +56,8 @@ builder.Services
         };
     });
 
+builder.Services.AddAuthorization();
+
 // 2.2 Register application services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
