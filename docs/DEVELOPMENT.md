@@ -466,6 +466,140 @@ dotnet test backend/src --filter "TestClass=BuildRepositoryTests"
 
 # Run with output
 dotnet test backend/src --logger "console;verbosity=detailed"
+
+# Prerequisites: SQL Server must be running
+pnpm docker:up
+```
+
+### Backend Test Architecture
+
+Tests use **real SQL Server** (never mocks). Each test gets isolated database with auto-cleanup.
+
+#### Unit Tests (No DB)
+
+For services without database dependencies:
+
+```csharp
+// backend/FactoryApp.Tests/AuthServiceTests.cs
+public class AuthServiceTests
+{
+    [Fact]
+    public void HashPassword_WithValidPassword_ReturnsHash()
+    {
+        var authService = new AuthService(config);
+        var hash = authService.HashPassword("TestPass123!");
+        Assert.NotNull(hash);
+    }
+}
+```
+
+Run: `dotnet test backend/FactoryApp.Tests --filter "TestClass=AuthServiceTests"`
+
+#### Integration Tests (Real DB)
+
+For GraphQL resolvers and mutations touching database:
+
+```csharp
+// backend/FactoryApp.Tests/BuildMutationTests.cs
+public class BuildMutationTests : IAsyncLifetime
+{
+    private readonly TestDatabaseFixture _fixture = new();
+    private FactoryDbContext _context = null!;
+
+    public async Task InitializeAsync()
+    {
+        await _fixture.InitializeAsync();  // Creates isolated test DB
+        _context = _fixture.GetContext();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _fixture.DisposeAsync();      // Drops test DB
+    }
+
+    [Fact]
+    public async Task CreateBuild_WithValidInput_ReturnsBuildPayload()
+    {
+        // Test receives fresh DB, FixtureSeeder data
+    }
+}
+```
+
+**Key differences:**
+
+- Uses `TestDatabaseFixture` (real SQL Server at localhost:1433)
+- Implements `IAsyncLifetime` for setup/teardown
+- Each test gets unique `FactoryAppDb_Test_*` database
+- Database auto-dropped after test completes
+
+#### Transaction Tests (Shared Fixture)
+
+For testing atomicity and multi-operation consistency:
+
+```csharp
+// backend/FactoryApp.Tests/Mutations/TestRunTransactionTests.cs
+[Collection("SQL Server Transaction Tests")]
+public class TestRunTransactionTests
+{
+    private readonly TestDatabaseFixture _dbFixture;
+
+    public TestRunTransactionTests(TestDatabaseFixture dbFixture)
+    {
+        _dbFixture = dbFixture;  // Shared across collection
+    }
+
+    [Fact]
+    public async Task SubmitTestRun_RollsBackOnDatabaseError()
+    {
+        // Test against same seeded database as other tests in collection
+    }
+}
+```
+
+**Key differences:**
+
+- Uses xUnit Collections (shared fixture across multiple tests)
+- Defined in `FactoryApp.Tests/Collections/TransactionTestCollection.cs`
+- Single database used for all tests in collection
+- Useful for transaction/rollback scenarios
+
+### Using Test Helpers
+
+Fluent builder for cleaner test setup:
+
+```csharp
+// Setup
+var ctx = new GraphQLTestBuilder()
+    .WithContext(_context)
+    .WithDefaults()
+    .BuildMutationContext();
+
+// Act
+var result = await ctx.CreateBuild("Test Build", "Description");
+
+// Assert
+Assert.NotNull(result);
+Assert.Equal("Test Build", result.Name);
+```
+
+**Available contexts:**
+
+- `QueryTestContext`: Pre-wired query resolvers (GetBuild, GetBuilds, GetBuildsPaginated)
+- `MutationTestContext`: Pre-wired mutation resolvers (CreateBuild, UpdateBuildStatus, AddPart, SubmitTestRun)
+
+### Never Mock DbContext
+
+Tests must use real SQL Server. Mock divergence causes production failures:
+
+```csharp
+// ❌ WRONG
+var mockDbContext = new Mock<FactoryDbContext>();
+mockDbContext.Setup(...).Returns(...);
+
+// ✅ CORRECT
+var fixture = new TestDatabaseFixture();
+await fixture.InitializeAsync();
+var context = fixture.GetContext();
 ```
 
 ### Frontend Tests

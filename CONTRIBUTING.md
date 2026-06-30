@@ -19,7 +19,7 @@ For AI code generation and GitHub Copilot usage, see [.github/copilot-instructio
 7. [Commit Messages](#commit-messages)
 8. [Security](#security)
 9. [Pull Request Process](#pull-request-process)
-9. [Code Review](#code-review)
+10. [Code Review](#code-review)
 
 ---
 
@@ -36,12 +36,14 @@ For AI code generation and GitHub Copilot usage, see [.github/copilot-instructio
 ### Local Environment Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/pluto-atom-4/ng-graphql-playground.git
    cd ng-graphql-playground
    ```
 
 2. **Follow setup guide**
+
    ```bash
    # See docs/SETUP.md for detailed instructions
    # Quick start:
@@ -130,6 +132,7 @@ gh copilot -i "Use the factory-app-session-blog skill to document this work"
 ```
 
 **For more information:**
+
 - [GitHub Copilot CLI Documentation](https://docs.github.com/copilot/how-tos/copilot-cli)
 - [Plugin System Guide](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-cli-plugins)
 - [CLAUDE.md - Detailed Skill Configuration](CLAUDE.md)
@@ -141,6 +144,7 @@ gh copilot -i "Use the factory-app-session-blog skill to document this work"
 ### Overview
 
 All GitHub issue implementations follow a **standardized Git feature branch pattern** that includes:
+
 - Feature branch naming conventions
 - Implementation plan with file manifest tracking
 - Implementation criteria checklist
@@ -165,6 +169,7 @@ Examples:
 Every GitHub issue implementation requires a comprehensive implementation plan in `docs/implementation-planning/`:
 
 **Required Sections**:
+
 1. **Issue Information**: Issue number, feature branch, status
 2. **Executive Summary**: 2-3 sentence overview
 3. **Problem Statement**: What problem are we solving
@@ -183,19 +188,22 @@ The file manifest provides complete auditability:
 ## File Manifest
 
 ### Files Created
-| File Path | Purpose | Status |
-|-----------|---------|--------|
-| docs/new-file.md | Description | ✅ |
+
+| File Path        | Purpose     | Status |
+| ---------------- | ----------- | ------ |
+| docs/new-file.md | Description | ✅     |
 
 ### Files Modified
-| File Path | Changes | Status |
-|-----------|---------|--------|
-| README.md | Added section | ✅ |
+
+| File Path | Changes       | Status |
+| --------- | ------------- | ------ |
+| README.md | Added section | ✅     |
 
 ### Files Deleted
+
 | File Path | Reason |
-|-----------|--------|
-| (none) | N/A |
+| --------- | ------ |
+| (none)    | N/A    |
 ```
 
 Status options: ✅ (Done), ⏳ (In Progress), ❌ (Blocked), 🔄 (Pending Review)
@@ -297,6 +305,7 @@ git checkout -b feat/your-feature-name
 ```
 
 **Branch naming convention:**
+
 - `feat/feature-name` — New feature
 - `fix/bug-description` — Bug fix
 - `docs/documentation-update` — Documentation changes
@@ -307,6 +316,7 @@ git checkout -b feat/your-feature-name
 ### 2. Make Changes
 
 **Backend (.NET):**
+
 ```bash
 cd backend/src/FactoryApp.WebApi
 dotnet watch run
@@ -314,6 +324,7 @@ dotnet watch run
 ```
 
 **Frontend (Angular):**
+
 ```bash
 pnpm --filter frontend run ng serve
 # Code with HMR (Hot Module Replacement)
@@ -387,14 +398,14 @@ git commit --no-verify -m "feat: Emergency hotfix"
 
 **Troubleshooting:**
 
-| Issue | Solution |
-|-------|----------|
-| "Pre-commit hooks fail on first clone" | Run `pnpm install` to install dependencies and Husky hooks |
-| "command not found: pnpm" | Run `pnpm install` to reinstall dependencies |
-| "prettier: command not found" | Run `pnpm install` to ensure prettier is installed |
-| "Hook takes too long" | Reduce scope: only commit related files |
-| "Permission denied on .husky/pre-commit" | Run: `chmod +x .husky/pre-commit` |
-| ".husky/ not found after clone" | Run `pnpm install` (prepare script installs hooks) |
+| Issue                                    | Solution                                                   |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| "Pre-commit hooks fail on first clone"   | Run `pnpm install` to install dependencies and Husky hooks |
+| "command not found: pnpm"                | Run `pnpm install` to reinstall dependencies               |
+| "prettier: command not found"            | Run `pnpm install` to ensure prettier is installed         |
+| "Hook takes too long"                    | Reduce scope: only commit related files                    |
+| "Permission denied on .husky/pre-commit" | Run: `chmod +x .husky/pre-commit`                          |
+| ".husky/ not found after clone"          | Run `pnpm install` (prepare script installs hooks)         |
 
 **Backend C# Developers:**
 
@@ -435,6 +446,7 @@ git push origin feat/your-feature-name
 ```
 
 Then create a PR on GitHub:
+
 ```bash
 gh pr create --title "feat: Add new manufacturing workflow feature"
 ```
@@ -446,6 +458,7 @@ gh pr create --title "feat: Add new manufacturing workflow feature"
 ### Backend (.NET)
 
 **C# Code Style:**
+
 - PascalCase for class names and methods
 - camelCase for local variables and parameters
 - Use meaningful names (no abbreviations)
@@ -453,27 +466,29 @@ gh pr create --title "feat: Add new manufacturing workflow feature"
 - Follow [Microsoft C# Coding Conventions](https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/coding-conventions)
 
 **Example:**
+
 ```csharp
 public class BuildService
 {
     private readonly ILogger<BuildService> _logger;
-    
+
     public async Task<Build> CreateBuildAsync(CreateBuildRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        
-        var build = new Build 
-        { 
+
+        var build = new Build
+        {
             Id = Guid.NewGuid(),
             Name = request.Name
         };
-        
+
         return build;
     }
 }
 ```
 
 **Database:**
+
 - Use Entity Framework Core for domain models
 - Use Dapper only for high-velocity telemetry writes
 - Always share transactions for multi-step operations
@@ -482,6 +497,7 @@ public class BuildService
 ### Frontend (Angular)
 
 **TypeScript Code Style:**
+
 - PascalCase for classes
 - camelCase for variables and functions
 - Use strict TypeScript mode (`strict: true`)
@@ -489,12 +505,13 @@ public class BuildService
 - Use OnPush change detection strategy
 
 **Example:**
+
 ```typescript
 @Component({
-  selector: 'app-build-list',
-  templateUrl: './build-list.component.html',
-  styleUrls: ['./build-list.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "app-build-list",
+  templateUrl: "./build-list.component.html",
+  styleUrls: ["./build-list.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildListComponent {
   builds$: Observable<Build[]>;
@@ -512,6 +529,209 @@ export class BuildListComponent {
 - **Null checks** — Use guards or null coalescing
 - **Error handling** — Specific exceptions, not generic
 - **Configuration** — Use environment variables, not hardcoded values
+
+---
+
+## Dependency Layers
+
+Backend organized in layered architecture. Each layer has specific responsibility; dependencies flow one direction only.
+
+### Layer Structure
+
+```
+FactoryApp.Tests (Integration Tests)
+    ↓
+FactoryApp.WebApi (Entry point, routing, auth middleware)
+    ↓
+├── FactoryApp.GraphQL (Resolvers, DTOs, Dapper)
+├── FactoryApp.Workflows (Elsa v3 orchestration)
+    ↓
+FactoryApp.Domain (Entities, EF Core, migrations)
+```
+
+### Layer Responsibilities
+
+#### FactoryApp.Domain
+
+**Responsibility:** Data model, EF Core configuration, migrations
+
+**What lives here:**
+
+- Entity classes (Build, Part, TestRun, User)
+- DbContext (FactoryDbContext)
+- Migrations (auto-generated by EF Core)
+- Enums (BuildStatus, TestStatus)
+
+**What NEVER goes here:**
+
+- GraphQL resolvers or types
+- Elsa activities
+- HTTP/WebApi concerns
+- Dapper queries
+
+**Dependencies:**
+
+- Microsoft.EntityFrameworkCore (only)
+- System.\* (standard library)
+
+**Example:**
+
+```csharp
+// ✅ Correct: Domain entity
+namespace FactoryApp.Domain.Entities;
+public class Build
+{
+    public Guid Id { get; set; }
+    public required string Name { get; set; }
+    public BuildStatus Status { get; set; }
+}
+```
+
+#### FactoryApp.GraphQL
+
+**Responsibility:** GraphQL schema, resolvers, data transfer objects (DTOs)
+
+**What lives here:**
+
+- Query/Mutation/Subscription types (BuildQueryType, BuildMutationType)
+- DTOs/Payloads (BuildPayload, PartPayload) — for API contracts
+- GraphQL services (LoggingService, ValidationService)
+- Dapper queries (high-velocity writes only)
+
+**What NEVER goes here:**
+
+- Entity classes (use entities from Domain)
+- Workflows or activities
+- HTTP middleware or routing
+- Database setup
+
+**Dependencies:**
+
+- FactoryApp.Domain (import entities, enums)
+- HotChocolate.\* (GraphQL engine)
+- Dapper (telemetry writes only, shared transactions)
+- System.\* (standard library)
+
+**Example:**
+
+```csharp
+// ✅ Correct: GraphQL resolver with DTO
+namespace FactoryApp.GraphQL;
+public class BuildMutationType
+{
+    public async Task<BuildPayload> CreateBuild(
+        string name,
+        [Service] FactoryDbContext dbContext,
+        [Service] LoggingService loggingService)
+    {
+        // Return DTO, not entity
+        return new BuildPayload { Id = build.Id, Name = build.Name };
+    }
+}
+
+// ❌ Wrong: Returning raw entity
+public Build CreateBuild(...) // ← Returns entity, breaks DTOs
+```
+
+#### FactoryApp.Workflows
+
+**Responsibility:** Long-running workflow orchestration via Elsa v3
+
+**What lives here:**
+
+- Elsa activities (custom business logic)
+- Workflow definitions (YAML or fluent API)
+- Workflow services and helpers
+
+**What NEVER goes here:**
+
+- GraphQL resolvers or schema
+- HTTP middleware
+- Domain entities (store only IDs in workflow state)
+
+**Dependencies:**
+
+- FactoryApp.Domain (import entities for IDs only)
+- FactoryApp.GraphQL (optional, for coordination)
+- Elsa.\* (workflow engine)
+- System.\* (standard library)
+
+**Example:**
+
+```csharp
+// ✅ Correct: Workflow stores only ID, fetches fresh data
+public class ProcessBuildActivity : Activity
+{
+    protected override async ValueTask<IActivityExecutionResult> OnExecuteAsync(
+        ActivityExecutionContext context)
+    {
+        var buildId = context.GetInput<Guid>("BuildId");  // Store ID only
+        var build = await dbContext.Builds.FindAsync(buildId);  // Fetch fresh
+        // Process...
+    }
+}
+
+// ❌ Wrong: Storing full entity
+var build = dbContext.Builds.Find(buildId);
+context.SetInput("CurrentBuild", build);  // Stale data!
+```
+
+#### FactoryApp.WebApi
+
+**Responsibility:** ASP.NET Core entry point, routing, middleware, HTTP context
+
+**What lives here:**
+
+- Program.cs (startup configuration)
+- Middleware (auth, logging, error handling)
+- Dependency injection setup
+- HTTP context handling
+
+**What NEVER goes here:**
+
+- Entity classes
+- GraphQL type definitions
+- Workflow definitions
+- Database direct access
+
+**Dependencies:**
+
+- FactoryApp.Domain
+- FactoryApp.GraphQL
+- FactoryApp.Workflows
+- HotChocolate.AspNetCore
+- Microsoft.AspNetCore.\*
+
+### Adding Dependencies to Layers
+
+#### ✅ Allowed dependency additions:
+
+- Add NuGet package to Domain if: Entity Framework, database-related
+- Add NuGet package to GraphQL if: HotChocolate, Dapper, validation, serialization
+- Add NuGet package to Workflows if: Elsa, orchestration, state management
+- Add NuGet package to WebApi if: ASP.NET Core, authentication, middleware
+
+#### ❌ Forbidden dependency additions:
+
+- GraphQL package to Domain (violates separation)
+- Workflows package to GraphQL (no orchestration in resolvers)
+- Domain circular reference (Domain can't depend on other layers)
+- Mock/test libraries in production code
+
+**Before adding dependency:** Ask "Does this belong in this layer's responsibility?" If no, create a new layer or move to existing layer.
+
+### Upgrade Policy
+
+When upgrading dependencies:
+
+1. **Domain layer:** Upgrade EF Core, database drivers (coordinated migrations)
+2. **GraphQL layer:** Upgrade HotChocolate, Dapper, validation libs (schema validation required)
+3. **Workflows layer:** Upgrade Elsa (test activity execution)
+4. **WebApi layer:** Upgrade ASP.NET Core (typically handled by .NET SDK upgrade)
+
+**Cross-layer upgrades:** .NET SDK version upgrade affects all layers simultaneously; coordinate carefully.
+
+See [docs/UPGRADE-PLAYBOOK.md](docs/UPGRADE-PLAYBOOK.md) for detailed upgrade procedures.
 
 ---
 
@@ -533,27 +753,29 @@ pnpm test:frontend -- --coverage
 ### Test Standards
 
 **Unit tests:**
+
 - Every public method should have tests
 - Test happy path, edge cases, and errors
 - Use descriptive test names
 - Follow Arrange-Act-Assert pattern
 
 **Example:**
+
 ```typescript
-describe('BuildService', () => {
-  it('should create a build with valid request', () => {
+describe("BuildService", () => {
+  it("should create a build with valid request", () => {
     // Arrange
-    const request: CreateBuildRequest = { name: 'Build 1' };
-    
+    const request: CreateBuildRequest = { name: "Build 1" };
+
     // Act
     const result = service.createBuild(request);
-    
+
     // Assert
     expect(result.id).toBeDefined();
-    expect(result.name).toBe('Build 1');
+    expect(result.name).toBe("Build 1");
   });
 
-  it('should throw error for null request', () => {
+  it("should throw error for null request", () => {
     // Assert
     expect(() => service.createBuild(null)).toThrowError();
   });
@@ -563,6 +785,7 @@ describe('BuildService', () => {
 ### CI/CD Testing
 
 All tests run automatically on:
+
 - Push to any branch (pre-PR testing)
 - PR creation
 - PR updates (new commits)
@@ -597,6 +820,7 @@ All tests run automatically on:
 ### Scope (Optional)
 
 Brief category:
+
 - `backend` — Backend/API changes
 - `frontend` — Frontend/Angular changes
 - `docker` — Docker/infrastructure changes
@@ -619,12 +843,14 @@ Brief category:
 ### Footer (Optional)
 
 Reference issues:
+
 ```
 Fixes #123
 Related to #456
 ```
 
 Include GitHub Copilot Co-authored-by trailer:
+
 ```
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
@@ -662,6 +888,7 @@ Fixed stuff
 ### Secrets & Credentials
 
 **NEVER commit:**
+
 - Database passwords
 - API keys or tokens
 - Private encryption keys
@@ -669,6 +896,7 @@ Fixed stuff
 - Third-party service secrets
 
 **Always use:**
+
 - `.env.local` files (git-ignored)
 - `.env.local.example` as documentation
 - GitHub repository secrets (for CI/CD)
@@ -677,6 +905,7 @@ Fixed stuff
 ### Secret Scanning
 
 Before pushing, verify:
+
 ```bash
 # No passwords in code
 git diff --cached | grep -i "password\|secret\|key\|token"
@@ -702,18 +931,21 @@ See [SECURITY.md](SECURITY.md) for detailed security policies.
 ### Before Creating PR
 
 1. **Update main branch**
+
    ```bash
    git checkout main
    git pull origin main
    ```
 
 2. **Rebase your branch**
+
    ```bash
    git checkout feat/your-feature
    git rebase main
    ```
 
 3. **Run tests locally**
+
    ```bash
    pnpm test
    pnpm lint
@@ -753,6 +985,7 @@ Fixes #234"
 ```
 
 Examples:
+
 - `feat(backend): Add build status API endpoint`
 - `fix(frontend): Correct build list filtering`
 - `docs: Update deployment documentation`
@@ -760,6 +993,7 @@ Examples:
 ### PR Description
 
 Include:
+
 - **What changes were made** (summary)
 - **Why changes were made** (motivation)
 - **How to test** (steps for reviewer)
@@ -849,6 +1083,7 @@ Currently, all PRs from solo developer auto-approve. To skip:
 - Document assumptions and constraints
 
 **Example (C#):**
+
 ```csharp
 /// <summary>
 /// Creates a new build and initializes its workflow state.
@@ -863,6 +1098,7 @@ public async Task<Build> CreateBuildAsync(CreateBuildRequest request)
 ### README Updates
 
 Update [README.md](README.md) if:
+
 - Adding new features
 - Changing setup process
 - Adding new dependencies
@@ -871,6 +1107,7 @@ Update [README.md](README.md) if:
 ### API Documentation
 
 GraphQL schema is auto-generated. Update:
+
 - Backend entity descriptions (C# XML docs)
 - Resolver documentation
 - Query/mutation descriptions
@@ -933,6 +1170,7 @@ git reset --soft HEAD~1
 ## Copilot & AI Code Generation
 
 For GitHub Copilot CLI and AI-assisted code generation:
+
 - See [.github/copilot-instructions.md](.github/copilot-instructions.md) for setup and usage
 - Review AI-generated code before committing
 - Ensure AI output follows code standards (above)
