@@ -8,8 +8,7 @@
 ###
 
 ### Query build with nested parts
-### Verify: parts loaded via DataLoader (should be 1 build query + 1 batch parts query)
-### Check backend logs to confirm no N+1 queries
+### Verify: parts loaded via DataLoader (should be 1 build query + 1 batch parts query = 2 total)
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -26,11 +25,18 @@ Authorization: Bearer {{token}}
   client.test("Parts array present", function() {
     client.assert(Array.isArray(response.body.data.build.parts), "Expected parts array");
   });
+
+  client.test("DataLoader batching verified (queryCount = 2)", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount === 2,
+      "Expected 2 queries (1 build + 1 batch parts), got " + queryCount);
+  });
 %}
 
 ###
 ### Query build with nested testRuns
-### Verify: testRuns loaded via DataLoader batch loading
+### Verify: testRuns loaded via DataLoader batch loading (1 build + 1 batch testRuns = 2 total)
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -47,11 +53,18 @@ Authorization: Bearer {{token}}
   client.test("TestRuns array present", function() {
     client.assert(Array.isArray(response.body.data.build.testRuns), "Expected testRuns array");
   });
+
+  client.test("DataLoader batching verified (queryCount = 2)", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount === 2,
+      "Expected 2 queries (1 build + 1 batch testRuns), got " + queryCount);
+  });
 %}
 
 ###
 ### Query build with both parts and testRuns in single query
-### Verify: both nested entities loaded efficiently
+### Verify: both nested entities loaded efficiently (1 build + 1 batch parts + 1 batch testRuns = 3 total)
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -69,11 +82,19 @@ Authorization: Bearer {{token}}
     client.assert(Array.isArray(response.body.data.build.parts), "Expected parts array");
     client.assert(Array.isArray(response.body.data.build.testRuns), "Expected testRuns array");
   });
+
+  client.test("DataLoader batching verified (queryCount = 3)", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount === 3,
+      "Expected 3 queries (1 build + 1 batch parts + 1 batch testRuns), got " + queryCount);
+  });
 %}
 
 ###
 ### Query multiple builds to test DataLoader batching
-### All parts should be batch-loaded in single query (not N builds * 1 query per build)
+### Critical N+1 test: 10 builds should use 3 queries (1 builds + 1 batch parts + 1 batch testRuns)
+### NOT 10 builds * 1 part query per build = 20+ queries (N+1 failure)
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -90,11 +111,19 @@ Authorization: Bearer {{token}}
       client.assert(Array.isArray(build.testRuns), "Expected testRuns array for build");
     });
   });
+
+  client.test("No N+1 queries (queryCount ≤ 3)", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    var buildCount = response.body.data.buildsPaginated.items.length;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount <= 3,
+      "N+1 detected: " + queryCount + " queries for " + buildCount + " builds (expected ≤3)");
+  });
 %}
 
 ###
 ### Compare: Query build without relations (baseline for performance comparison)
-### Use this response time as baseline; nested query should take similar time with DataLoader
+### Use this response time + query count as baseline; nested query should have similar metrics with DataLoader
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -108,11 +137,22 @@ Authorization: Bearer {{token}}
     client.assert(!response.body.errors, "GraphQL errors: " + JSON.stringify(response.body.errors));
     client.assert(response.body.data.build, "Expected build data");
   });
+
+  client.test("Baseline query count = 1", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount === 1,
+      "Expected 1 query (simple build lookup), got " + queryCount);
+
+    // Store baseline for comparison
+    client.global.set("baselineQueryTime", response.body.extensions.responseTimeMs);
+  });
 %}
 
 ###
 ### Query parts with all fields
 ### Verify Part schema: id, buildId, name, sku, quantity, createdAt
+### Also verify DataLoader batching (1 build + 1 batch parts = 2 queries)
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -132,11 +172,19 @@ Authorization: Bearer {{token}}
       client.assert(typeof part.quantity === "number", "Missing/invalid quantity");
     }
   });
+
+  client.test("DataLoader batching verified (queryCount = 2)", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount === 2,
+      "Expected 2 queries (1 build + 1 batch parts), got " + queryCount);
+  });
 %}
 
 ###
 ### Query testRuns with all fields
 ### Verify TestRun schema: id, buildId, status, result, fileUrl, completedAt, createdAt, updatedAt
+### Also verify DataLoader batching (1 build + 1 batch testRuns = 2 queries)
 POST {{graphqlUrl}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -153,5 +201,12 @@ Authorization: Bearer {{token}}
       client.assert(testRun.buildId, "Missing buildId");
       client.assert(testRun.status, "Missing status");
     }
+  });
+
+  client.test("DataLoader batching verified (queryCount = 2)", function() {
+    var queryCount = response.body.extensions?.queryCount;
+    client.assert(queryCount !== undefined, "Missing queryCount in extensions");
+    client.assert(queryCount === 2,
+      "Expected 2 queries (1 build + 1 batch testRuns), got " + queryCount);
   });
 %}
