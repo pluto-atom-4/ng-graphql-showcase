@@ -108,39 +108,41 @@ Authorization: Bearer {{token}}
 %}
 
 ###
-### No authorization header (if required)
-### Should return 401 Unauthorized or GraphQL auth error
-### TODO: Enable after auth middleware implemented
-### POST {{graphqlUrl}}
-### Content-Type: application/json
-###
-### {
-###   "query": "mutation { createBuild(name: \"Unauthorized\", description: \"No token\") { id } }"
-### }
-###
-### > {%
-###   client.test("Auth error or rejection", function() {
-###     client.assert(response.status === 401 || response.body.errors, "Expected auth error");
-###   });
-### %}
+### Missing authorization header
+### Should return 401 Unauthorized (issue #133)
+POST {{graphqlUrl}}
+Content-Type: application/json
+
+{
+  "query": "mutation { createBuild(name: \"Unauthorized\", description: \"No token\") { id } }"
+}
+
+> {%
+  client.test("Missing token rejected with 401", function() {
+    client.assert(response.status === 401, "Expected 401, got " + response.status);
+  });
+
+  client.log("✓ Missing JWT token correctly rejected");
+%}
 
 ###
-### Invalid token format
-### Bearer token with invalid value
-### TODO: Enable after auth middleware validates JWT token format
-### POST {{graphqlUrl}}
-### Content-Type: application/json
-### Authorization: Bearer invalid.token.format
-###
-### {
-###   "query": "mutation { createBuild(name: \"Test\", description: null) { id } }"
-### }
-###
-### > {%
-###   client.test("Invalid token rejected", function() {
-###     client.assert(response.status === 401 || response.body.errors, "Expected token validation error");
-###   });
-### %}
+### Invalid JWT signature
+### Bearer token with forged/tampered payload (issue #133)
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.invalid_signature_here_does_not_match_secret
+
+{
+  "query": "mutation { createBuild(name: \"Forged\", description: null) { id } }"
+}
+
+> {%
+  client.test("Forged JWT rejected with 401", function() {
+    client.assert(response.status === 401, "Expected 401 for invalid signature, got " + response.status);
+  });
+
+  client.log("✓ Invalid JWT signature correctly rejected");
+%}
 
 ###
 ### Request to non-existent endpoint
