@@ -5,7 +5,7 @@ using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
@@ -72,13 +72,18 @@ public class BuildMutationType
         }
     }
 
-    [Authorize]
     public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
         [Service] FactoryDbContext dbContext,
-        [Service] LoggingService loggingService)
+        [Service] LoggingService loggingService,
+        [Service] IHttpContextAccessor httpContextAccessor)
     {
+        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
+        {
+            throw new GraphQLException("Unauthorized: Authentication required");
+        }
+
         var args = new Dictionary<string, object?> { { "name", name }, { "description", description } };
 
         try
@@ -124,14 +129,19 @@ public class BuildMutationType
         }
     }
 
-    [Authorize]
     public async Task<BuildPayload> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
         [Service] FactoryDbContext dbContext,
         [Service] ITopicEventSender eventSender,
-        [Service] LoggingService loggingService)
+        [Service] LoggingService loggingService,
+        [Service] IHttpContextAccessor httpContextAccessor)
     {
+        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
+        {
+            throw new GraphQLException("Unauthorized: Authentication required");
+        }
+
         var args = new Dictionary<string, object?> { { "id", id }, { "status", status } };
 
         try
@@ -174,15 +184,20 @@ public class BuildMutationType
         }
     }
 
-    [Authorize]
     public async Task<PartPayload> AddPart(
         Guid buildId,
         string name,
         string sku,
         decimal quantity,
         [Service] FactoryDbContext dbContext,
-        [Service] LoggingService loggingService)
+        [Service] LoggingService loggingService,
+        [Service] IHttpContextAccessor httpContextAccessor)
     {
+        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
+        {
+            throw new GraphQLException("Unauthorized: Authentication required");
+        }
+
         var args = new Dictionary<string, object?>
         {
             { "buildId", buildId },
@@ -242,7 +257,6 @@ public class BuildMutationType
         }
     }
 
-    [Authorize]
     public async Task<TestRunPayload> SubmitTestRun(
         Guid buildId,
         TestStatus status,
@@ -250,8 +264,14 @@ public class BuildMutationType
         string? fileUrl,
         [Service] FactoryDbContext dbContext,
         [Service] ITopicEventSender eventSender,
-        [Service] LoggingService loggingService)
+        [Service] LoggingService loggingService,
+        [Service] IHttpContextAccessor httpContextAccessor)
     {
+        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
+        {
+            throw new GraphQLException("Unauthorized: Authentication required");
+        }
+
         var args = new Dictionary<string, object?>
         {
             { "buildId", buildId },

@@ -4,6 +4,7 @@ using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.Tests.Mocks;
 using HotChocolate;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,7 @@ public class BuildMutationTests : IAsyncLifetime
     private BuildMutationType _mutation = null!;
     private AuthService _authService = null!;
     private LoggingService _loggingService = null!;
+    private IHttpContextAccessor _httpContextAccessor = null!;
 
     public async Task InitializeAsync()
     {
@@ -44,6 +46,8 @@ public class BuildMutationTests : IAsyncLifetime
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         _loggingService = new LoggingService(loggerFactory.CreateLogger<LoggingService>());
 
+        _httpContextAccessor = new MockHttpContextAccessor();
+
         _mutation = new BuildMutationType();
     }
 
@@ -56,7 +60,7 @@ public class BuildMutationTests : IAsyncLifetime
     public async Task CreateBuild_WithValidInput_ReturnsBuildPayload()
     {
         // Act
-        var result = await _mutation.CreateBuild("Test Build", "Description", _context, _loggingService);
+        var result = await _mutation.CreateBuild("Test Build", "Description", _context, _loggingService, _httpContextAccessor);
 
         // Assert
         Assert.NotNull(result);
@@ -70,7 +74,7 @@ public class BuildMutationTests : IAsyncLifetime
     {
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild("", null, _context, _loggingService));
+            () => _mutation.CreateBuild("", null, _context, _loggingService, _httpContextAccessor));
     }
 
     [Fact]
@@ -81,7 +85,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild(longName, null, _context, _loggingService));
+            () => _mutation.CreateBuild(longName, null, _context, _loggingService, _httpContextAccessor));
     }
 
     [Fact]
@@ -92,7 +96,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild("Valid Name", longDescription, _context, _loggingService));
+            () => _mutation.CreateBuild("Valid Name", longDescription, _context, _loggingService, _httpContextAccessor));
     }
 
     [Fact]
@@ -114,7 +118,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act
         var result = await _mutation.UpdateBuildStatus(
-            build.Id, BuildStatus.Running, _context, topicEventSender, _loggingService);
+            build.Id, BuildStatus.Running, _context, topicEventSender, _loggingService, _httpContextAccessor);
 
         // Assert
         Assert.NotNull(result);
@@ -131,7 +135,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.UpdateBuildStatus(invalidId, BuildStatus.Running, _context, topicEventSender, _loggingService));
+            () => _mutation.UpdateBuildStatus(invalidId, BuildStatus.Running, _context, topicEventSender, _loggingService, _httpContextAccessor));
     }
 
     [Fact]
@@ -150,7 +154,7 @@ public class BuildMutationTests : IAsyncLifetime
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _mutation.AddPart(build.Id, "Part Name", "SKU123", 10, _context, _loggingService);
+        var result = await _mutation.AddPart(build.Id, "Part Name", "SKU123", 10, _context, _loggingService, _httpContextAccessor);
 
         // Assert
         Assert.NotNull(result);
@@ -168,7 +172,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.AddPart(buildId, "Part", "SKU", 0, _context, _loggingService));
+            () => _mutation.AddPart(buildId, "Part", "SKU", 0, _context, _loggingService, _httpContextAccessor));
     }
 
     [Fact]
@@ -179,7 +183,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.AddPart(invalidBuildId, "Part", "SKU", 10, _context, _loggingService));
+            () => _mutation.AddPart(invalidBuildId, "Part", "SKU", 10, _context, _loggingService, _httpContextAccessor));
     }
 
     [Fact]
@@ -201,7 +205,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act
         var result = await _mutation.SubmitTestRun(
-            build.Id, TestStatus.Passed, "Test passed", "https://example.com/test", _context, topicEventSender, _loggingService);
+            build.Id, TestStatus.Passed, "Test passed", "https://example.com/test", _context, topicEventSender, _loggingService, _httpContextAccessor);
 
         // Assert
         Assert.NotNull(result);
@@ -219,7 +223,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.SubmitTestRun(buildId, TestStatus.Failed, null, null, _context, topicEventSender, _loggingService));
+            () => _mutation.SubmitTestRun(buildId, TestStatus.Failed, null, null, _context, topicEventSender, _loggingService, _httpContextAccessor));
     }
 }
 
