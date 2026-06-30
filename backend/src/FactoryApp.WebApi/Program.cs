@@ -32,6 +32,7 @@ builder.Services.AddDbContext<FactoryDbContext>(options =>
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<BuildDataLoaders>();
+builder.Services.AddSingleton<SubscriptionRateLimiter>();
 
 // 2.5 Elsa Workflows v3 (Phase 5B - Deferred)
 // ROADBLOCK: Elsa v3.5.3 ActivityExecutionContext lacks SetVariable/GetVariable API
