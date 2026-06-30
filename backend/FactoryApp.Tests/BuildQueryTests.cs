@@ -2,8 +2,7 @@ using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using FactoryApp.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -11,19 +10,15 @@ namespace FactoryApp.Tests;
 
 public class BuildQueryTests : IAsyncLifetime
 {
+    private readonly TestDatabaseFixture _fixture = new();
     private FactoryDbContext _context = null!;
     private BuildQueryType _query = null!;
     private LoggingService _loggingService = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new DbContextOptionsBuilder<FactoryDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
-            .Options;
-
-        _context = new FactoryDbContext(options);
-        await _context.Database.EnsureCreatedAsync();
+        await _fixture.InitializeAsync();
+        _context = _fixture.GetContext();
 
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         _loggingService = new LoggingService(loggerFactory.CreateLogger<LoggingService>());
@@ -33,7 +28,7 @@ public class BuildQueryTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _context.DisposeAsync();
+        await _fixture.DisposeAsync();
     }
 
     [Fact]

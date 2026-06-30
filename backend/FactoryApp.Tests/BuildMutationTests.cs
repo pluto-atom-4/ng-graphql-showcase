@@ -2,11 +2,10 @@ using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
+using FactoryApp.Tests.Fixtures;
 using FactoryApp.Tests.Mocks;
 using HotChocolate;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -15,6 +14,7 @@ namespace FactoryApp.Tests;
 
 public class BuildMutationTests : IAsyncLifetime
 {
+    private readonly TestDatabaseFixture _fixture = new();
     private FactoryDbContext _context = null!;
     private BuildMutationType _mutation = null!;
     private AuthService _authService = null!;
@@ -23,13 +23,8 @@ public class BuildMutationTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        var options = new DbContextOptionsBuilder<FactoryDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
-            .Options;
-
-        _context = new FactoryDbContext(options);
-        await _context.Database.EnsureCreatedAsync();
+        await _fixture.InitializeAsync();
+        _context = _fixture.GetContext();
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -53,7 +48,7 @@ public class BuildMutationTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _context.DisposeAsync();
+        await _fixture.DisposeAsync();
     }
 
     [Fact]
