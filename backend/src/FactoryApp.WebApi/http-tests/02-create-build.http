@@ -120,3 +120,71 @@ Authorization: Bearer {{token}}
     client.assert(response.body.data.createBuild.status === "Pending", "Expected Pending status, got " + response.body.data.createBuild.status);
   });
 %}
+
+###
+### Create build with NULL description (optional field)
+### Should succeed - description is nullable
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Build with Null Description\", description: null) { id name description } }"
+}
+
+> {%
+  client.test("NULL description accepted", function() {
+    client.assert(!response.body.errors, "Expected success with NULL description, got errors: " + JSON.stringify(response.body.errors));
+  });
+
+  client.test("NULL description preserved", function() {
+    client.assert(response.body.data.createBuild.description === null, "Expected null description, got " + response.body.data.createBuild.description);
+  });
+%}
+
+###
+### Create build with emoji in name
+### UTF-8 support: factory emoji 🏭 wrench 🔧 gear ⚙️
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"Factory Build 🏭🔧⚙️ Q2 2026\", description: \"Production run with emoji support\") { id name } }"
+}
+
+> {%
+  client.test("Emoji in name accepted", function() {
+    client.assert(!response.body.errors, "Expected success with emoji in name");
+  });
+
+  client.test("Emoji preserved in response", function() {
+    var name = response.body.data.createBuild.name;
+    client.assert(name.includes("🏭"), "Expected factory emoji preserved, got: " + name);
+    client.assert(name.includes("🔧"), "Expected wrench emoji preserved");
+    client.assert(name.includes("⚙️"), "Expected gear emoji preserved");
+  });
+%}
+
+###
+### Create build with unicode characters (multi-language)
+### Chinese 制造, Japanese 日本語, Korean 한국어, Russian Русский, Arabic العربية
+POST {{graphqlUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createBuild(name: \"制造 Manufacturing 製造\", description: \"Multi-language: 日本語 한국어 Русский العربية\") { id name description } }"
+}
+
+> {%
+  client.test("Unicode characters accepted", function() {
+    client.assert(!response.body.errors, "Expected success with unicode characters");
+  });
+
+  client.test("Unicode preserved in database", function() {
+    var name = response.body.data.createBuild.name;
+    client.assert(name.includes("制造"), "Expected Chinese preserved");
+    client.assert(name.includes("製造"), "Expected Japanese preserved");
+  });
+%}
