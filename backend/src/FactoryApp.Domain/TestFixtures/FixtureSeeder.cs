@@ -32,7 +32,8 @@ public class FixtureSeeder
         { "pagination-test", new Guid("10000000-0000-0000-0000-000000000007") },
         { "transaction-test", new Guid("10000000-0000-0000-0000-000000000008") },
         { "edge-case-01", new Guid("10000000-0000-0000-0000-000000000009") },
-        { "edge-case-02", new Guid("10000000-0000-0000-0000-000000000010") }
+        { "edge-case-02", new Guid("10000000-0000-0000-0000-000000000010") },
+        { "decimal-precision-test", new Guid("10000000-0000-0000-0000-000000000011") }
     };
 
     /// <summary>
@@ -202,6 +203,15 @@ public class FixtureSeeder
                 Status = BuildStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Id = TestBuildIds["decimal-precision-test"],
+                Name = "Decimal Precision Test Build",
+                Description = "Build with fractional quantity parts for precision testing (issue #132)",
+                Status = BuildStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             }
         };
 
@@ -214,41 +224,59 @@ public class FixtureSeeder
         }
 
         await dbContext.SaveChangesAsync();
-        Console.WriteLine("  • Test builds: 10 (PENDING, RUNNING, COMPLETE, FAILED, edge cases)");
+        Console.WriteLine("  • Test builds: 11 (PENDING, RUNNING, COMPLETE, FAILED, edge cases, decimal precision)");
     }
 
     /// <summary>
-    /// Seed test parts under the DataLoader test build.
-    /// Creates 10 parts with varying quantities for constraint testing.
+    /// Seed test parts under the DataLoader test build and decimal precision test build.
+    /// Creates 10 parts with integer quantities for DataLoader testing.
+    /// Creates 3 parts with fractional quantities for decimal precision testing (issue #132).
     /// </summary>
     public static async Task SeedTestPartsAsync(FactoryDbContext dbContext)
     {
-        var buildId = TestBuildIds["dataloader-test"];
-
-        var parts = new Part[]
+        // DataLoader test parts (integer quantities)
+        var dataloaderBuildId = TestBuildIds["dataloader-test"];
+        var dataloaderParts = new Part[]
         {
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Precision Bearing", SKU = "SKU-PB-001", Quantity = 5, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Control Module", SKU = "SKU-CM-042", Quantity = 2, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Power Supply Unit", SKU = "SKU-PSU-003", Quantity = 1, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Connector Assembly", SKU = "SKU-CA-015", Quantity = 8, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Sensor Module", SKU = "SKU-SM-007", Quantity = 3, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Communication Board", SKU = "SKU-CB-021", Quantity = 1, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Thermal Interface", SKU = "SKU-TI-009", Quantity = 4, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Mounting Hardware", SKU = "SKU-MH-012", Quantity = 50, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Cable Assembly A", SKU = "SKU-CAB-A-001", Quantity = 2, CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), BuildId = buildId, Name = "Cable Assembly B", SKU = "SKU-CAB-B-002", Quantity = 3, CreatedAt = DateTime.UtcNow }
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Precision Bearing", SKU = "SKU-PB-001", Quantity = 5, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Control Module", SKU = "SKU-CM-042", Quantity = 2, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Power Supply Unit", SKU = "SKU-PSU-003", Quantity = 1, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Connector Assembly", SKU = "SKU-CA-015", Quantity = 8, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Sensor Module", SKU = "SKU-SM-007", Quantity = 3, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Communication Board", SKU = "SKU-CB-021", Quantity = 1, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Thermal Interface", SKU = "SKU-TI-009", Quantity = 4, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Mounting Hardware", SKU = "SKU-MH-012", Quantity = 50, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Cable Assembly A", SKU = "SKU-CAB-A-001", Quantity = 2, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = dataloaderBuildId, Name = "Cable Assembly B", SKU = "SKU-CAB-B-002", Quantity = 3, CreatedAt = DateTime.UtcNow }
         };
 
-        foreach (var part in parts)
+        foreach (var part in dataloaderParts)
         {
-            if (!await dbContext.Parts.AnyAsync(p => p.BuildId == buildId && p.SKU == part.SKU))
+            if (!await dbContext.Parts.AnyAsync(p => p.BuildId == dataloaderBuildId && p.SKU == part.SKU))
+            {
+                dbContext.Parts.Add(part);
+            }
+        }
+
+        // Decimal precision test parts (fractional quantities for issue #132)
+        var precisionBuildId = TestBuildIds["decimal-precision-test"];
+        var precisionParts = new Part[]
+        {
+            new() { Id = Guid.NewGuid(), BuildId = precisionBuildId, Name = "Half Unit Component", SKU = "SKU-HALF-001", Quantity = 0.5m, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = precisionBuildId, Name = "Single Point Five Units", SKU = "SKU-1.5-002", Quantity = 1.5m, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), BuildId = precisionBuildId, Name = "Two Point Seventy Five Units", SKU = "SKU-2.75-003", Quantity = 2.75m, CreatedAt = DateTime.UtcNow }
+        };
+
+        foreach (var part in precisionParts)
+        {
+            if (!await dbContext.Parts.AnyAsync(p => p.BuildId == precisionBuildId && p.SKU == part.SKU))
             {
                 dbContext.Parts.Add(part);
             }
         }
 
         await dbContext.SaveChangesAsync();
-        Console.WriteLine("  • Test parts: 10 (for DataLoader N+1 prevention testing)");
+        Console.WriteLine("  • Test parts: 13 (10 integer + 3 decimal precision)");
     }
 
     /// <summary>

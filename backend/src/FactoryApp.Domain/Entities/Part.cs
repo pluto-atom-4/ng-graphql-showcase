@@ -6,7 +6,7 @@ public class Part
     public Guid BuildId { get; set; }
     public required string Name { get; set; }
     public required string SKU { get; set; }
-    public int Quantity { get; set; }
+    public decimal Quantity { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation property

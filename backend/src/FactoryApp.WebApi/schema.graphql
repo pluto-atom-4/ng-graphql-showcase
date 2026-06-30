@@ -3,6 +3,7 @@
 # Auto-generated from C# domain model
 
 scalar DateTime
+scalar Decimal
 
 enum BuildStatus {
   PENDING
@@ -72,7 +73,7 @@ type Part {
   sku: String!
 
   """Quantity in build"""
-  quantity: Int!
+  quantity: Decimal!
 
   """Timestamp when part was created"""
   createdAt: DateTime!
@@ -169,7 +170,7 @@ type Mutation {
   updateBuildStatus(id: ID!, status: BuildStatus!): Build!
 
   """Add a part to a build"""
-  addPart(buildId: ID!, name: String!, sku: String!, quantity: Int!): Part!
+  addPart(buildId: ID!, name: String!, sku: String!, quantity: Decimal!): Part!
 
   """Submit a test run for a build"""
   submitTestRun(buildId: ID!, status: TestStatus!, result: String, fileUrl: String): TestRun!
