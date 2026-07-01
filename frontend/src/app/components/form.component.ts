@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 
 /**
@@ -20,6 +20,7 @@ import { ReactiveFormsModule, FormGroup } from '@angular/forms';
   selector: 'app-form',
   standalone: true,
   imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="formGroup()" (ngSubmit)="onFormSubmit()" class="space-y-4">
       <ng-content></ng-content>

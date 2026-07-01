@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 
 /**
@@ -16,6 +16,7 @@ import { Component, Input } from '@angular/core';
   selector: 'app-card',
   standalone: true,
   imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card-factory">
       <div class="card-body">

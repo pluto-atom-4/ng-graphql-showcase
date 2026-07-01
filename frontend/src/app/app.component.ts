@@ -1,12 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { ButtonComponent, CardComponent, BadgeComponent } from './components';
+
+interface BuildCard {
+  id: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [BuildProgressCardComponent, ButtonComponent, CardComponent, BadgeComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-gradient-to-br from-base-100 to-base-200 p-8">
       <div class="max-w-6xl mx-auto">
@@ -22,10 +28,10 @@ import { ButtonComponent, CardComponent, BadgeComponent } from './components';
 
         <!-- Feature showcase -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <!-- Build cards -->
-          <app-build-progress-card buildName="Production Build" buildId="build-prod-001" />
-          <app-build-progress-card buildName="Test Suite" buildId="build-test-001" />
-          <app-build-progress-card buildName="Staging Deploy" buildId="build-stage-001" />
+          <!-- Build cards: use @for with track to avoid re-rendering unchanged items -->
+          @for (build of builds; track build.id) {
+            <app-build-progress-card [buildName]="build.name" [buildId]="build.id" />
+          }
         </div>
 
         <!-- Component showcase -->
@@ -63,4 +69,10 @@ import { ButtonComponent, CardComponent, BadgeComponent } from './components';
     </div>
   `,
 })
-export class AppComponent {}
+export class AppComponent {
+  builds: BuildCard[] = [
+    { id: 'build-prod-001', name: 'Production Build' },
+    { id: 'build-test-001', name: 'Test Suite' },
+    { id: 'build-stage-001', name: 'Staging Deploy' },
+  ];
+}
