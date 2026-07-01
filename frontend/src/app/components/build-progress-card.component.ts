@@ -6,6 +6,16 @@ import { map, startWith } from 'rxjs/operators';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
 import { BuildStatusService } from '../api/build-status.service';
+import { BuildStatus } from '../api/generated/graphql';
+
+interface DisplayStatus {
+  status: string;
+  progress: number;
+  testsPassed: number;
+  testsTotal: number;
+  duration: number;
+  timestamp: Date;
+}
 
 /**
  * BuildProgressCard: Complete daisyUI + GraphQL + RxJS Integration Example
@@ -14,10 +24,7 @@ import { BuildStatusService } from '../api/build-status.service';
  * 1. daisyUI semantic classes (card, progress, badge, btn)
  * 2. Angular Signals and type-safe inputs
  * 3. RxJS subscriptions with high-frequency buffering
- * 4. Real-time status updates (simulated GraphQL subscription)
- *
- * In production, replace mockBuildProgress$ with:
- *   this.buildService.buildSubscription(buildId).pipe(...)
+ * 4. Real-time status updates (GraphQL subscription)
  */
 @Component({
   selector: 'app-build-progress-card',
@@ -84,81 +91,65 @@ import { BuildStatusService } from '../api/build-status.service';
     </app-card>
   `,
 })
+
 export class BuildProgressCardComponent implements OnInit {
   @Input() buildName = 'Build #42';
   @Input() buildId = 'build-uuid-123';
 
   private buildStatusService = inject(BuildStatusService);
 
-  buildStatus!: () => BuildStatus;
+  buildStatus!: () => DisplayStatus;
 
   ngOnInit(): void {
-    // Subscribe to real GraphQL subscription for build status updates
     this.buildStatusService.subscribeToBuildStatus(this.buildId);
 
     const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
-      map(updates => {
-        const latestUpdate = updates[updates.length - 1];
-        if (!latestUpdate) {
-          return {
-            status: 'Starting' as const,
-            progress: 0,
-            testsPassed: 0,
-            testsTotal: 0,
-            duration: 0,
-            timestamp: new Date()
-          };
-        }
-
-        // Map GraphQL subscription update to local BuildStatus interface
-        return {
-          status: this.mapSubscriptionStatus(latestUpdate.newStatus),
-          progress: 0,
-          testsPassed: 0,
-          testsTotal: 0,
-          duration: 0,
-          timestamp: latestUpdate.timestamp
-        };
-      }),
-      startWith({
-        status: 'Starting' as const,
-        progress: 0,
-        testsPassed: 0,
-        testsTotal: 0,
-        duration: 0,
-        timestamp: new Date()
-      })
+      map(updates => this.mapUpdatesToDisplay(updates)),
+      startWith(this.getDefaultStatus())
     );
 
-    // Convert stream to Signal with initial value
     this.buildStatus = toSignal(buildStatusStream$, {
-      initialValue: {
-        status: 'Starting',
-        progress: 0,
-        testsPassed: 0,
-        testsTotal: 0,
-        duration: 0,
-        timestamp: new Date()
-      }
+      initialValue: this.getDefaultStatus()
     });
   }
 
-  private mapSubscriptionStatus(subscriptionStatus: string): BuildStatus['status'] {
-    const statusMap: Record<string, BuildStatus['status']> = {
-      'PENDING': 'Starting',
-      'Pending': 'Starting',
-      'RUNNING': 'In Progress',
-      'Running': 'In Progress',
-      'COMPLETE': 'Complete',
-      'Complete': 'Complete',
-      'FAILED': 'Failed',
-      'Failed': 'Failed'
+  private mapUpdatesToDisplay(updates: any[]): DisplayStatus {
+    const latestUpdate = updates[updates.length - 1];
+    if (!latestUpdate) {
+      return this.getDefaultStatus();
+    }
+
+    return {
+      status: this.mapStatus(latestUpdate.newStatus),
+      progress: 0,
+      testsPassed: 0,
+      testsTotal: 0,
+      duration: 0,
+      timestamp: new Date(latestUpdate.timestamp)
     };
-    return statusMap[subscriptionStatus] || 'Starting';
   }
 
-  // 6. Use 'computed' signals for derived state.
-  // These automatically recalculate whenever buildStatus updates.
+  private getDefaultStatus(): DisplayStatus {
+    return {
+      status: 'Starting',
+      progress: 0,
+      testsPassed: 0,
+      testsTotal: 0,
+      duration: 0,
+      timestamp: new Date()
+    };
+  }
+
+  private mapStatus(gqlStatus: BuildStatus): string {
+    const statusMap: Record<BuildStatus, string> = {
+      [BuildStatus.Pending]: 'Starting',
+      [BuildStatus.Running]: 'In Progress',
+      [BuildStatus.Complete]: 'Complete',
+      [BuildStatus.Failed]: 'Failed'
+    };
+    return statusMap[gqlStatus] || 'Starting';
+  }
+
   statusVariant = computed(() => {
     const status = this.buildStatus().status;
     switch (status) {
@@ -166,15 +157,14 @@ export class BuildProgressCardComponent implements OnInit {
       case 'Finalizing': return 'warning';
       case 'In Progress':
       case 'Starting': return 'info';
-      case 'Failed':
-      case 'Cancelled': return 'error';
+      case 'Failed': return 'error';
       default: return 'info';
     }
   });
 
   isComplete = computed(() => {
     const status = this.buildStatus().status;
-    return status === 'Complete' || status === 'Failed' || status === 'Cancelled';
+    return status === 'Complete' || status === 'Failed';
   });
 
 
@@ -185,24 +175,9 @@ export class BuildProgressCardComponent implements OnInit {
 
   cancelBuild(): void {
     console.log('Cancelling build', this.buildId);
-    // In production: this.buildService.cancelBuild(this.buildId).subscribe(...)
   }
 
   restartBuild(): void {
     console.log('Restarting build', this.buildId);
-    // In production: this.buildService.restartBuild(this.buildId).subscribe(...)
   }
-}
-
-/**
- * Type-safe GraphQL subscription response
- * Maps to BuildStatus from backend GraphQL schema
- */
-interface BuildStatus {
-  status: 'Starting' | 'In Progress' | 'Finalizing' | 'Complete' | 'Failed' | 'Cancelled';
-  progress: number; // 0-100
-  testsPassed: number;
-  testsTotal: number;
-  duration: number; // seconds
-  timestamp: Date;
 }
