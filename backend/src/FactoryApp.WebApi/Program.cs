@@ -6,10 +6,12 @@ using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.GraphQL.Types;
 using FactoryApp.Workflows.Activities;
+using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
 using Elsa;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -65,6 +67,12 @@ builder.Services.AddScoped<BuildDataLoaders>();
 builder.Services.AddSingleton<SubscriptionRateLimiter>();
 builder.Services.AddHttpContextAccessor();
 
+// 2.4 Query Complexity Limits (issue #146)
+builder.Services.Configure<QueryComplexityOptions>(builder.Configuration.GetSection("GraphQL:QueryComplexity"));
+builder.Services.AddScoped<FieldCostCalculator>(sp =>
+    new FieldCostCalculator(sp.GetRequiredService<IOptions<QueryComplexityOptions>>().Value));
+builder.Services.AddQueryComplexityValidator();
+
 // 2.3 Query diagnostics (for N+1 detection in HTTP tests)
 builder.Services.AddSingleton<QueryDiagnosticsService>();
 builder.Services.AddSingleton<DatabaseQueryListener>();
@@ -107,6 +115,9 @@ app.Use(async (context, next) =>
 // 3.8 Add authentication & authorization middleware (issue #133)
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 3.9 Add query complexity check middleware (issue #146)
+app.UseMiddleware<QueryComplexityCheckMiddleware>();
 
 // 4. Seed test data in development or when TEST_SEED_DATA is set
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("TEST_SEED_DATA") == "true")
