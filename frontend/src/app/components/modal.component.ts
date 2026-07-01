@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Reusable Modal component using daisyUI
@@ -17,6 +17,7 @@ import { Component, input, output } from '@angular/core';
   selector: 'app-modal',
   standalone: true,
   imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <dialog
       class="modal"

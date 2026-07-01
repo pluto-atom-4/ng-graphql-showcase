@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'success' | 'warning' | 'error' | 'info';
@@ -15,6 +15,7 @@ export type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'succe
   selector: 'app-badge',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span [ngClass]="getClasses()">
       {{ label }}

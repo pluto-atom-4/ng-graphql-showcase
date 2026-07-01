@@ -1,7 +1,8 @@
 import { Injectable, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Apollo, gql } from 'apollo-angular';
 import { BehaviorSubject, Observable, Subject, interval, Subscription } from 'rxjs';
-import { bufferTime, filter, retry, tap, takeUntilDestroyed } from 'rxjs/operators';
+import { bufferTime, filter, retry, tap } from 'rxjs/operators';
 import { BuildStatusUpdatedSubscription, BuildStatusUpdatedSubscriptionVariables } from './generated/graphql';
 
 export interface BuildStatusUpdate {
