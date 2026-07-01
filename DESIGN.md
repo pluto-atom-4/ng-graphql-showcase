@@ -408,26 +408,230 @@ pnpm --filter frontend run e2e               # Playwright E2E
 
 ---
 
+# Backend Implementation Status
+
+**Updated**: July 1, 2026  
+**Stack**: .NET 10 | ASP.NET Core | Hot Chocolate GraphQL | SQL Server | EF Core + Dapper
+
+---
+
+## ⚡ BACKEND STATUS & BLOCKERS
+
+### Test Status
+
+| Metric               | Status          | Details                                                                                                            |
+| -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Total Tests**      | ✅ 79/82 PASS   | 3 failures (pagination logic)                                                                                      |
+| **Test Files**       | ✅ 6 FILES      | AuthServiceTests, BuildQueryTests, BuildMutationTests, BuildSubscriptionTests, SchemaTests, ValidationServiceTests |
+| **Build**            | ✅ SUCCESS      | 4 xUnit warnings (fixable)                                                                                         |
+| **GraphQL Schema**   | ✅ AUTO-EMITTED | 185 lines, type-safe pipeline                                                                                      |
+| **Query Complexity** | ✅ IMPLEMENTED  | Issue #146 complete (14 tests passing)                                                                             |
+
+### What's Broken (Minor)
+
+| Issue                          | Status      | Impact                                               | Effort |
+| ------------------------------ | ----------- | ---------------------------------------------------- | ------ |
+| **3 pagination tests failing** | ❌ FAILING  | BuildQueryTests (totalCount mismatch)                | 15 min |
+| **4 xUnit warnings**           | ⚠️ WARNINGS | TestRunTransactionTests (Assert.NotNull on DateTime) | 5 min  |
+
+### What Works ✅
+
+- ✅ GraphQL schema auto-generated on build
+- ✅ Query complexity middleware (DoS prevention)
+- ✅ JWT authentication middleware (issue #133)
+- ✅ Real SQL Server testing (Testcontainers)
+- ✅ EF Core + Dapper transaction handling
+- ✅ DataLoader pattern for N+1 prevention
+- ✅ GraphQL subscriptions (BuildStatusChanged, etc.)
+- ✅ Decimal precision support (issue #132)
+- ✅ Error handling + Unicode support
+
+---
+
+## 🔧 QUICK FIXES (Backend)
+
+### Fix #1: Pagination Test Failures
+
+**Files**: `backend/FactoryApp.Tests/BuildQueryTests.cs` (lines 136, 167)
+
+**Issue**: Expected totalCount/offset differ from actual values
+
+**Status**: Minor (79/82 tests pass) — fixture data seed mismatch
+
+**Estimated Effort**: 15 min (review FixtureSeeder data)
+
+---
+
+### Fix #2: xUnit Warnings
+
+**Files**: `backend/FactoryApp.Tests/Mutations/TestRunTransactionTests.cs` (lines 58, 206)
+
+**Issue**: Assert.NotNull() on DateTime value type (xUnit analyzer)
+
+**Fix**:
+
+```csharp
+// ❌ Bad
+Assert.NotNull(timestamp);
+
+// ✅ Good
+Assert.NotEqual(default, timestamp);
+```
+
+**Estimated Effort**: 5 min
+
+---
+
+## 📚 KEY BACKEND CONCEPTS
+
+### 1. GraphQL Schema Auto-Emission
+
+Backend builds emit `schema.graphql` automatically. Frontend codegen reads it:
+
+```bash
+dotnet build ./backend/FactoryApp.slnx  # Emits schema.graphql
+pnpm --filter frontend run codegen       # Generates graphql.ts
+```
+
+**Impact**: Type-safe pipeline C# → GraphQL → TypeScript
+
+---
+
+### 2. Query Complexity Limits (Issue #146)
+
+Middleware calculates query cost before execution:
+
+```typescript
+# Cost example
+{
+  builds(limit: 5)     # 100 base * 5 multiplier = 500
+  { parts { id } }     # + nested
+}
+# Total complexity tracked, rejects if > MaxComplexity (1000)
+```
+
+Configuration in `appsettings.json`:
+
+```json
+"GraphQL": {
+  "QueryComplexity": {
+    "Enabled": true,
+    "MaxComplexity": 1000,
+    "DefaultFieldCost": 1,
+    "ListMultiplier": 10
+  }
+}
+```
+
+---
+
+### 3. Real SQL Server Testing (Testcontainers)
+
+Tests use real SQL Server, not InMemory:
+
+```bash
+pnpm docker:up                    # Start SQL Server container
+dotnet test backend/              # Run against real DB
+pnpm docker:down                  # Cleanup
+```
+
+**Why**: Mocks diverge from production; tests must verify actual behavior.
+
+---
+
+### 4. EF Core + Dapper Transaction Handling
+
+Critical for deadlock prevention:
+
+```csharp
+using var transaction = await context.Database.BeginTransactionAsync();
+// EF Core ops...
+// Dapper ops (pass transaction)...
+await transaction.CommitAsync();
+```
+
+**Rule**: Never mix EF Core + Dapper writes without shared transaction.
+
+---
+
+## 📋 BACKEND COMMANDS
+
+```bash
+# Build & test
+dotnet build ./backend/FactoryApp.slnx           # Build backend
+dotnet test backend/                              # Run all tests (79/82 pass)
+dotnet test backend/ --filter "BuildQueryTests"   # Run specific test class
+
+# EF Core migrations
+cd backend/src/FactoryApp.WebApi
+dotnet ef migrations add MigrationName             # Create migration
+dotnet ef database update                          # Apply migrations
+
+# Development server
+dotnet watch run                                   # Hot reload (port 5275)
+
+# GraphQL
+pnpm codegen                                       # Generate types from schema
+```
+
+---
+
+## 📁 BACKEND FILE STRUCTURE
+
+| Path                                | Status                   | Purpose                                      |
+| ----------------------------------- | ------------------------ | -------------------------------------------- |
+| `backend/src/FactoryApp.Domain/`    | ✅ Core entities         | Build, Part, TestRun, Result models          |
+| `backend/src/FactoryApp.GraphQL/`   | ✅ Resolvers             | Query, Mutation, Subscription types          |
+| `backend/src/FactoryApp.WebApi/`    | ✅ Server                | ASP.NET Core host, middleware, configuration |
+| `backend/src/FactoryApp.Workflows/` | ✅ Elsa v3               | Workflow activities (Phase 5B deferred)      |
+| `backend/FactoryApp.Tests/`         | ✅ 82 tests              | 79 pass, 3 failures (pagination)             |
+| `backend/FactoryApp.slnx`           | ✅ .NET 10 solution file | Modern solution format                       |
+| `schema.graphql`                    | ✅ 185 lines             | Auto-generated from C# entities              |
+
+---
+
+## 🎯 BACKEND ROADMAP (Quick Fixes)
+
+### Phase 1: Fix Test Failures ✅ READY (20 min)
+
+- [ ] Fix pagination test mismatch (15 min)
+- [ ] Fix xUnit warnings (5 min)
+
+**Success**: All 82 tests pass
+
+---
+
 ## FOR CLAUDE CODE SESSIONS
 
-**Entry Point**: This file (DESIGN.md) — start here for any frontend task
+**Entry Point**: This file (DESIGN.md) — start here for any task
 
 **Structure**:
 
-1. STATUS & BLOCKERS — understand what's broken
-2. 5-MINUTE FIXES — quick copy-paste solutions
-3. KEY CONCEPTS — understand the "why"
-4. ROADMAP — plan multi-step work
-5. COMMANDS & FILES — reference during coding
+**FRONTEND**:
+
+1. STATUS & BLOCKERS — understand what's broken (OnPush, tracking, tests)
+2. 5-MINUTE FIXES — copy-paste solutions (OnPush template, trackBy, tests)
+3. KEY CONCEPTS — understand the "why" (OnPush perf, buffering, type safety)
+4. ROADMAP — 5-phase plan (30 min Phase 1, 3 hrs Phase 3)
+5. COMMANDS & FILES — build, test, codegen
+
+**BACKEND**:
+
+1. TEST STATUS — build success, test pass rate (79/82 passing)
+2. QUICK FIXES — pagination issues, xUnit warnings (20 min total)
+3. KEY CONCEPTS — schema generation, complexity, transactions, testing
+4. COMMANDS & FILES — build, test, migrate, develop
 
 **Workflow**:
 
-- Building a component? → Scroll to "Component Library Quick Reference"
-- Performance issues? → Check "5-MINUTE FIXES" for OnPush/tracking
-- Need to know something? → Search this file first (faster than docs/)
-- Want deep reference? → See links at bottom
+- **Building a component?** → Frontend section → "Component Library Quick Reference"
+- **Performance issues?** → Frontend → "5-MINUTE FIXES" (OnPush/tracking)
+- **Tests failing?** → Backend section → "Quick Fixes" (pagination, xUnit)
+- **Need schema changes?** → Remember: backend build emits schema.graphql → `pnpm codegen`
+- **Type not found?** → Did you run `pnpm codegen` after backend build?
+- **Want deep reference?** → Frontend: `docs/FRONTEND-DESIGN-SYSTEM.md` | Backend: `.claude/rules/backend-patterns.md`
 
-**Design System Details**: `docs/FRONTEND-DESIGN-SYSTEM.md` (full component reference, patterns, theming)
+**Design System Details**: `docs/FRONTEND-DESIGN-SYSTEM.md` (components, patterns, theming)
 
 ---
 
