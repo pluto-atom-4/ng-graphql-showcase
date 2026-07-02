@@ -1,0 +1,21 @@
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
