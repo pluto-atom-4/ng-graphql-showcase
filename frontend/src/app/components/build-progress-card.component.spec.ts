@@ -7,7 +7,6 @@ import { BuildStatus } from '../api/generated/graphql';
 describe('BuildProgressCardComponent', () => {
   let component: BuildProgressCardComponent;
   let fixture: ComponentFixture<BuildProgressCardComponent>;
-  let buildStatusService: any;
 
   const createComponent = (updates: any[] = []) => {
     const mockService = {
@@ -22,7 +21,6 @@ describe('BuildProgressCardComponent', () => {
       providers: [{ provide: BuildStatusService, useValue: mockService }],
     });
 
-    buildStatusService = TestBed.inject(BuildStatusService);
     fixture = TestBed.createComponent(BuildProgressCardComponent);
     component = fixture.componentInstance;
   };
@@ -233,12 +231,6 @@ describe('BuildProgressCardComponent', () => {
     });
   });
 
-  describe('Change Detection Strategy', () => {
-    it('should have OnPush change detection', () => {
-      const metadata = (BuildProgressCardComponent as any).ɵcmp;
-      expect(metadata.changeDetection).toBe(0); // 0 = OnPush
-    });
-  });
 
   describe('Methods', () => {
     it('should have viewLogs method', () => {

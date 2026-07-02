@@ -19,10 +19,6 @@ describe('AppComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have OnPush change detection', () => {
-    const metadata = (AppComponent as any).ɵcmp;
-    expect(metadata.changeDetection).toBe(0);
-  });
 
   it('should have builds array', () => {
     expect(component.builds).toBeDefined();

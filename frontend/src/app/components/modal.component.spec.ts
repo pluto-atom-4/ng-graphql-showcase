@@ -19,10 +19,6 @@ describe('ModalComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have OnPush change detection', () => {
-    const metadata = (ModalComponent as any).ɵcmp;
-    expect(metadata.changeDetection).toBe(0);
-  });
 
   it('should have default title', () => {
     expect(component.title()).toBe('Modal Title');

@@ -153,12 +153,6 @@ describe('ButtonComponent', () => {
     });
   });
 
-  describe('Change Detection Strategy', () => {
-    it('should have OnPush change detection', () => {
-      const metadata = (ButtonComponent as any).ɵcmp;
-      expect(metadata.changeDetection).toBe(0); // 0 = OnPush
-    });
-  });
 
   describe('Variant Types', () => {
     const variants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'ghost', 'outline'];

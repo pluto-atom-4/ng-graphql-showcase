@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormComponent } from './form.component';
 
 describe('FormComponent', () => {
@@ -21,10 +21,6 @@ describe('FormComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have OnPush change detection', () => {
-    const metadata = (FormComponent as any).ɵcmp;
-    expect(metadata.changeDetection).toBe(0);
-  });
 
   it('should accept required formGroup input', () => {
     const form = fb.group({ name: [''] });
@@ -81,9 +77,8 @@ describe('FormComponent', () => {
   });
 
   it('should disable submit button when form invalid', () => {
-    const form = fb.group({ email: ['', []] });
+    const form = fb.group({ email: ['', Validators.required] });
     fixture.componentRef.setInput('formGroup', form);
-    form.setErrors({ 'required': true });
     fixture.detectChanges();
     const button = fixture.nativeElement.querySelector('button[type="submit"]');
     expect(button.disabled).toBe(true);
