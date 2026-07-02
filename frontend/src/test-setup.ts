@@ -1,8 +1,14 @@
 // frontend/src/test-setup.ts
+import 'zone.js';
 import '@angular/compiler';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { getTestBed } from '@angular/core/testing';
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
 
-setupTestBed({
-  zoneless: false, // Set to true if you migrate to Angular 19 signals-only zoneless tracking
-});
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting()
+);
 

@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, Subject, interval, Subscription } from 'rx
 import { bufferTime, filter, retry, tap } from 'rxjs/operators';
 import { BuildStatusUpdatedSubscription, BuildStatusUpdatedSubscriptionVariables } from './generated/graphql';
 
-type BuildStatusUpdate = BuildStatusUpdatedSubscription['buildStatusUpdated'];
+export type BuildStatusUpdate = BuildStatusUpdatedSubscription['buildStatusUpdated'];
 
 export interface ConnectionHealth {
   isConnected: boolean;
