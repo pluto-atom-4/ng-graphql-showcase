@@ -8,6 +8,10 @@ namespace FactoryApp.GraphQL;
 
 public class BuildQueryType
 {
+    /// <summary>
+    /// Public query: All authenticated users can list builds.
+    /// Phase 3 decision: Queries readable by default, filtering added in Phase 4.
+    /// </summary>
     public IQueryable<Build> GetBuilds([Service] FactoryDbContext context)
         => context.Builds.AsNoTracking();
 
@@ -75,6 +79,32 @@ public class BuildQueryType
         {
             loggingService.LogQueryError(nameof(GetBuildsPaginated), ex);
             throw new GraphQLException("Failed to fetch builds", ex);
+        }
+    }
+
+    /// <summary>
+    /// Admin-only query: Returns builds with internal metadata (audit, cost, etc.).
+    /// Authorization: Requires "Admin" role (applied via @authorize directive in schema).
+    /// </summary>
+    public async Task<ICollection<Build>> GetBuildsAdmin(
+        [Service] FactoryDbContext context,
+        [Service] LoggingService loggingService)
+    {
+        try
+        {
+            loggingService.LogQueryStart(nameof(GetBuildsAdmin), new());
+
+            var builds = await context.Builds
+                .AsNoTracking()
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+
+            return builds;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogQueryError(nameof(GetBuildsAdmin), ex);
+            throw new GraphQLException("Failed to fetch admin builds", ex);
         }
     }
 }

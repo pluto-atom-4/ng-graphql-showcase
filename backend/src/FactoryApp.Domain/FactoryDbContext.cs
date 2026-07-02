@@ -80,6 +80,8 @@ public class FactoryDbContext : DbContext
             a.HasKey(x => x.Id);
             a.Property(x => x.Email).IsRequired().HasMaxLength(256);
             a.Property(x => x.PasswordHash).IsRequired().HasMaxLength(256);
+            a.Property(x => x.Role).IsRequired().HasConversion<int>();
+            a.Property(x => x.Claims).IsRequired().HasMaxLength(2000);
 
             a.HasIndex(x => x.Email).IsUnique();
         });

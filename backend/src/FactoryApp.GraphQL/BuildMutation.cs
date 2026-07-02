@@ -5,7 +5,6 @@ using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
@@ -51,7 +50,7 @@ public class BuildMutationType
                 throw new GraphQLException("Invalid email or password");
             }
 
-            var token = authService.GenerateToken(user.Id, user.Email);
+            var token = authService.GenerateToken(user);
             loggingService.LogAuthenticationAttempt(email, true);
             loggingService.LogMutationSuccess(nameof(Login), user.Id);
 
@@ -72,17 +71,16 @@ public class BuildMutationType
         }
     }
 
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema (see Program.cs AddAuthorization).
+    /// </summary>
     public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
         [Service] FactoryDbContext dbContext,
-        [Service] LoggingService loggingService,
-        [Service] IHttpContextAccessor httpContextAccessor)
+        [Service] LoggingService loggingService)
     {
-        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
-        {
-            throw new GraphQLException("Unauthorized: Authentication required");
-        }
 
         var args = new Dictionary<string, object?> { { "name", name }, { "description", description } };
 
@@ -129,18 +127,17 @@ public class BuildMutationType
         }
     }
 
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema.
+    /// </summary>
     public async Task<BuildPayload> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
         [Service] FactoryDbContext dbContext,
         [Service] ITopicEventSender eventSender,
-        [Service] LoggingService loggingService,
-        [Service] IHttpContextAccessor httpContextAccessor)
+        [Service] LoggingService loggingService)
     {
-        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
-        {
-            throw new GraphQLException("Unauthorized: Authentication required");
-        }
 
         var args = new Dictionary<string, object?> { { "id", id }, { "status", status } };
 
@@ -184,19 +181,18 @@ public class BuildMutationType
         }
     }
 
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema.
+    /// </summary>
     public async Task<PartPayload> AddPart(
         Guid buildId,
         string name,
         string sku,
         decimal quantity,
         [Service] FactoryDbContext dbContext,
-        [Service] LoggingService loggingService,
-        [Service] IHttpContextAccessor httpContextAccessor)
+        [Service] LoggingService loggingService)
     {
-        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
-        {
-            throw new GraphQLException("Unauthorized: Authentication required");
-        }
 
         var args = new Dictionary<string, object?>
         {
@@ -257,6 +253,10 @@ public class BuildMutationType
         }
     }
 
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema.
+    /// </summary>
     public async Task<TestRunPayload> SubmitTestRun(
         Guid buildId,
         TestStatus status,
@@ -264,13 +264,8 @@ public class BuildMutationType
         string? fileUrl,
         [Service] FactoryDbContext dbContext,
         [Service] ITopicEventSender eventSender,
-        [Service] LoggingService loggingService,
-        [Service] IHttpContextAccessor httpContextAccessor)
+        [Service] LoggingService loggingService)
     {
-        if (!(httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false))
-        {
-            throw new GraphQLException("Unauthorized: Authentication required");
-        }
 
         var args = new Dictionary<string, object?>
         {

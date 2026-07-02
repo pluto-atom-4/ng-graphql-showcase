@@ -58,7 +58,24 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy =>
+        policy.RequireRole("Admin"));
+
+    options.AddPolicy("RequireUser", policy =>
+        policy.RequireRole("User", "Admin"));
+
+    options.AddPolicy("CanEditBuild", policy =>
+        policy.RequireClaim("edit_builds", "true"));
+
+    options.AddPolicy("CanDeleteBuild", policy =>
+        policy.RequireClaim("delete_builds", "true"));
+
+    options.AddPolicy("CanViewTestResults", policy =>
+        policy.RequireRole("Admin")
+            .RequireClaim("view_tests", "true"));
+});
 
 // 2.2 Register application services
 builder.Services.AddScoped<AuthService>();
@@ -86,6 +103,7 @@ builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
 // Phase 5C: Upgrade Elsa + implement workflow context variable binding
 
 // 3. Register Hot Chocolate GraphQL Server with domain resolvers
+// Note: Authorization policies registered above are available to resolvers via ClaimsPrincipal
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<BuildQueryType>()

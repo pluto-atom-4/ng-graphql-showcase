@@ -135,14 +135,14 @@ public class MutationTestContext
     public AuthService Auth => _authService;
 
     public async Task<BuildPayload> CreateBuild(string name, string? description) =>
-        await _mutation.CreateBuild(name, description, _context, _loggingService, _httpContextAccessor);
+        await _mutation.CreateBuild(name, description, _context, _loggingService);
 
     public async Task<BuildPayload> UpdateBuildStatus(Guid buildId, BuildStatus status, MockTopicEventSender eventSender) =>
-        await _mutation.UpdateBuildStatus(buildId, status, _context, eventSender, _loggingService, _httpContextAccessor);
+        await _mutation.UpdateBuildStatus(buildId, status, _context, eventSender, _loggingService);
 
     public async Task<PartPayload> AddPart(Guid buildId, string name, string sku, int quantity) =>
-        await _mutation.AddPart(buildId, name, sku, quantity, _context, _loggingService, _httpContextAccessor);
+        await _mutation.AddPart(buildId, name, sku, quantity, _context, _loggingService);
 
     public async Task<TestRunPayload> SubmitTestRun(Guid buildId, TestStatus status, string? result, string? fileUrl, MockTopicEventSender eventSender) =>
-        await _mutation.SubmitTestRun(buildId, status, result, fileUrl, _context, eventSender, _loggingService, _httpContextAccessor);
+        await _mutation.SubmitTestRun(buildId, status, result, fileUrl, _context, eventSender, _loggingService);
 }
