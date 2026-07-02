@@ -59,4 +59,21 @@ public class AuthService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    /// <summary>
+    /// Backwards compatibility overload for existing tests.
+    /// Creates a minimal User role token without custom claims.
+    /// </summary>
+    public string GenerateToken(Guid userId, string email)
+    {
+        var user = new AuthUser
+        {
+            Id = userId,
+            Email = email,
+            PasswordHash = string.Empty,
+            Role = UserRole.User,
+            Claims = "{}"
+        };
+        return GenerateToken(user);
+    }
 }

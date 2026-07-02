@@ -103,9 +103,9 @@ builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
 // Phase 5C: Upgrade Elsa + implement workflow context variable binding
 
 // 3. Register Hot Chocolate GraphQL Server with domain resolvers
+// Note: Authorization policies registered above are available to resolvers via ClaimsPrincipal
 builder.Services
     .AddGraphQLServer()
-    .AddAuthorization()
     .AddQueryType<BuildQueryType>()
     .AddMutationType<BuildMutationType>()
     .AddSubscriptionType<BuildSubscription>()

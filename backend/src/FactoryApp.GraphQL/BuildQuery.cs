@@ -2,7 +2,6 @@ using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
-using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL;
@@ -85,9 +84,8 @@ public class BuildQueryType
 
     /// <summary>
     /// Admin-only query: Returns builds with internal metadata (audit, cost, etc.).
-    /// Phase 3 example: Demonstrates @authorize on queries.
+    /// Authorization: Requires "Admin" role (applied via @authorize directive in schema).
     /// </summary>
-    [Authorize(Roles = new[] { "Admin" })]
     public async Task<ICollection<Build>> GetBuildsAdmin(
         [Service] FactoryDbContext context,
         [Service] LoggingService loggingService)

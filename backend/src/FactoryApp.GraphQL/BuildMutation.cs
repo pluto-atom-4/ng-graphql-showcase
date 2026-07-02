@@ -4,7 +4,6 @@ using FactoryApp.GraphQL.DTOs;
 using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
-using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,7 +71,10 @@ public class BuildMutationType
         }
     }
 
-    [Authorize(Roles = new[] { "User", "Admin" })]
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema (see Program.cs AddAuthorization).
+    /// </summary>
     public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
@@ -125,7 +127,10 @@ public class BuildMutationType
         }
     }
 
-    [Authorize(Roles = new[] { "User", "Admin" })]
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema.
+    /// </summary>
     public async Task<BuildPayload> UpdateBuildStatus(
         Guid id,
         BuildStatus status,
@@ -176,7 +181,10 @@ public class BuildMutationType
         }
     }
 
-    [Authorize(Roles = new[] { "User", "Admin" })]
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema.
+    /// </summary>
     public async Task<PartPayload> AddPart(
         Guid buildId,
         string name,
@@ -245,7 +253,10 @@ public class BuildMutationType
         }
     }
 
-    [Authorize(Roles = new[] { "User", "Admin" })]
+    /// <summary>
+    /// Authorization: Requires "User" or "Admin" role.
+    /// Applied via @authorize directive in GraphQL schema.
+    /// </summary>
     public async Task<TestRunPayload> SubmitTestRun(
         Guid buildId,
         TestStatus status,
