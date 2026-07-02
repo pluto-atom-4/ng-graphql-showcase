@@ -5,16 +5,39 @@ export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'outl
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 /**
- * Reusable Button component using daisyUI
+ * Reusable button component built with daisyUI + Angular 19 signals.
  *
- * Example:
+ * **Features**:
+ * - OnPush change detection (performance optimized)
+ * - Signals-based inputs/outputs (reactive API)
+ * - Computed disabled state (loading OR disabled input)
+ * - Semantic daisyUI classes for variants & sizes
+ *
+ * **Signals**:
+ * - @input label: Button text (default: "Button")
+ * - @input variant: ButtonVariant (primary|secondary|accent|ghost|outline)
+ * - @input size: ButtonSize (xs|sm|md|lg)
+ * - @input loading: Show spinner overlay
+ * - @input disabled: Prevent clicks
+ * - @output trigger: Emits on click (if not disabled)
+ *
+ * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#buttons}
+ *
+ * **Example**:
+ * ```typescript
  * <app-button
- *   label="Click Me"
+ *   label="Save"
  *   variant="primary"
  *   size="md"
- *   [loading]="isLoading"
- *   (click)="handleClick()"
+ *   [loading]="isSaving()"
+ *   (trigger)="handleSave()"
  * />
+ * ```
+ *
+ * **Implementation Notes**:
+ * - Uses computed() to derive isDisabled state from inputs
+ * - Classes computed dynamically from variant/size inputs
+ * - Blocks clicks when disabled OR loading
  */
 @Component({
   selector: 'app-button',
