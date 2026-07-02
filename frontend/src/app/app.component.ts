@@ -8,6 +8,29 @@ interface BuildCard {
   name: string;
 }
 
+/**
+ * Root application component: Manufacturing Workflow Dashboard
+ *
+ * Demonstrates:
+ * - Angular 19 standalone components with OnPush change detection
+ * - daisyUI component library integration (Button, Card, Badge)
+ * - Real-time GraphQL subscriptions (BuildProgressCardComponent)
+ * - @for loop with track function (performance optimization)
+ * - Tailwind CSS responsive grid layout
+ *
+ * **Performance**:
+ * - OnPush: Only updates when inputs change
+ * - @for track: Prevents re-rendering unchanged builds
+ * - Lazy subscriptions: Each BuildProgressCard manages own GraphQL updates
+ *
+ * **Architecture**:
+ * - Imports 5+ components from the design system library
+ * - Manages static BuildCard[] (mock data for development)
+ * - Delegates real-time updates to BuildProgressCardComponent
+ *
+ * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md}
+ * **Component Library**: {@link frontend/src/app/components}
+ */
 @Component({
   selector: 'app-root',
   standalone: true,

@@ -2,15 +2,34 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 
 /**
- * Reusable Card component using daisyUI
+ * Semantic container component built with daisyUI.
  *
- * Example:
- * <app-card
- *   title="Build Status"
- *   description="Current build metrics"
- * >
- *   <div>Card content goes here</div>
+ * Wraps content in a card layout with optional title and description.
+ * Provides consistent spacing, shadows, and theming via daisyUI.
+ *
+ * **Features**:
+ * - OnPush change detection (no performance overhead)
+ * - Optional title and description headers
+ * - ng-content slot for flexible body content
+ * - daisyUI card-factory class (rounded corners, shadow, padding)
+ *
+ * **Inputs**:
+ * - title?: string — Card header title
+ * - description?: string — Subtitle/description text
+ *
+ * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#cards}
+ *
+ * **Example**:
+ * ```typescript
+ * <app-card title="Build Status" description="Real-time updates">
+ *   <div class="space-y-4">
+ *     <p>Metrics here</p>
+ *     <app-button label="Action" variant="primary" />
+ *   </div>
  * </app-card>
+ * ```
+ *
+ * **Related**: BuildProgressCardComponent (complex example using Card)
  */
 @Component({
   selector: 'app-card',

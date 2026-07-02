@@ -18,13 +18,29 @@ interface DisplayStatus {
 }
 
 /**
- * BuildProgressCard: Complete daisyUI + GraphQL + RxJS Integration Example
+ * BuildProgressCard: Real-time manufacturing workflow status display
  *
- * This component demonstrates:
- * 1. daisyUI semantic classes (card, progress, badge, btn)
- * 2. Angular Signals and type-safe inputs
- * 3. RxJS subscriptions with high-frequency buffering
- * 4. Real-time status updates (GraphQL subscription)
+ * Combines daisyUI UI + GraphQL subscriptions + Angular signals to display
+ * real-time build status, progress, and test results with high-frequency
+ * update buffering (250ms windows).
+ *
+ * **Architecture**:
+ * - Signals: buildStatus (from toSignal), statusVariant & isComplete (computed)
+ * - RxJS: bufferTime(250ms) aggregates rapid subscription updates
+ * - GraphQL: BuildStatusUpdated subscription via build-status.service
+ * - Types: DisplayStatus interface + BuildStatus enum (generated/graphql.ts)
+ *
+ * **Design System**: See {@link docs/FRONTEND-DESIGN-SYSTEM.md}
+ * Uses: CardComponent, BadgeComponent, ButtonComponent
+ *
+ * **Example**:
+ * ```typescript
+ * <app-build-progress-card buildName="Production Build" buildId="build-123" />
+ * ```
+ *
+ * **Dependencies**:
+ * - BuildStatusService: Manages subscriptions & buffered updates
+ * - Generated types: BuildStatus enum from schema.graphql (auto-generated)
  */
 @Component({
   selector: 'app-build-progress-card',
