@@ -3,6 +3,7 @@ using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.Tests.Fixtures;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -10,7 +11,7 @@ namespace FactoryApp.Tests;
 
 public class BuildQueryTests : IAsyncLifetime
 {
-    private readonly TestDatabaseFixture _fixture = new();
+    private readonly TestDatabaseFixtureNoSeed _fixture = new();
     private FactoryDbContext _context = null!;
     private BuildQueryType _query = null!;
     private LoggingService _loggingService = null!;
@@ -72,7 +73,14 @@ public class BuildQueryTests : IAsyncLifetime
     [Fact]
     public void GetBuilds_ReturnsQueryable()
     {
-        // Arrange
+        // Arrange - clear any builds from previous tests
+        var existingBuilds = _context.Builds.ToList();
+        if (existingBuilds.Any())
+        {
+            _context.Builds.RemoveRange(existingBuilds);
+            _context.SaveChanges();
+        }
+
         var builds = new[]
         {
             new Build
@@ -109,7 +117,14 @@ public class BuildQueryTests : IAsyncLifetime
     [Fact]
     public async Task GetBuildsPaginated_WithValidParams_ReturnsPaginatedResult()
     {
-        // Arrange
+        // Arrange - clear any builds from previous tests
+        var existingBuilds = await _context.Builds.ToListAsync();
+        if (existingBuilds.Any())
+        {
+            _context.Builds.RemoveRange(existingBuilds);
+            await _context.SaveChangesAsync();
+        }
+
         var builds = Enumerable.Range(1, 15)
             .Select(i => new Build
             {
@@ -141,7 +156,14 @@ public class BuildQueryTests : IAsyncLifetime
     [Fact]
     public async Task GetBuildsPaginated_WithSecondPage_ReturnsSecondPageData()
     {
-        // Arrange
+        // Arrange - clear any builds from previous tests
+        var existingBuilds = await _context.Builds.ToListAsync();
+        if (existingBuilds.Any())
+        {
+            _context.Builds.RemoveRange(existingBuilds);
+            await _context.SaveChangesAsync();
+        }
+
         var builds = Enumerable.Range(1, 15)
             .Select(i => new Build
             {
