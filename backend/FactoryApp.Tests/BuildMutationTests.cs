@@ -14,7 +14,7 @@ namespace FactoryApp.Tests;
 
 public class BuildMutationTests : IAsyncLifetime
 {
-    private readonly TestDatabaseFixture _fixture = new();
+    private readonly TestDatabaseFixtureNoSeed _fixture = new();
     private FactoryDbContext _context = null!;
     private BuildMutationType _mutation = null!;
     private AuthService _authService = null!;

@@ -13,11 +13,17 @@ namespace FactoryApp.Tests.Fixtures;
 public class TestDatabaseFixture : IAsyncLifetime
 {
     private readonly string _testDbName;
+    protected bool SeedData { get; init; } = true;
     private FactoryDbContext _context = null!;
 
-    public TestDatabaseFixture()
+    public TestDatabaseFixture() : this(seedData: true)
+    {
+    }
+
+    protected TestDatabaseFixture(bool seedData)
     {
         _testDbName = $"FactoryAppDb_Test_{Guid.NewGuid():N}";
+        SeedData = seedData;
     }
 
     public async Task InitializeAsync()
@@ -32,8 +38,11 @@ public class TestDatabaseFixture : IAsyncLifetime
         // Create schema via EF Core migrations
         await _context.Database.MigrateAsync();
 
-        // Seed test fixtures
-        await FixtureSeeder.SeedAllAsync(_context);
+        // Seed test fixtures only if requested
+        if (SeedData)
+        {
+            await FixtureSeeder.SeedAllAsync(_context);
+        }
     }
 
     public async Task DisposeAsync()
