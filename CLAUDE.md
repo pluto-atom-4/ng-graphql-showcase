@@ -58,14 +58,14 @@ See **README.md** for service URLs.
 
 ## Phase-Based Guardrails
 
-Strict execution order required. Issues #148 → #149 → #147.
+Strict execution order required. Backend: #148 → #149 → #147. Frontend tracking: [Issue #47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47). Backend tracking: [Issue #145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145).
 
-| Phase                   | Do NOT                                 | Do                                              | Issue |
-| ----------------------- | -------------------------------------- | ----------------------------------------------- | ----- |
-| Phase 1 (Frontend)      | Edit `graphql.ts` manually             | Add `ChangeDetectionStrategy.OnPush` everywhere | #47   |
-| Phase 2 (Backend Auth)  | Deploy without `@Authorize` policies   | Implement authorization foundation first        | #148  |
-| Phase 3 (Workflows)     | Store complex objects in workflow vars | Use primitives only (Guid, string)              | #149  |
-| Phase 4 (Rate Limiting) | Enable before #149 workflows stable    | Start with high thresholds; monitor             | #147  |
+| Phase                   | Do NOT                                 | Do                                              | Issue | Status                                                                 |
+| ----------------------- | -------------------------------------- | ----------------------------------------------- | ----- | ---------------------------------------------------------------------- |
+| Phase 1 (Frontend)      | Edit `graphql.ts` manually             | Add `ChangeDetectionStrategy.OnPush` everywhere | #47   | [#47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)   |
+| Phase 2 (Backend Auth)  | Deploy without `@Authorize` policies   | Implement authorization foundation first        | #148  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
+| Phase 3 (Workflows)     | Store complex objects in workflow vars | Use primitives only (Guid, string)              | #149  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
+| Phase 4 (Rate Limiting) | Enable before #149 workflows stable    | Start with high thresholds; monitor             | #147  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
 
 ---
 

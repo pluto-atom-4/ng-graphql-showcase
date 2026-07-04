@@ -668,40 +668,28 @@ pnpm codegen                                       # Generate types from schema
 
 ---
 
-## FOR CLAUDE CODE SESSIONS
+## Related Issues & Implementation Tracking
 
-**Entry Point**: This file (DESIGN.md) — start here for any task
+**DESIGN.md covers UI/visual guidance only.** For implementation status and roadmaps, see:
 
-**Structure**:
+### Frontend Implementation
 
-**FRONTEND**:
+- **[Issue #47: Frontend Architecture Fixes](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)** — Phases 1-5: OnPush, Type Safety, Tests, Performance, Docs (Phases 1 & 5 complete)
+- **[Issue #50: Performance Optimization](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/50)** — OnPush + Loop Tracking details
+- **Sub-issues**: #48-51 (specific frontend work)
 
-1. STATUS & BLOCKERS — understand what's broken (OnPush, tracking, tests)
-2. 5-MINUTE FIXES — copy-paste solutions (OnPush template, trackBy, tests)
-3. KEY CONCEPTS — understand the "why" (OnPush perf, buffering, type safety)
-4. ROADMAP — 5-phase plan (30 min Phase 1, 3 hrs Phase 3)
-5. COMMANDS & FILES — build, test, codegen
+### Backend Implementation
 
-**BACKEND**:
+- **[Issue #145: Advanced Features Roadmap](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145)** — Query limits (#146 ✅), Rate limiting (#147), Authorization (#148), Workflows (#149)
+- **Recommended order**: #148 (Auth) → #149 (Workflows) → #147 (Rate Limiting)
 
-1. TEST STATUS — build success, test pass rate (79/82 passing)
-2. QUICK FIXES — pagination issues, xUnit warnings (20 min total)
-3. KEY CONCEPTS — schema generation, complexity, transactions, testing
-4. COMMANDS & FILES — build, test, migrate, develop
+### Design System Reference
 
-**Workflow**:
-
-- **Building a component?** → Frontend section → "Component Library Quick Reference"
-- **Performance issues?** → Frontend → "5-MINUTE FIXES" (OnPush/tracking)
-- **Tests failing?** → Backend section → "Quick Fixes" (pagination, xUnit)
-- **Need schema changes?** → Remember: backend build emits schema.graphql → `pnpm codegen`
-- **Type not found?** → Did you run `pnpm codegen` after backend build?
-- **Want deep reference?** → Frontend: `docs/FRONTEND-DESIGN-SYSTEM.md` | Backend: `.claude/rules/backend-patterns.md`
-
-**Design System Details**: `docs/FRONTEND-DESIGN-SYSTEM.md` (components, patterns, theming)
+- **[docs/FRONTEND-DESIGN-SYSTEM.md](./docs/FRONTEND-DESIGN-SYSTEM.md)** — Components, patterns, theming
+- **[.claude/rules/](./claude/rules/)** — Backend patterns, transactions, DataLoaders
 
 ---
 
-**Last Updated**: July 1, 2026  
-**Status**: Production-ready; 40% implementation complete  
-**Next Review**: After Phase 1 completion (estimated 30 min work)
+**Last Updated**: July 4, 2026  
+**Purpose**: Visual/UI design guidance only  
+**Status**: Frontend 40%+ complete (#47), Backend roadmap established (#145-149)
