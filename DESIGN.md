@@ -4,6 +4,58 @@
 **Format**: Claude Code CLI session reference — self-contained, copy-paste ready  
 **Architecture**: Angular 19 | daisyUI + Tailwind | GraphQL + Type Safety
 
+> **See also**: [CLAUDE.md](./CLAUDE.md) for behavior rules, testing patterns, and issue dependencies. DESIGN.md focuses on visual consistency + constraints; CLAUDE.md covers behavior + testing + phase ordering.
+
+---
+
+## Product Narrative
+
+**ng-graphql-playground** is a full-stack manufacturing workflow management system with real-time telemetry, long-running Elsa orchestration, and type-safe GraphQL API.
+
+**Visual Philosophy**: Clean, data-dense dashboard (daisyUI + Tailwind) with high-frequency updates (250ms buffers) and zero flicker on subscription events. Every component prioritizes performance (OnPush change detection) and accessibility (semantic HTML, ARIA labels).
+
+---
+
+## Semantic Token Definitions
+
+### Colors
+
+| Token         | Value            | Intent                | Use When                        | Never When                  |
+| ------------- | ---------------- | --------------------- | ------------------------------- | --------------------------- |
+| `primary`     | `#2563eb` (blue) | Primary actions, CTAs | Buttons, links, active states   | Background fills, text body |
+| `surface`     | `#ffffff`        | Container backgrounds | Cards, modals, forms            | Text, borders               |
+| `surface-dim` | `#f3f4f6`        | Subtle backgrounds    | Disabled states, hover          | High contrast text          |
+| `text-muted`  | `#6b7280`        | Secondary text        | Helper text, labels             | Buttons, headings           |
+| `success`     | `#10b981`        | Positive feedback     | Status badges, success messages | Error states                |
+| `warning`     | `#f59e0b`        | Caution               | Warning badges, alert icons     | Success states              |
+| `error`       | `#ef4444`        | Error states          | Error badges, validation        | Normal states               |
+
+### Spacing
+
+| Token             | Value    | Intent                 | Use When                     |
+| ----------------- | -------- | ---------------------- | ---------------------------- |
+| `section-gap`     | `6rem`   | Major section dividers | Between major content blocks |
+| `card-gap`        | `1.5rem` | Card spacing           | Padding inside cards         |
+| `density-compact` | `0.5rem` | Tight spacing          | List items, badges           |
+
+### Radius
+
+| Token           | Value  | Intent             | Use When        |
+| --------------- | ------ | ------------------ | --------------- |
+| `radius-card`   | `8px`  | Card corners       | Cards, modals   |
+| `radius-button` | `4px`  | Button corners     | Buttons, inputs |
+| `radius-badge`  | `12px` | Badge/pill corners | Badges, tags    |
+
+---
+
+## Constraints & Boundaries
+
+- **Max nesting depth**: 3 levels (prevent over-complex layouts)
+- **Component composition**: Always `ChangeDetectionStrategy.OnPush` + `trackBy` (mandatory)
+- **Subscription update frequency**: ≤250ms buffer (prevent jank on high-frequency updates)
+- **Typography**: Max line length 80 characters (readability on dense data tables)
+- **Query complexity**: Max 5 GraphQL nesting layers (split deeper into separate requests)
+
 ---
 
 ## ⚡ STATUS & BLOCKERS (START HERE)
@@ -30,7 +82,22 @@ Next action: Add `ChangeDetectionStrategy.OnPush` to 6 components.
 
 ---
 
-## 🔧 5-MINUTE FIXES (Copy-Paste Ready)
+## Known Issues & Blockers
+
+See **Issue #47** (Frontend Architecture Fixes Implementation Plan) for full tracking.
+
+| Issue                                 | Status       | Impact                                | Link        |
+| ------------------------------------- | ------------ | ------------------------------------- | ----------- |
+| OnPush missing (6/7 components)       | ❌ NOT FIXED | Perf degradation on subscriptions     | #47 Phase 1 |
+| Loop tracking missing (app.component) | ❌ NOT FIXED | Unnecessary re-renders on data change | #47 Phase 1 |
+| 0 component unit tests                | ❌ NOT FIXED | No regression coverage                | #47 Phase 2 |
+| Manual types (build-progress-card)    | ❌ NOT FIXED | Type safety violation                 | #47 Phase 2 |
+
+**Related Issues**: #50 (Performance optimization), #48-51 (Frontend sub-tasks)
+
+---
+
+## 🔧 COPY-PASTE REFERENCE (Quick Wins)
 
 ### Fix #1: Add ChangeDetectionStrategy.OnPush
 
@@ -601,40 +668,28 @@ pnpm codegen                                       # Generate types from schema
 
 ---
 
-## FOR CLAUDE CODE SESSIONS
+## Related Issues & Implementation Tracking
 
-**Entry Point**: This file (DESIGN.md) — start here for any task
+**DESIGN.md covers UI/visual guidance only.** For implementation status and roadmaps, see:
 
-**Structure**:
+### Frontend Implementation
 
-**FRONTEND**:
+- **[Issue #47: Frontend Architecture Fixes](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)** — Phases 1-5: OnPush, Type Safety, Tests, Performance, Docs (Phases 1 & 5 complete)
+- **[Issue #50: Performance Optimization](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/50)** — OnPush + Loop Tracking details
+- **Sub-issues**: #48-51 (specific frontend work)
 
-1. STATUS & BLOCKERS — understand what's broken (OnPush, tracking, tests)
-2. 5-MINUTE FIXES — copy-paste solutions (OnPush template, trackBy, tests)
-3. KEY CONCEPTS — understand the "why" (OnPush perf, buffering, type safety)
-4. ROADMAP — 5-phase plan (30 min Phase 1, 3 hrs Phase 3)
-5. COMMANDS & FILES — build, test, codegen
+### Backend Implementation
 
-**BACKEND**:
+- **[Issue #145: Advanced Features Roadmap](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145)** — Query limits (#146 ✅), Rate limiting (#147), Authorization (#148), Workflows (#149)
+- **Recommended order**: #148 (Auth) → #149 (Workflows) → #147 (Rate Limiting)
 
-1. TEST STATUS — build success, test pass rate (79/82 passing)
-2. QUICK FIXES — pagination issues, xUnit warnings (20 min total)
-3. KEY CONCEPTS — schema generation, complexity, transactions, testing
-4. COMMANDS & FILES — build, test, migrate, develop
+### Design System Reference
 
-**Workflow**:
-
-- **Building a component?** → Frontend section → "Component Library Quick Reference"
-- **Performance issues?** → Frontend → "5-MINUTE FIXES" (OnPush/tracking)
-- **Tests failing?** → Backend section → "Quick Fixes" (pagination, xUnit)
-- **Need schema changes?** → Remember: backend build emits schema.graphql → `pnpm codegen`
-- **Type not found?** → Did you run `pnpm codegen` after backend build?
-- **Want deep reference?** → Frontend: `docs/FRONTEND-DESIGN-SYSTEM.md` | Backend: `.claude/rules/backend-patterns.md`
-
-**Design System Details**: `docs/FRONTEND-DESIGN-SYSTEM.md` (components, patterns, theming)
+- **[docs/FRONTEND-DESIGN-SYSTEM.md](./docs/FRONTEND-DESIGN-SYSTEM.md)** — Components, patterns, theming
+- **[.claude/rules/](./claude/rules/)** — Backend patterns, transactions, DataLoaders
 
 ---
 
-**Last Updated**: July 1, 2026  
-**Status**: Production-ready; 40% implementation complete  
-**Next Review**: After Phase 1 completion (estimated 30 min work)
+**Last Updated**: July 4, 2026  
+**Purpose**: Visual/UI design guidance only  
+**Status**: Frontend 40%+ complete (#47), Backend roadmap established (#145-149)

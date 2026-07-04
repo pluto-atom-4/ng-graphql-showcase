@@ -19,6 +19,10 @@ Full-stack monorepo for long-running manufacturing workflows (Build, Parts, Test
 - ❌ Store complex objects in Elsa workflow variables (use primitives only: Guid, string)
 - ❌ GraphQL queries > 5 layers deep (split into separate requests)
 - ❌ `*ngFor` without `trackBy` function (performance killer)
+- ❌ Implement Issue #147 (rate limiting) before #148 (authorization) is complete
+- ❌ Implement Issue #149 (workflows) before #148 (authorization) is merged
+- ❌ Use OAuth/SAML before #148 authorization is complete
+- ❌ Enable rate limiting before #149 workflows are stable
 
 ---
 
@@ -37,6 +41,34 @@ See **README.md** for service URLs.
 
 ---
 
+## DESIGN.md Integration
+
+**CLAUDE.md** (this file) defines **behavior rules, testing patterns, and constraints**.  
+**DESIGN.md** defines **visual consistency, component library, and UI boundaries**.
+
+| Decision Type                                         | File      | Example                                           |
+| ----------------------------------------------------- | --------- | ------------------------------------------------- |
+| Component layout, CSS classes, semantic tokens        | DESIGN.md | Use `class="p-4 bg-primary"` not inline styles    |
+| Mutation ordering, transaction safety, async patterns | CLAUDE.md | Share `DbTransaction` for EF Core + Dapper writes |
+| Authorization policies, rate limits                   | CLAUDE.md | See **Phase-Based Guardrails** table below        |
+
+**Golden Rule**: Visual → DESIGN.md; Behavior → CLAUDE.md
+
+---
+
+## Phase-Based Guardrails
+
+Strict execution order required. Backend: #148 → #149 → #147. Frontend tracking: [Issue #47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47). Backend tracking: [Issue #145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145).
+
+| Phase                   | Do NOT                                 | Do                                              | Issue | Status                                                                 |
+| ----------------------- | -------------------------------------- | ----------------------------------------------- | ----- | ---------------------------------------------------------------------- |
+| Phase 1 (Frontend)      | Edit `graphql.ts` manually             | Add `ChangeDetectionStrategy.OnPush` everywhere | #47   | [#47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)   |
+| Phase 2 (Backend Auth)  | Deploy without `@Authorize` policies   | Implement authorization foundation first        | #148  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
+| Phase 3 (Workflows)     | Store complex objects in workflow vars | Use primitives only (Guid, string)              | #149  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
+| Phase 4 (Rate Limiting) | Enable before #149 workflows stable    | Start with high thresholds; monitor             | #147  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
+
+---
+
 ## Rules Router
 
 Domain-specific patterns in `.claude/rules/`:
@@ -46,6 +78,11 @@ Domain-specific patterns in `.claude/rules/`:
 - **[backend-patterns.md](.claude/rules/backend-patterns.md)** — ASP.NET Core, testing, DataLoaders, projections
 - **[frontend-patterns.md](.claude/rules/frontend-patterns.md)** — Angular, trackBy, buffering, codegen sync, subscriptions
 - **[workflow-integration.md](.claude/rules/workflow-integration.md)** — Elsa v3, primitive-only state, activity patterns
+
+**Upcoming (Issues #148-149)**:
+
+- Authorization patterns (`@Authorize` policies, resolver-level guards) — #148
+- Rate-limiting patterns (middleware, token bucket, Redis integration) — #147
 
 ---
 
