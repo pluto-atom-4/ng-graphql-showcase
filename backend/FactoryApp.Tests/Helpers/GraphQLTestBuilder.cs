@@ -115,6 +115,7 @@ public class MutationTestContext
     private readonly AuthService _authService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly BuildMutationType _mutation;
+    private readonly ILogger<BuildMutationType> _logger;
 
     public MutationTestContext(
         FactoryDbContext context,
@@ -127,6 +128,9 @@ public class MutationTestContext
         _authService = authService;
         _httpContextAccessor = httpContextAccessor;
         _mutation = new BuildMutationType();
+
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        _logger = loggerFactory.CreateLogger<BuildMutationType>();
     }
 
     public BuildMutationType Mutation => _mutation;
@@ -135,7 +139,7 @@ public class MutationTestContext
     public AuthService Auth => _authService;
 
     public async Task<BuildPayload> CreateBuild(string name, string? description) =>
-        await _mutation.CreateBuild(name, description, _context, _loggingService);
+        await _mutation.CreateBuild(name, description, _context, _logger, _loggingService);
 
     public async Task<BuildPayload> UpdateBuildStatus(Guid buildId, BuildStatus status, MockTopicEventSender eventSender) =>
         await _mutation.UpdateBuildStatus(buildId, status, _context, eventSender, _loggingService);
