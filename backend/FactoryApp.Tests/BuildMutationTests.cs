@@ -20,6 +20,7 @@ public class BuildMutationTests : IAsyncLifetime
     private AuthService _authService = null!;
     private LoggingService _loggingService = null!;
     private IHttpContextAccessor _httpContextAccessor = null!;
+    private ILogger<BuildMutationType> _logger = null!;
 
     public async Task InitializeAsync()
     {
@@ -40,6 +41,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         _loggingService = new LoggingService(loggerFactory.CreateLogger<LoggingService>());
+        _logger = loggerFactory.CreateLogger<BuildMutationType>();
 
         _httpContextAccessor = new MockHttpContextAccessor();
 
@@ -55,7 +57,7 @@ public class BuildMutationTests : IAsyncLifetime
     public async Task CreateBuild_WithValidInput_ReturnsBuildPayload()
     {
         // Act
-        var result = await _mutation.CreateBuild("Test Build", "Description", _context, _loggingService);
+        var result = await _mutation.CreateBuild("Test Build", "Description", _context, _logger, _loggingService);
 
         // Assert
         Assert.NotNull(result);
@@ -69,7 +71,7 @@ public class BuildMutationTests : IAsyncLifetime
     {
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild("", null, _context, _loggingService));
+            () => _mutation.CreateBuild("", null, _context, _logger, _loggingService));
     }
 
     [Fact]
@@ -80,7 +82,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild(longName, null, _context, _loggingService));
+            () => _mutation.CreateBuild(longName, null, _context, _logger, _loggingService));
     }
 
     [Fact]
@@ -91,7 +93,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild("Valid Name", longDescription, _context, _loggingService));
+            () => _mutation.CreateBuild("Valid Name", longDescription, _context, _logger, _loggingService));
     }
 
     [Fact]

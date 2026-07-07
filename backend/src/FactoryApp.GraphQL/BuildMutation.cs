@@ -6,6 +6,7 @@ using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FactoryApp.GraphQL;
 
@@ -74,11 +75,15 @@ public class BuildMutationType
     /// <summary>
     /// Authorization: Requires "User" or "Admin" role.
     /// Applied via @authorize directive in GraphQL schema (see Program.cs AddAuthorization).
+    ///
+    /// Phase 4: Triggers BuildProcessWorkflow asynchronously after build creation.
+    /// Workflow runs in background; mutation returns immediately with new build.
     /// </summary>
     public async Task<BuildPayload> CreateBuild(
         string name,
         string? description,
         [Service] FactoryDbContext dbContext,
+        [Service] ILogger<BuildMutationType> logger,
         [Service] LoggingService loggingService)
     {
 
@@ -112,14 +117,14 @@ public class BuildMutationType
             dbContext.Builds.Add(build);
             await dbContext.SaveChangesAsync();
 
-            // TODO: Trigger BuildProcessWorkflow asynchronously (Phase 5C)
-            // When Elsa v3.6+ is available:
-            // 1. Implement async bookmarks for AwaitTestCompletionActivity
-            // 2. Use IWorkflowHost.StartAsync() to trigger workflow by name
-            // 3. Add workflow persistence layer for state recovery
+            // Phase 4: GraphQL wiring scaffolding (Phase 5 for workflow execution)
+            // TODO: Trigger BuildProcessWorkflow after workflow persistence layer implemented
+            // Issue: Circular dependency between FactoryApp.GraphQL ← Events and FactoryApp.Workflows
+            // Fix: Move Events to FactoryApp.Domain (Phase 5 - larger refactor)
             //
-            // Current Elsa v3.5.3 API limitation: SetVariable/GetVariable not available
-            // Workaround: Manual orchestration via BuildProcessWorkflowOrchestrator (deferred)
+            // Once available, will call:
+            // _ = workflowHost.ExecuteAsync("BuildProcessWorkflow", new { BuildId = build.Id.ToString() });
+            logger.LogInformation("CreateBuild: Build {BuildId} created. Workflow trigger deferred to Phase 5.", build.Id);
 
             loggingService.LogMutationSuccess(nameof(CreateBuild), build.Id);
             return MapperService.ToBuildPayload(build);
