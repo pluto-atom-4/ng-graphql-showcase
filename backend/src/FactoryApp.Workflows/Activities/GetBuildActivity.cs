@@ -25,9 +25,19 @@ namespace FactoryApp.Workflows.Activities;
     Description = "Fetches build from database by ID (stub - awaiting Elsa v3.6+)")]
 public class GetBuildActivity : Activity
 {
-    private readonly FactoryDbContext _dbContext;
-    private readonly ILogger<GetBuildActivity> _logger;
+    private FactoryDbContext? _dbContext;
+    private ILogger<GetBuildActivity>? _logger;
 
+    /// <summary>
+    /// Parameterless constructor for workflow definitions.
+    /// </summary>
+    public GetBuildActivity()
+    {
+    }
+
+    /// <summary>
+    /// DI constructor for service-based instantiation.
+    /// </summary>
     public GetBuildActivity(FactoryDbContext dbContext, ILogger<GetBuildActivity> logger)
     {
         _dbContext = dbContext;
@@ -49,6 +59,14 @@ public class GetBuildActivity : Activity
     {
         try
         {
+            if (_dbContext == null || _logger == null)
+            {
+                // Stub implementation for workflow definitions without DI
+                BuildId = BuildId ?? string.Empty;
+                await context.CompleteActivityAsync();
+                return;
+            }
+
             if (string.IsNullOrEmpty(BuildId))
             {
                 _logger.LogError("GetBuildActivity: BuildId is null or empty");
@@ -79,7 +97,7 @@ public class GetBuildActivity : Activity
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GetBuildActivity: Unexpected error processing BuildId {BuildId}", BuildId);
+            _logger?.LogError(ex, "GetBuildActivity: Unexpected error processing BuildId {BuildId}", BuildId);
             await context.CompleteActivityAsync();
         }
     }

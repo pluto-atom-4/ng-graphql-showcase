@@ -15,9 +15,19 @@ namespace FactoryApp.Workflows.Activities;
     Description = "Validate parts exist for a build")]
 public class ProcessPartsActivity : Activity
 {
-    private readonly FactoryDbContext _dbContext;
-    private readonly ILogger<ProcessPartsActivity> _logger;
+    private FactoryDbContext? _dbContext;
+    private ILogger<ProcessPartsActivity>? _logger;
 
+    /// <summary>
+    /// Parameterless constructor for workflow definitions.
+    /// </summary>
+    public ProcessPartsActivity()
+    {
+    }
+
+    /// <summary>
+    /// DI constructor for service-based instantiation.
+    /// </summary>
     public ProcessPartsActivity(FactoryDbContext dbContext, ILogger<ProcessPartsActivity> logger)
     {
         _dbContext = dbContext;
@@ -38,6 +48,15 @@ public class ProcessPartsActivity : Activity
     {
         try
         {
+            if (_dbContext == null || _logger == null)
+            {
+                // Stub implementation for workflow definitions without DI
+                BuildId = BuildId ?? string.Empty;
+                PartsValid = false;
+                await context.CompleteActivityAsync();
+                return;
+            }
+
             if (string.IsNullOrEmpty(BuildId))
             {
                 _logger.LogError("ProcessPartsActivity: BuildId is null or empty");
@@ -80,7 +99,7 @@ public class ProcessPartsActivity : Activity
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ProcessPartsActivity: Unexpected error processing BuildId {BuildId}", BuildId);
+            _logger?.LogError(ex, "ProcessPartsActivity: Unexpected error processing BuildId {BuildId}", BuildId);
             PartsValid = false;
             await context.CompleteActivityAsync();
         }

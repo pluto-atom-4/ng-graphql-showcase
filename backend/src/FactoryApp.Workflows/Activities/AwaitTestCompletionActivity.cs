@@ -15,8 +15,18 @@ namespace FactoryApp.Workflows.Activities;
     Description = "Wait for test run completion (stub - awaiting Elsa v3.6+ async bookmarks)")]
 public class AwaitTestCompletionActivity : Activity
 {
-    private readonly ILogger<AwaitTestCompletionActivity> _logger;
+    private ILogger<AwaitTestCompletionActivity>? _logger;
 
+    /// <summary>
+    /// Parameterless constructor for workflow definitions.
+    /// </summary>
+    public AwaitTestCompletionActivity()
+    {
+    }
+
+    /// <summary>
+    /// DI constructor for service-based instantiation.
+    /// </summary>
     public AwaitTestCompletionActivity(ILogger<AwaitTestCompletionActivity> logger)
     {
         _logger = logger;
@@ -38,13 +48,13 @@ public class AwaitTestCompletionActivity : Activity
         {
             if (string.IsNullOrEmpty(TestRunId))
             {
-                _logger.LogError("AwaitTestCompletionActivity: TestRunId is null or empty");
+                _logger?.LogError("AwaitTestCompletionActivity: TestRunId is null or empty");
                 TestRunCompleted = false;
                 await context.CompleteActivityAsync();
                 return;
             }
 
-            _logger.LogInformation("AwaitTestCompletionActivity: Waiting for test completion of TestRunId {TestRunId}", TestRunId);
+            _logger?.LogInformation("AwaitTestCompletionActivity: Waiting for test completion of TestRunId {TestRunId}", TestRunId);
 
             // TODO: Implement async bookmark-based waiting when Elsa v3.6+ is available
             // Current behavior: immediate completion (stub implementation)
@@ -59,7 +69,7 @@ public class AwaitTestCompletionActivity : Activity
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "AwaitTestCompletionActivity: Unexpected error awaiting TestRunId {TestRunId}", TestRunId);
+            _logger?.LogError(ex, "AwaitTestCompletionActivity: Unexpected error awaiting TestRunId {TestRunId}", TestRunId);
             TestRunCompleted = false;
             await context.CompleteActivityAsync();
         }

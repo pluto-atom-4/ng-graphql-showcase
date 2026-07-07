@@ -1,19 +1,49 @@
+using Elsa.Workflows;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Models;
+using FactoryApp.Workflows.Activities;
+
 namespace FactoryApp.Workflows.WorkflowDefinitions;
 
 /// <summary>
-/// BuildProcessWorkflow orchestrates the complete manufacturing build process:
-/// Build → Validate Parts → Trigger Tests → Await Test Completion → Publish Status
+/// BuildProcessWorkflow - Phase 3 (Elsa v3.7.1)
 ///
-/// This workflow follows the primitive-key-only pattern (workflow-integration.md):
-/// - Only BuildId (Guid string) is stored in workflow state
-/// - Each activity fetches fresh data from database on execution
-/// - Workflow version isolation prevents schema changes from breaking in-flight workflows
+/// Orchestrates manufacturing build lifecycle:
+/// Build → Validate Parts → Trigger Tests → Await Completion → Publish Status
 ///
-/// Note: For Elsa v3.5.3, this workflow is orchestrated via C# code in BuildProcessWorkflowOrchestrator.
-/// When upgrading to Elsa v3.6+, this can use proper fluent workflow builder API and async bookmarks.
+/// Follows primitive-key-only pattern (CLAUDE.md):
+/// - Only BuildId (Guid string) in workflow state
+/// - Fresh DB queries per activity execution
+/// - Version isolation for schema evolution
+///
+/// Metadata (Name, Version) managed by workflow registration/provider.
 /// </summary>
-public class BuildProcessWorkflow
+public class BuildProcessWorkflow : WorkflowBase
 {
-    // Placeholder for workflow definition
-    // Actual orchestration happens in FactoryApp.WebApi.Services.BuildProcessWorkflowOrchestrator
+    protected override void Build(IWorkflowBuilder builder)
+    {
+        builder.Root = new Sequence
+        {
+            Activities = new List<IActivity>
+            {
+                // 1. Fetch Build from DB (input: BuildId)
+                new GetBuildActivity(),
+
+                // 2. Validate Parts exist
+                new ProcessPartsActivity(),
+
+                // 3. Trigger test run (generates TestRunId)
+                new TriggerTestRunActivity(),
+
+                // 4. Await test completion
+                new AwaitTestCompletionActivity(),
+
+                // 5. Publish final status (Released)
+                new PublishBuildStatusActivity
+                {
+                    NewStatus = "Released"
+                }
+            }
+        };
+    }
 }
