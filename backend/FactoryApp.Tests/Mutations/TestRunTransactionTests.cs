@@ -44,7 +44,7 @@ public class TestRunTransactionTests
         // Act
         var response = await _mutation.SubmitTestRun(
             buildId, testStatus, result, fileUrl,
-            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
+            _context, _mockEventSender, _mockLogging);
 
         // Assert - Query database directly
         var testRun = await _context.TestRuns
@@ -74,7 +74,7 @@ public class TestRunTransactionTests
         var exception = await Assert.ThrowsAsync<GraphQLException>(async () =>
             await _mutation.SubmitTestRun(
                 buildId, TestStatus.Failed, null, null,  // null result fails validation
-                _context, _mockEventSender, _mockLogging, _httpContextAccessor));
+                _context, _mockEventSender, _mockLogging));
 
         // Assert
         Assert.Contains("result is required", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -110,7 +110,7 @@ public class TestRunTransactionTests
         var exception = await Assert.ThrowsAsync<GraphQLException>(async () =>
             await _mutation.SubmitTestRun(
                 buildId, TestStatus.Passed, "Test", "https://example.com/file.json",
-                _context, mockEventSenderWithFailure, _mockLogging, _httpContextAccessor));
+                _context, mockEventSenderWithFailure, _mockLogging));
 
         // Assert - Verify exception wraps the event sender failure
         Assert.Contains("Failed to submit test run", exception.Message);
@@ -134,7 +134,7 @@ public class TestRunTransactionTests
         // Act - PASSED status
         await _mutation.SubmitTestRun(
             buildId, TestStatus.Passed, "Pass", "https://example.com/1.json",
-            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
+            _context, _mockEventSender, _mockLogging);
 
         // Assert - completedAt set and recent
         var passedRun = await _context.TestRuns
@@ -146,7 +146,7 @@ public class TestRunTransactionTests
         // Act - RUNNING status
         await _mutation.SubmitTestRun(
             buildId, TestStatus.Running, null, null,
-            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
+            _context, _mockEventSender, _mockLogging);
 
         // Assert - completedAt null for RUNNING
         var runningRun = await _context.TestRuns
@@ -158,7 +158,7 @@ public class TestRunTransactionTests
         // Act - FAILED status with result
         await _mutation.SubmitTestRun(
             buildId, TestStatus.Failed, "Failed", "https://example.com/2.json",
-            _context, _mockEventSender, _mockLogging, _httpContextAccessor);
+            _context, _mockEventSender, _mockLogging);
 
         // Assert - completedAt set for FAILED
         var failedRun = await _context.TestRuns
@@ -187,7 +187,7 @@ public class TestRunTransactionTests
         {
             var response = await _mutation.SubmitTestRun(
                 buildId, status, "Result", status == TestStatus.Running ? null : "https://example.com/file.json",
-                _context, _mockEventSender, _mockLogging, _httpContextAccessor);
+                _context, _mockEventSender, _mockLogging);
             testRunIds.Add(response.Id);
         }
 
