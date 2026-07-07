@@ -117,14 +117,12 @@ public class BuildMutationType
             dbContext.Builds.Add(build);
             await dbContext.SaveChangesAsync();
 
-            // Phase 4: GraphQL wiring scaffolding (Phase 5 for workflow execution)
-            // TODO: Trigger BuildProcessWorkflow after workflow persistence layer implemented
-            // Issue: Circular dependency between FactoryApp.GraphQL ← Events and FactoryApp.Workflows
-            // Fix: Move Events to FactoryApp.Domain (Phase 5 - larger refactor)
-            //
-            // Once available, will call:
-            // _ = workflowHost.ExecuteAsync("BuildProcessWorkflow", new { BuildId = build.Id.ToString() });
-            logger.LogInformation("CreateBuild: Build {BuildId} created. Workflow trigger deferred to Phase 5.", build.Id);
+            // Phase 5b (TODO): Trigger BuildProcessWorkflow asynchronously
+            // Requires IWorkflowHost injection + proper Elsa API usage
+            // Workflow runs in background; mutation returns immediately
+            logger.LogInformation(
+                "CreateBuild: Build created, workflow trigger deferred to Phase 5b. BuildId: {BuildId}",
+                build.Id);
 
             loggingService.LogMutationSuccess(nameof(CreateBuild), build.Id);
             return MapperService.ToBuildPayload(build);
