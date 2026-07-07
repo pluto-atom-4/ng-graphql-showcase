@@ -1,53 +1,65 @@
+using Elsa.Workflows;
+using Elsa.Workflows.Activities;
+using FactoryApp.Workflows.Activities;
+
 namespace FactoryApp.Workflows.WorkflowDefinitions;
 
 /// <summary>
-/// BuildProcessWorkflow - Phase 3 Implementation
+/// BuildProcessWorkflow - Phase 3 (Elsa v3.7.1)
 ///
-/// BLOCKED: Requires Elsa v3.6+ (currently on v3.5.3)
-///
-/// This workflow orchestrates: Build → Validate Parts → Trigger Tests → Await Completion → Publish Status
+/// Orchestrates manufacturing build lifecycle:
+/// Build → Validate Parts → Trigger Tests → Await Completion → Publish Status
 ///
 /// Follows primitive-key-only pattern (CLAUDE.md):
 /// - Only BuildId (Guid string) in workflow state
-/// - Fresh DB queries per activity (no stale objects)
-/// - Version isolation allows safe schema evolution
-///
-/// ## Upgrade Path: Elsa v3.6+
-///
-/// When Elsa v3.6+ available:
-/// 1. Update FactoryApp.Workflows.csproj: Version="3.6.0" or later
-/// 2. Replace this placeholder with fluent builder:
-///    ```csharp
-///    public class BuildProcessWorkflow : WorkflowBase
-///    {
-///        public override string Name => "BuildProcessWorkflow";
-///        public override int Version => 1;
-///
-///        protected override void Build(IWorkflowBuilder builder)
-///        {
-///            builder.Root = new Sequence
-///            {
-///                Activities = new List<Activity>
-///                {
-///                    new GetBuildActivity { BuildId = new Input<string>(...) },
-///                    new ProcessPartsActivity { BuildId = new Input<string>(...) },
-///                    new TriggerTestRunActivity { BuildId = new Input<string>(...) },
-///                    new AwaitTestCompletionActivity { TestRunId = new Input<string>(...) },
-///                    new PublishBuildStatusActivity { BuildId = new Input<string>(...) }
-///                }
-///            };
-///        }
-///    }
-///    ```
-/// 3. Create BuildProcessCompensationWorkflow (similar pattern)
-/// 4. Run: `dotnet build && dotnet test`
-/// 5. Unblock Phase 4-6
-///
-/// See: gh-issue-draft-3.md for full implementation spec
-/// Blocks: #170, #171, #172 (Phase 4-6)
+/// - Fresh DB queries per activity execution
+/// - Version isolation for schema evolution
 /// </summary>
-public class BuildProcessWorkflow
+public class BuildProcessWorkflow : WorkflowBase
 {
-    // Placeholder for Elsa v3.6+ fluent workflow definition
-    // Phase 3 implementation deferred until Elsa v3.6 released
+    public override string Name => "BuildProcessWorkflow";
+    public override string DisplayName => "Build Process Workflow";
+    public override string Description => "Manufacturing build lifecycle: Build → Parts → TestRun → Release";
+    public override int Version => 1;
+
+    protected override void Build(IWorkflowBuilder builder)
+    {
+        builder
+            .Root = new Sequence
+            {
+                Activities = new List<Activity>
+                {
+                    // 1. Fetch Build from DB (input: BuildId)
+                    new GetBuildActivity
+                    {
+                        BuildId = new Input<string>(context => context.GetInput<string>("BuildId") ?? string.Empty)
+                    },
+
+                    // 2. Validate Parts exist
+                    new ProcessPartsActivity
+                    {
+                        BuildId = new Input<string>(context => context.GetInput<string>("BuildId") ?? string.Empty)
+                    },
+
+                    // 3. Trigger test run (generates TestRunId)
+                    new TriggerTestRunActivity
+                    {
+                        BuildId = new Input<string>(context => context.GetInput<string>("BuildId") ?? string.Empty)
+                    },
+
+                    // 4. Await test completion
+                    new AwaitTestCompletionActivity
+                    {
+                        TestRunId = new Input<string>(context => context.GetInput<string>("TestRunId") ?? string.Empty)
+                    },
+
+                    // 5. Publish final status (Released)
+                    new PublishBuildStatusActivity
+                    {
+                        BuildId = new Input<string>(context => context.GetInput<string>("BuildId") ?? string.Empty),
+                        NewStatus = new Input<string>("Released")
+                    }
+                }
+            };
+    }
 }
