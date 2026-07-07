@@ -1,6 +1,8 @@
 using FactoryApp.Domain;
+using FactoryApp.Domain.Entities;
 using Elsa.Workflows;
 using Elsa.Workflows.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace FactoryApp.Workflows.Activities;
 
@@ -24,10 +26,12 @@ namespace FactoryApp.Workflows.Activities;
 public class GetBuildActivity : Activity
 {
     private readonly FactoryDbContext _dbContext;
+    private readonly ILogger<GetBuildActivity> _logger;
 
-    public GetBuildActivity(FactoryDbContext dbContext)
+    public GetBuildActivity(FactoryDbContext dbContext, ILogger<GetBuildActivity> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     /// <summary>
@@ -36,13 +40,25 @@ public class GetBuildActivity : Activity
     /// </summary>
     public string? BuildId { get; set; }
 
+    /// <summary>
+    /// Fetched build (output property for Elsa v3.5.3 API limitation).
+    /// </summary>
+    public Build? Build { get; set; }
+
     protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
         try
         {
-            if (string.IsNullOrEmpty(BuildId) || !Guid.TryParse(BuildId, out var buildGuid))
+            if (string.IsNullOrEmpty(BuildId))
             {
-                // TODO: Proper error handling when Elsa v3.6+ available
+                _logger.LogError("GetBuildActivity: BuildId is null or empty");
+                await context.CompleteActivityAsync();
+                return;
+            }
+
+            if (!Guid.TryParse(BuildId, out var buildGuid))
+            {
+                _logger.LogError("GetBuildActivity: Invalid Guid format for BuildId: {BuildId}", BuildId);
                 await context.CompleteActivityAsync();
                 return;
             }
@@ -50,17 +66,20 @@ public class GetBuildActivity : Activity
             // Fetch fresh build (primitive-key-only pattern)
             var build = await _dbContext.Builds.FindAsync(buildGuid);
 
-            if (build != null)
+            if (build == null)
             {
-                // TODO: Pass output via context.Variables when Elsa API available
-                // Current workaround: use activity properties as output
+                _logger.LogWarning("GetBuildActivity: Build not found for ID {BuildId}", BuildId);
+                await context.CompleteActivityAsync();
+                return;
             }
 
+            Build = build;
+            _logger.LogInformation("GetBuildActivity: Successfully fetched build {BuildId} with status {Status}", buildGuid, build.Status);
             await context.CompleteActivityAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently complete - error handling pending API improvements
+            _logger.LogError(ex, "GetBuildActivity: Unexpected error processing BuildId {BuildId}", BuildId);
             await context.CompleteActivityAsync();
         }
     }

@@ -69,8 +69,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
             BuildStatus.Running,
             _context,
             _eventSender,
-            _loggingService,
-            _httpContextAccessor
+            _loggingService
         );
 
         Assert.NotNull(result);
@@ -148,8 +147,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
             "http://example.com/result.txt",
             _context,
             _eventSender,
-            _loggingService,
-            _httpContextAccessor
+            _loggingService
         );
 
         Assert.NotNull(result);
