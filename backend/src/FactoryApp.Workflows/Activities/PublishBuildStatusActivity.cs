@@ -26,9 +26,19 @@ namespace FactoryApp.Workflows.Activities;
     Description = "Publishes build status change event to subscribers (stub - awaiting Elsa v3.6+)")]
 public class PublishBuildStatusActivity : Activity
 {
-    private readonly ITopicEventSender _eventSender;
-    private readonly ILogger<PublishBuildStatusActivity> _logger;
+    private ITopicEventSender? _eventSender;
+    private ILogger<PublishBuildStatusActivity>? _logger;
 
+    /// <summary>
+    /// Parameterless constructor for workflow definitions.
+    /// </summary>
+    public PublishBuildStatusActivity()
+    {
+    }
+
+    /// <summary>
+    /// DI constructor for service-based instantiation.
+    /// </summary>
     public PublishBuildStatusActivity(ITopicEventSender eventSender, ILogger<PublishBuildStatusActivity> logger)
     {
         _eventSender = eventSender;
@@ -54,6 +64,15 @@ public class PublishBuildStatusActivity : Activity
     {
         try
         {
+            if (_eventSender == null || _logger == null)
+            {
+                // Stub implementation for workflow definitions without DI
+                BuildId = BuildId ?? string.Empty;
+                NewStatus = NewStatus ?? string.Empty;
+                await context.CompleteActivityAsync();
+                return;
+            }
+
             if (string.IsNullOrEmpty(BuildId))
             {
                 _logger.LogError("PublishBuildStatusActivity: BuildId is null or empty");
@@ -104,7 +123,7 @@ public class PublishBuildStatusActivity : Activity
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "PublishBuildStatusActivity: Unexpected error processing BuildId {BuildId}", BuildId);
+            _logger?.LogError(ex, "PublishBuildStatusActivity: Unexpected error processing BuildId {BuildId}", BuildId);
             await context.CompleteActivityAsync();
         }
     }
