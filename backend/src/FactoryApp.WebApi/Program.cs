@@ -9,6 +9,10 @@ using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
 using Elsa;
+using Elsa.Extensions;
+using Elsa.Workflows.Management;
+using Elsa.EntityFrameworkCore.Modules.Runtime;
+using Elsa.EntityFrameworkCore.Modules.Management;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -96,11 +100,20 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3 (Phase 5B - Deferred)
-// ROADBLOCK: Elsa v3.5.3 ActivityExecutionContext lacks SetVariable/GetVariable API
-// Activities stubbed with documented limitations pending Elsa v3.6+ upgrade
-// See: GetBuildActivity.cs, PublishBuildStatusActivity.cs for implementation notes
-// Phase 5C: Upgrade Elsa + implement workflow context variable binding
+// 2.5 Elsa Workflows v3 (Phase 5B)
+// Note: Elsa v3.5.3 has API limitations (SetVariable/GetVariable not yet available)
+// Phase 5C: Upgrade to Elsa v3.6+ for full workflow implementation with async bookmarks
+builder.Services
+    .AddElsa(elsa => elsa
+        .AddActivitiesFrom<Program>()
+        .AddWorkflowsFrom<Program>());
+
+// Register activities as scoped services for DI injection in activity constructors
+builder.Services.AddScoped<GetBuildActivity>();
+builder.Services.AddScoped<PublishBuildStatusActivity>();
+builder.Services.AddScoped<ProcessPartsActivity>();
+builder.Services.AddScoped<TriggerTestRunActivity>();
+builder.Services.AddScoped<AwaitTestCompletionActivity>();
 
 // 3. Register Hot Chocolate GraphQL Server with domain resolvers
 // Note: Authorization policies registered above are available to resolvers via ClaimsPrincipal

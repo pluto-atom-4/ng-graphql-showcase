@@ -112,6 +112,15 @@ public class BuildMutationType
             dbContext.Builds.Add(build);
             await dbContext.SaveChangesAsync();
 
+            // TODO: Trigger BuildProcessWorkflow asynchronously (Phase 5C)
+            // When Elsa v3.6+ is available:
+            // 1. Implement async bookmarks for AwaitTestCompletionActivity
+            // 2. Use IWorkflowHost.StartAsync() to trigger workflow by name
+            // 3. Add workflow persistence layer for state recovery
+            //
+            // Current Elsa v3.5.3 API limitation: SetVariable/GetVariable not available
+            // Workaround: Manual orchestration via BuildProcessWorkflowOrchestrator (deferred)
+
             loggingService.LogMutationSuccess(nameof(CreateBuild), build.Id);
             return MapperService.ToBuildPayload(build);
         }

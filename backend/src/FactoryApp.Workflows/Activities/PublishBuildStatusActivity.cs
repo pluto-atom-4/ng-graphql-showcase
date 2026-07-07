@@ -3,6 +3,7 @@ using FactoryApp.GraphQL.Events;
 using Elsa.Workflows;
 using Elsa.Workflows.Attributes;
 using HotChocolate.Subscriptions;
+using Microsoft.Extensions.Logging;
 
 namespace FactoryApp.Workflows.Activities;
 
@@ -26,10 +27,12 @@ namespace FactoryApp.Workflows.Activities;
 public class PublishBuildStatusActivity : Activity
 {
     private readonly ITopicEventSender _eventSender;
+    private readonly ILogger<PublishBuildStatusActivity> _logger;
 
-    public PublishBuildStatusActivity(ITopicEventSender eventSender)
+    public PublishBuildStatusActivity(ITopicEventSender eventSender, ILogger<PublishBuildStatusActivity> logger)
     {
         _eventSender = eventSender;
+        _logger = logger;
     }
 
     /// <summary>
@@ -51,30 +54,57 @@ public class PublishBuildStatusActivity : Activity
     {
         try
         {
-            if (string.IsNullOrEmpty(BuildId) || string.IsNullOrEmpty(NewStatus))
+            if (string.IsNullOrEmpty(BuildId))
             {
-                // TODO: Proper error handling when Elsa v3.6+ available
+                _logger.LogError("PublishBuildStatusActivity: BuildId is null or empty");
                 await context.CompleteActivityAsync();
                 return;
             }
 
+            if (string.IsNullOrEmpty(NewStatus))
+            {
+                _logger.LogError("PublishBuildStatusActivity: NewStatus is null or empty");
+                await context.CompleteActivityAsync();
+                return;
+            }
+
+            if (!Guid.TryParse(BuildId, out var buildGuid))
+            {
+                _logger.LogError("PublishBuildStatusActivity: Invalid Guid format for BuildId: {BuildId}", BuildId);
+                await context.CompleteActivityAsync();
+                return;
+            }
+
+            // Parse enum statuses with validation
+            if (!Enum.TryParse<BuildStatus>(NewStatus, out var newStatus))
+            {
+                _logger.LogError("PublishBuildStatusActivity: Invalid BuildStatus value: {NewStatus}", NewStatus);
+                await context.CompleteActivityAsync();
+                return;
+            }
+
+            var oldStatus = !string.IsNullOrEmpty(OldStatus) && Enum.TryParse<BuildStatus>(OldStatus, out var parsed)
+                ? parsed
+                : BuildStatus.Pending;
+
             // Publish subscription event (infrastructure verified working)
             var @event = new BuildStatusChangedEvent
             {
-                BuildId = new Guid(BuildId),
-                OldStatus = (BuildStatus)Enum.Parse(typeof(BuildStatus), OldStatus ?? "Pending"),
-                NewStatus = (BuildStatus)Enum.Parse(typeof(BuildStatus), NewStatus),
+                BuildId = buildGuid,
+                OldStatus = oldStatus,
+                NewStatus = newStatus,
                 Timestamp = DateTime.UtcNow
             };
 
             // Send to Hot Chocolate subscribers
             await _eventSender.SendAsync($"buildStatusUpdated_{BuildId}", @event);
+            _logger.LogInformation("PublishBuildStatusActivity: Published status change for build {BuildId} from {OldStatus} to {NewStatus}", buildGuid, oldStatus, newStatus);
 
             await context.CompleteActivityAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently complete - error handling pending Elsa API improvements
+            _logger.LogError(ex, "PublishBuildStatusActivity: Unexpected error processing BuildId {BuildId}", BuildId);
             await context.CompleteActivityAsync();
         }
     }
