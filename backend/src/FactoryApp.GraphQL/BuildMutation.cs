@@ -1,7 +1,7 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.Domain.Events;
 using FactoryApp.GraphQL.DTOs;
-using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
