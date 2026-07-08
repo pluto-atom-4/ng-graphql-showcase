@@ -1,6 +1,6 @@
 using FactoryApp.Domain.Entities;
 
-namespace FactoryApp.GraphQL.Events;
+namespace FactoryApp.Domain.Events;
 
 public class BuildStatusChangedEvent
 {

@@ -1,4 +1,4 @@
-using FactoryApp.GraphQL.Events;
+using FactoryApp.Domain.Events;
 using Elsa.Workflows;
 using Elsa.Workflows.Attributes;
 using HotChocolate.Subscriptions;

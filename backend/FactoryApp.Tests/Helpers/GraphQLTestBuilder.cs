@@ -6,6 +6,8 @@ using FactoryApp.GraphQL.Services;
 using FactoryApp.Tests.Mocks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Moq;
+using Elsa.Workflows.Runtime;
 
 namespace FactoryApp.Tests.Helpers;
 
@@ -116,6 +118,7 @@ public class MutationTestContext
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly BuildMutationType _mutation;
     private readonly ILogger<BuildMutationType> _logger;
+    private readonly Mock<IWorkflowRuntime> _workflowRuntimeMock;
 
     public MutationTestContext(
         FactoryDbContext context,
@@ -128,6 +131,7 @@ public class MutationTestContext
         _authService = authService;
         _httpContextAccessor = httpContextAccessor;
         _mutation = new BuildMutationType();
+        _workflowRuntimeMock = new Mock<IWorkflowRuntime>();
 
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         _logger = loggerFactory.CreateLogger<BuildMutationType>();
@@ -139,7 +143,7 @@ public class MutationTestContext
     public AuthService Auth => _authService;
 
     public async Task<BuildPayload> CreateBuild(string name, string? description) =>
-        await _mutation.CreateBuild(name, description, _context, _logger, _loggingService);
+        await _mutation.CreateBuild(name, description, _context, _logger, _loggingService, _workflowRuntimeMock.Object);
 
     public async Task<BuildPayload> UpdateBuildStatus(Guid buildId, BuildStatus status, MockTopicEventSender eventSender) =>
         await _mutation.UpdateBuildStatus(buildId, status, _context, eventSender, _loggingService);

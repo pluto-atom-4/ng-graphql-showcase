@@ -1,5 +1,5 @@
 using FactoryApp.Domain.Entities;
-using FactoryApp.GraphQL.Events;
+using FactoryApp.Domain.Events;
 using HotChocolate;
 
 namespace FactoryApp.GraphQL;

@@ -1,12 +1,13 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.Domain.Events;
 using FactoryApp.GraphQL.DTOs;
-using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Elsa.Workflows.Runtime;
 
 namespace FactoryApp.GraphQL;
 
@@ -84,7 +85,8 @@ public class BuildMutationType
         string? description,
         [Service] FactoryDbContext dbContext,
         [Service] ILogger<BuildMutationType> logger,
-        [Service] LoggingService loggingService)
+        [Service] LoggingService loggingService,
+        [Service] IWorkflowRuntime workflowRuntime)
     {
 
         var args = new Dictionary<string, object?> { { "name", name }, { "description", description } };
@@ -117,14 +119,33 @@ public class BuildMutationType
             dbContext.Builds.Add(build);
             await dbContext.SaveChangesAsync();
 
-            // Phase 4: GraphQL wiring scaffolding (Phase 5 for workflow execution)
-            // TODO: Trigger BuildProcessWorkflow after workflow persistence layer implemented
-            // Issue: Circular dependency between FactoryApp.GraphQL ← Events and FactoryApp.Workflows
-            // Fix: Move Events to FactoryApp.Domain (Phase 5 - larger refactor)
-            //
-            // Once available, will call:
-            // _ = workflowHost.ExecuteAsync("BuildProcessWorkflow", new { BuildId = build.Id.ToString() });
-            logger.LogInformation("CreateBuild: Build {BuildId} created. Workflow trigger deferred to Phase 5.", build.Id);
+            // Phase 5b: Trigger BuildProcessWorkflow asynchronously
+            // Workflow runs in background; mutation returns immediately
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var client = await workflowRuntime.CreateClientAsync("BuildProcessWorkflow");
+                    var request = new Elsa.Workflows.Runtime.Messages.CreateAndRunWorkflowInstanceRequest
+                    {
+                        Input = new Dictionary<string, object> { { "BuildId", build.Id.ToString() } }
+                    };
+
+                    var result = await client.CreateAndRunInstanceAsync(request);
+
+                    logger.LogInformation(
+                        "CreateBuild: Triggered BuildProcessWorkflow for build {BuildId}, instance {InstanceId}",
+                        build.Id,
+                        result.WorkflowInstanceId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "CreateBuild: Failed to trigger BuildProcessWorkflow for build {BuildId}",
+                        build.Id);
+                }
+            });
 
             loggingService.LogMutationSuccess(nameof(CreateBuild), build.Id);
             return MapperService.ToBuildPayload(build);

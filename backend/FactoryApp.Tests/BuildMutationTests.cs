@@ -8,6 +8,8 @@ using HotChocolate;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Moq;
+using Elsa.Workflows.Runtime;
 using Xunit;
 
 namespace FactoryApp.Tests;
@@ -21,6 +23,7 @@ public class BuildMutationTests : IAsyncLifetime
     private LoggingService _loggingService = null!;
     private IHttpContextAccessor _httpContextAccessor = null!;
     private ILogger<BuildMutationType> _logger = null!;
+    private Mock<IWorkflowRuntime> _workflowRuntimeMock = null!;
 
     public async Task InitializeAsync()
     {
@@ -45,6 +48,9 @@ public class BuildMutationTests : IAsyncLifetime
 
         _httpContextAccessor = new MockHttpContextAccessor();
 
+        // Mock IWorkflowRuntime for Phase 5b testing
+        _workflowRuntimeMock = new Mock<IWorkflowRuntime>();
+
         _mutation = new BuildMutationType();
     }
 
@@ -57,7 +63,7 @@ public class BuildMutationTests : IAsyncLifetime
     public async Task CreateBuild_WithValidInput_ReturnsBuildPayload()
     {
         // Act
-        var result = await _mutation.CreateBuild("Test Build", "Description", _context, _logger, _loggingService);
+        var result = await _mutation.CreateBuild("Test Build", "Description", _context, _logger, _loggingService, _workflowRuntimeMock.Object);
 
         // Assert
         Assert.NotNull(result);
@@ -71,7 +77,7 @@ public class BuildMutationTests : IAsyncLifetime
     {
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild("", null, _context, _logger, _loggingService));
+            () => _mutation.CreateBuild("", null, _context, _logger, _loggingService, _workflowRuntimeMock.Object));
     }
 
     [Fact]
@@ -82,7 +88,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild(longName, null, _context, _logger, _loggingService));
+            () => _mutation.CreateBuild(longName, null, _context, _logger, _loggingService, _workflowRuntimeMock.Object));
     }
 
     [Fact]
@@ -93,7 +99,7 @@ public class BuildMutationTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<GraphQLException>(
-            () => _mutation.CreateBuild("Valid Name", longDescription, _context, _logger, _loggingService));
+            () => _mutation.CreateBuild("Valid Name", longDescription, _context, _logger, _loggingService, _workflowRuntimeMock.Object));
     }
 
     [Fact]

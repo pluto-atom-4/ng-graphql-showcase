@@ -1,7 +1,7 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.Domain.Events;
 using FactoryApp.GraphQL;
-using FactoryApp.GraphQL.Events;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.Tests.Fixtures;
 using FactoryApp.Tests.Mocks;

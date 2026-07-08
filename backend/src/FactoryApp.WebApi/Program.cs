@@ -11,8 +11,6 @@ using FactoryApp.WebApi.Middleware;
 using Elsa;
 using Elsa.Extensions;
 using Elsa.Workflows.Management;
-using Elsa.EntityFrameworkCore.Modules.Runtime;
-using Elsa.EntityFrameworkCore.Modules.Management;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -100,9 +98,8 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3 (Phase 5B)
-// Note: Elsa v3.5.3 has API limitations (SetVariable/GetVariable not yet available)
-// Phase 5C: Upgrade to Elsa v3.6+ for full workflow implementation with async bookmarks
+// 2.5 Elsa Workflows v3.7.1 (Phase 3-6)
+// TODO: Configure persistence with Elsa.Persistence.EFCore.SqlServer
 builder.Services
     .AddElsa(elsa => elsa
         .AddActivitiesFrom<Program>()

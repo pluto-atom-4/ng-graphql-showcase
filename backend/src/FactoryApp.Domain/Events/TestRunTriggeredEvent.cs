@@ -1,4 +1,4 @@
-namespace FactoryApp.GraphQL.Events;
+namespace FactoryApp.Domain.Events;
 
 public class TestRunTriggeredEvent
 {
