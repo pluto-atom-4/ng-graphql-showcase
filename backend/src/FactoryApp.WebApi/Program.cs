@@ -98,15 +98,15 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 5b: Working; Phase 5c: Blocked)
-// Phase 5b COMPLETE: Async workflow invocation (CreateBuild triggers BuildProcessWorkflow)
-// Phase 5c BLOCKED: SQL Server persistence configuration - API mismatch with v3.7.1
-// PHASE 5C RESOLUTION PLAN:
-// 1. Official docs show UseSqlServer() on persistence features but method doesn't exist
-// 2. Namespace search: Elsa.EntityFrameworkCore.* doesn't exist in v3.7.1 packages
-// 3. Correct namespaces: Elsa.Persistence.EFCore.Modules.Management/Runtime
-// 4. SQL Server extension: Package Elsa.Persistence.EFCore.SqlServer has no public API
-// 5. Next step: Either find custom DbContext pattern or wait for Elsa version clarification
+// 2.5 Elsa Workflows v3.7.1 (Phase 5b: Complete; Phase 5c: Blocked on API)
+// Phase 5b WORKING: Async workflow invocation via IWorkflowRuntime client API
+// Phase 5c BLOCKED: SQL Server persistence configuration not found in Elsa.Extensions
+// Attempted configurations:
+// 1. Elsa.Persistence.EFCore.Modules.Management/Runtime namespaces
+// 2. Elsa.EntityFrameworkCore.* namespaces (don't exist in 3.7.1)
+// 3. Extension methods via Elsa.Extensions alone
+// Result: None of the documented patterns compile successfully
+// Current: Using in-memory workflow execution (suitable for development/testing)
 builder.Services.AddElsa(elsa => elsa
     .UseWorkflowManagement(management => management.UseEntityFrameworkCore(ef => { }))
     .UseWorkflowRuntime(runtime => runtime.UseEntityFrameworkCore(ef => { }))
