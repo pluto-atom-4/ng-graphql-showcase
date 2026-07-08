@@ -96,10 +96,10 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 5c: Persistence Framework)
-// SQL Server connection string configuration API under investigation.
-// Elsa 3.7.1 extension methods (UseEntityFrameworkCore, UseSqlServer) unavailable on feature types.
-// Current registration enables workflow execution; persistence backend config requires API clarification.
+// 2.5 Elsa Workflows v3.5.3 (Phase 5c)
+// Note: UseEntityFrameworkCore extension method not available on IModule in 3.5.3.
+// SQL Server persistence requires alternative configuration approach or feature not available.
+// Workflows execute in-memory; state lost on app restart (acceptable Phase 5c MVP).
 builder.Services.AddElsa(elsa =>
 {
     elsa.AddActivitiesFrom<Program>();
