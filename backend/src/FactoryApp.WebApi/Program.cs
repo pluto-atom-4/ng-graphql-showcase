@@ -8,10 +8,7 @@ using FactoryApp.GraphQL.Types;
 using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
-using Elsa;
 using Elsa.Extensions;
-using Elsa.Workflows.Management;
-using Elsa.Workflows.Runtime;
 using Elsa.Persistence.EFCore.Modules.Management;
 using Elsa.Persistence.EFCore.Modules.Runtime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -101,33 +98,20 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 5b-5d)
-// Phase 5b: Async workflow invocation (CreateBuild triggers BuildProcessWorkflow)
-// Phase 5c: SQL Server persistence for workflow state (definitions, instances, bookmarks)
-// TODO: Complete Phase 5c persistence configuration
-// Challenge: WorkflowManagementPersistenceFeature lacks direct UseSqlServer() method
-// Investigation needed: Custom DbContext configuration or different API pattern
-builder.Services
-    .AddElsa(elsa => elsa
-        .AddActivitiesFrom<Program>()
-        .AddWorkflowsFrom<Program>()
-        // Phase 5c: Configure workflow management persistence (definitions, instances)
-        .UseWorkflowManagement(management =>
-        {
-            management.UseEntityFrameworkCore(ef =>
-            {
-                // TODO: Research correct API for SQL Server configuration
-                // Current: Extension method chain not found in 3.7.1 API
-            });
-        })
-        // Phase 5c: Configure workflow runtime persistence (bookmarks, inbox, logs)
-        .UseWorkflowRuntime(runtime =>
-        {
-            runtime.UseEntityFrameworkCore(ef =>
-            {
-                // TODO: Research correct API for SQL Server configuration
-            });
-        }));
+// 2.5 Elsa Workflows v3.7.1 (Phase 5b: Working; Phase 5c: Blocked)
+// Phase 5b COMPLETE: Async workflow invocation (CreateBuild triggers BuildProcessWorkflow)
+// Phase 5c BLOCKED: SQL Server persistence configuration - API mismatch with v3.7.1
+// PHASE 5C RESOLUTION PLAN:
+// 1. Official docs show UseSqlServer() on persistence features but method doesn't exist
+// 2. Namespace search: Elsa.EntityFrameworkCore.* doesn't exist in v3.7.1 packages
+// 3. Correct namespaces: Elsa.Persistence.EFCore.Modules.Management/Runtime
+// 4. SQL Server extension: Package Elsa.Persistence.EFCore.SqlServer has no public API
+// 5. Next step: Either find custom DbContext pattern or wait for Elsa version clarification
+builder.Services.AddElsa(elsa => elsa
+    .UseWorkflowManagement(management => management.UseEntityFrameworkCore(ef => { }))
+    .UseWorkflowRuntime(runtime => runtime.UseEntityFrameworkCore(ef => { }))
+    .AddActivitiesFrom<Program>()
+    .AddWorkflowsFrom<Program>());
 
 // Register activities as scoped services for DI injection in activity constructors
 builder.Services.AddScoped<GetBuildActivity>();
