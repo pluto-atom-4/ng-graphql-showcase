@@ -11,6 +11,9 @@ using FactoryApp.WebApi.Middleware;
 using Elsa;
 using Elsa.Extensions;
 using Elsa.Workflows.Management;
+using Elsa.Workflows.Runtime;
+using Elsa.Persistence.EFCore.Modules.Management;
+using Elsa.Persistence.EFCore.Modules.Runtime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -98,14 +101,33 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 5b: In-memory; Phase 5c TODO: EFCore persistence)
-// Phase 5c: Configure persistence with Elsa.Persistence.EFCore.SqlServer
-// Requires: UseWorkflowManagement() + EFCore feature configuration
-// TODO: Research Elsa 3.7.1 persistence feature API and implement
+// 2.5 Elsa Workflows v3.7.1 (Phase 5b-5d)
+// Phase 5b: Async workflow invocation (CreateBuild triggers BuildProcessWorkflow)
+// Phase 5c: SQL Server persistence for workflow state (definitions, instances, bookmarks)
+// TODO: Complete Phase 5c persistence configuration
+// Challenge: WorkflowManagementPersistenceFeature lacks direct UseSqlServer() method
+// Investigation needed: Custom DbContext configuration or different API pattern
 builder.Services
     .AddElsa(elsa => elsa
         .AddActivitiesFrom<Program>()
-        .AddWorkflowsFrom<Program>());
+        .AddWorkflowsFrom<Program>()
+        // Phase 5c: Configure workflow management persistence (definitions, instances)
+        .UseWorkflowManagement(management =>
+        {
+            management.UseEntityFrameworkCore(ef =>
+            {
+                // TODO: Research correct API for SQL Server configuration
+                // Current: Extension method chain not found in 3.7.1 API
+            });
+        })
+        // Phase 5c: Configure workflow runtime persistence (bookmarks, inbox, logs)
+        .UseWorkflowRuntime(runtime =>
+        {
+            runtime.UseEntityFrameworkCore(ef =>
+            {
+                // TODO: Research correct API for SQL Server configuration
+            });
+        }));
 
 // Register activities as scoped services for DI injection in activity constructors
 builder.Services.AddScoped<GetBuildActivity>();
