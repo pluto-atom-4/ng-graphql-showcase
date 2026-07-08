@@ -98,8 +98,10 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 3-6)
-// TODO: Configure persistence with Elsa.Persistence.EFCore.SqlServer
+// 2.5 Elsa Workflows v3.7.1 (Phase 5b: In-memory; Phase 5c TODO: EFCore persistence)
+// Phase 5c: Configure persistence with Elsa.Persistence.EFCore.SqlServer
+// Requires: UseWorkflowManagement() + EFCore feature configuration
+// TODO: Research Elsa 3.7.1 persistence feature API and implement
 builder.Services
     .AddElsa(elsa => elsa
         .AddActivitiesFrom<Program>()
