@@ -6,7 +6,7 @@ AI agent guidance router. Modular rules + skills. See `/docs/` for detailed docu
 
 Full-stack monorepo for long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
 
-**Stack:** Angular 19+ | Hot Chocolate GraphQL | ASP.NET Core (.NET 10) | Elsa Workflows v3 | SQL Server | EF Core + Dapper
+**Stack:** Angular 19+ | Hot Chocolate GraphQL | ASP.NET Core (.NET 10) | Elsa Workflows v3.5.3 | SQL Server | EF Core + Dapper
 
 ---
 
@@ -60,12 +60,12 @@ See **README.md** for service URLs.
 
 Strict execution order required. Backend: #148 → #149 → #147. Frontend tracking: [Issue #47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47). Backend tracking: [Issue #145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145).
 
-| Phase                   | Do NOT                                 | Do                                              | Issue | Status                                                                 |
-| ----------------------- | -------------------------------------- | ----------------------------------------------- | ----- | ---------------------------------------------------------------------- |
-| Phase 1 (Frontend)      | Edit `graphql.ts` manually             | Add `ChangeDetectionStrategy.OnPush` everywhere | #47   | [#47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)   |
-| Phase 2 (Backend Auth)  | Deploy without `@Authorize` policies   | Implement authorization foundation first        | #148  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
-| Phase 3 (Workflows)     | Store complex objects in workflow vars | Use primitives only (Guid, string)              | #149  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
-| Phase 4 (Rate Limiting) | Enable before #149 workflows stable    | Start with high thresholds; monitor             | #147  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145) |
+| Phase                   | Do NOT                                 | Do                                              | Issue | Status                                                                  |
+| ----------------------- | -------------------------------------- | ----------------------------------------------- | ----- | ----------------------------------------------------------------------- |
+| Phase 1 (Frontend)      | Edit `graphql.ts` manually             | Add `ChangeDetectionStrategy.OnPush` everywhere | #47   | [#47](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)    |
+| Phase 2 (Backend Auth)  | Deploy without `@Authorize` policies   | Implement authorization foundation first        | #148  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145)  |
+| Phase 3 (Workflows)     | Store complex objects in workflow vars | Elsa 3.5.3 + async invocation (in-memory MVP)   | #149  | [#176](https://github.com/pluto-atom-4/ng-graphql-showcase/pull/176) ✅ |
+| Phase 4 (Rate Limiting) | Enable before #149 workflows stable    | Start with high thresholds; monitor             | #147  | [#145](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/145)  |
 
 ---
 
