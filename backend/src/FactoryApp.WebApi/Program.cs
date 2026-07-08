@@ -11,6 +11,7 @@ using FactoryApp.WebApi.Middleware;
 using Elsa.Extensions;
 using Elsa.Persistence.EFCore.Modules.Management;
 using Elsa.Persistence.EFCore.Modules.Runtime;
+using Elsa.Persistence.EFCore.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -98,20 +99,22 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 5b: Complete; Phase 5c: Blocked on API)
-// Phase 5b WORKING: Async workflow invocation via IWorkflowRuntime client API
-// Phase 5c BLOCKED: SQL Server persistence configuration not found in Elsa.Extensions
-// Attempted configurations:
-// 1. Elsa.Persistence.EFCore.Modules.Management/Runtime namespaces
-// 2. Elsa.EntityFrameworkCore.* namespaces (don't exist in 3.7.1)
-// 3. Extension methods via Elsa.Extensions alone
-// Result: None of the documented patterns compile successfully
-// Current: Using in-memory workflow execution (suitable for development/testing)
-builder.Services.AddElsa(elsa => elsa
-    .UseWorkflowManagement(management => management.UseEntityFrameworkCore(ef => { }))
-    .UseWorkflowRuntime(runtime => runtime.UseEntityFrameworkCore(ef => { }))
-    .AddActivitiesFrom<Program>()
-    .AddWorkflowsFrom<Program>());
+// 2.5 Elsa Workflows v3.7.1 (Phase 5c)
+// Phase 5c: SQL Server persistence configuration requires further investigation of Elsa 3.7.1 API.
+// Currently using in-memory persistence; SQL Server backend to be configured via proper extension methods.
+builder.Services.AddElsa(elsa =>
+{
+    elsa.UseWorkflowManagement(management =>
+    {
+        management.UseWorkflowDefinitions(definitions =>
+        {
+            definitions.UseEntityFrameworkCore();
+        });
+    });
+
+    elsa.AddActivitiesFrom<Program>();
+    elsa.AddWorkflowsFrom<Program>();
+});
 
 // Register activities as scoped services for DI injection in activity constructors
 builder.Services.AddScoped<GetBuildActivity>();
