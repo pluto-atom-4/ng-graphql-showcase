@@ -20,8 +20,10 @@ public class BuildProcessWorkflowCompensationTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        var dbName = $"FactoryAppDb_Test_{nameof(BuildProcessWorkflowCompensationTests)}_{Guid.NewGuid()}";
+        var connectionString = $"Server=localhost,1433;Database={dbName};User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;";
         var options = new DbContextOptionsBuilder<FactoryDbContext>()
-            .UseSqlServer(TestConstants.TestConnectionString)
+            .UseSqlServer(connectionString)
             .Options;
 
         _dbContext = new FactoryDbContext(options);
