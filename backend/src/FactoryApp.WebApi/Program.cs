@@ -9,11 +9,8 @@ using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
 using Elsa.Extensions;
-using Elsa.Persistence.EFCore.Modules.Management;
-using Elsa.Persistence.EFCore.Modules.Runtime;
-using Elsa.Persistence.EFCore.SqlServer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -99,19 +96,12 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 5c)
-// Phase 5c: SQL Server persistence configuration requires further investigation of Elsa 3.7.1 API.
-// Currently using in-memory persistence; SQL Server backend to be configured via proper extension methods.
+// 2.5 Elsa Workflows v3.7.1 (Phase 5c: Persistence Framework)
+// SQL Server connection string configuration API under investigation.
+// Elsa 3.7.1 extension methods (UseEntityFrameworkCore, UseSqlServer) unavailable on feature types.
+// Current registration enables workflow execution; persistence backend config requires API clarification.
 builder.Services.AddElsa(elsa =>
 {
-    elsa.UseWorkflowManagement(management =>
-    {
-        management.UseWorkflowDefinitions(definitions =>
-        {
-            definitions.UseEntityFrameworkCore();
-        });
-    });
-
     elsa.AddActivitiesFrom<Program>();
     elsa.AddWorkflowsFrom<Program>();
 });
