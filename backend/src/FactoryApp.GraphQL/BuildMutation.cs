@@ -7,6 +7,7 @@ using HotChocolate;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Elsa.Workflows.Runtime;
 
 namespace FactoryApp.GraphQL;
 
@@ -84,7 +85,8 @@ public class BuildMutationType
         string? description,
         [Service] FactoryDbContext dbContext,
         [Service] ILogger<BuildMutationType> logger,
-        [Service] LoggingService loggingService)
+        [Service] LoggingService loggingService,
+        [Service] IWorkflowRuntime workflowRuntime)
     {
 
         var args = new Dictionary<string, object?> { { "name", name }, { "description", description } };
@@ -117,12 +119,33 @@ public class BuildMutationType
             dbContext.Builds.Add(build);
             await dbContext.SaveChangesAsync();
 
-            // Phase 5b (TODO): Trigger BuildProcessWorkflow asynchronously
-            // Requires IWorkflowHost injection + proper Elsa API usage
+            // Phase 5b: Trigger BuildProcessWorkflow asynchronously
             // Workflow runs in background; mutation returns immediately
-            logger.LogInformation(
-                "CreateBuild: Build created, workflow trigger deferred to Phase 5b. BuildId: {BuildId}",
-                build.Id);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var client = await workflowRuntime.CreateClientAsync("BuildProcessWorkflow");
+                    var request = new Elsa.Workflows.Runtime.Messages.CreateAndRunWorkflowInstanceRequest
+                    {
+                        Input = new Dictionary<string, object> { { "BuildId", build.Id.ToString() } }
+                    };
+
+                    var result = await client.CreateAndRunInstanceAsync(request);
+
+                    logger.LogInformation(
+                        "CreateBuild: Triggered BuildProcessWorkflow for build {BuildId}, instance {InstanceId}",
+                        build.Id,
+                        result.WorkflowInstanceId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "CreateBuild: Failed to trigger BuildProcessWorkflow for build {BuildId}",
+                        build.Id);
+                }
+            });
 
             loggingService.LogMutationSuccess(nameof(CreateBuild), build.Id);
             return MapperService.ToBuildPayload(build);
