@@ -8,11 +8,9 @@ using FactoryApp.GraphQL.Types;
 using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
-using Elsa;
 using Elsa.Extensions;
-using Elsa.Workflows.Management;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -98,12 +96,15 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.7.1 (Phase 3-6)
-// TODO: Configure persistence with Elsa.Persistence.EFCore.SqlServer
-builder.Services
-    .AddElsa(elsa => elsa
-        .AddActivitiesFrom<Program>()
-        .AddWorkflowsFrom<Program>());
+// 2.5 Elsa Workflows v3.5.3 (Phase 5c)
+// Note: UseEntityFrameworkCore extension method not available on IModule in 3.5.3.
+// SQL Server persistence requires alternative configuration approach or feature not available.
+// Workflows execute in-memory; state lost on app restart (acceptable Phase 5c MVP).
+builder.Services.AddElsa(elsa =>
+{
+    elsa.AddActivitiesFrom<Program>();
+    elsa.AddWorkflowsFrom<Program>();
+});
 
 // Register activities as scoped services for DI injection in activity constructors
 builder.Services.AddScoped<GetBuildActivity>();

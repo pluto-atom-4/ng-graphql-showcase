@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="Snappier" Version="1.3.1" />
     <PackageReference Include="Testcontainers" Version="3.8.0" />
