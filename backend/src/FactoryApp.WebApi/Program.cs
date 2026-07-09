@@ -9,6 +9,8 @@ using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
 using Elsa.Extensions;
+using Elsa.Persistence.Dapper.Extensions;
+using Elsa.Persistence.Dapper.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -96,12 +98,19 @@ builder.Services.AddSingleton<DatabaseQueryListener>();
 builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
-// 2.5 Elsa Workflows v3.5.3 (Phase 5c)
-// Note: UseEntityFrameworkCore extension method not available on IModule in 3.5.3.
-// SQL Server persistence requires alternative configuration approach or feature not available.
-// Workflows execute in-memory; state lost on app restart (acceptable Phase 5c MVP).
+// 2.5 Elsa Workflows v3.5.3 (Phase 5d - Dapper SQL Server Persistence)
+// Note: UseMigrations() requires FluentMigrator DI configuration not provided by Elsa.
+// Workflows will use Dapper persistence (may auto-create tables or use existing schema).
 builder.Services.AddElsa(elsa =>
 {
+    elsa.UseDapper(dapper =>
+    {
+        dapper.DbConnectionProvider = _ => new SqlServerDbConnectionProvider(connectionString);
+    });
+
+    elsa.UseWorkflowManagement(management => management.UseDapper());
+    elsa.UseWorkflowRuntime(runtime => runtime.UseDapper());
+
     elsa.AddActivitiesFrom<Program>();
     elsa.AddWorkflowsFrom<Program>();
 });
