@@ -13,6 +13,7 @@ public class FactoryDbContext : DbContext
     public DbSet<Part> Parts { get; set; } = null!;
     public DbSet<TestRun> TestRuns { get; set; } = null!;
     public DbSet<AuthUser> AuthUsers { get; set; } = null!;
+    public DbSet<WorkflowHistoryRecord> WorkflowHistory { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
