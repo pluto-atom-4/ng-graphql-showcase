@@ -1,4 +1,3 @@
-using Elsa.Workflows.Runtime;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,14 +10,10 @@ namespace FactoryApp.Workflows.Services;
 /// </summary>
 public class WorkflowRecoveryService : IHostedService
 {
-    private readonly IWorkflowRuntime _workflowRuntime;
     private readonly ILogger<WorkflowRecoveryService> _logger;
 
-    public WorkflowRecoveryService(
-        IWorkflowRuntime workflowRuntime,
-        ILogger<WorkflowRecoveryService> logger)
+    public WorkflowRecoveryService(ILogger<WorkflowRecoveryService> logger)
     {
-        _workflowRuntime = workflowRuntime;
         _logger = logger;
     }
 
@@ -50,25 +45,5 @@ public class WorkflowRecoveryService : IHostedService
     {
         _logger.LogInformation("Workflow recovery service stopped");
         return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Resume a specific incomplete workflow instance.
-    /// </summary>
-    private async Task ResumeWorkflowInstanceAsync(string instanceId)
-    {
-        try
-        {
-            // TODO: Implement resume logic when Elsa APIs available
-            // 1. Load workflow instance from DB
-            // 2. Find last completed activity/bookmark
-            // 3. Resume execution from that point
-            // 4. Update instance state on completion
-            _logger.LogInformation("Resumed workflow instance {InstanceId}", instanceId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error resuming workflow instance {InstanceId}", instanceId);
-        }
     }
 }

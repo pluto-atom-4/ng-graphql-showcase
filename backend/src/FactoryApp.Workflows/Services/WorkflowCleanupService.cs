@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,16 +12,16 @@ namespace FactoryApp.Workflows.Services;
 /// </summary>
 public class WorkflowCleanupService : IHostedService
 {
-    private readonly IWorkflowHistoryStore _historyStore;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<WorkflowCleanupService> _logger;
     private const int RetentionDays = 30;
     private Timer? _cleanupTimer;
 
     public WorkflowCleanupService(
-        IWorkflowHistoryStore historyStore,
+        IServiceProvider serviceProvider,
         ILogger<WorkflowCleanupService> logger)
     {
-        _historyStore = historyStore;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -56,8 +57,12 @@ public class WorkflowCleanupService : IHostedService
         {
             _logger.LogInformation("Running workflow cleanup job (retention: {RetentionDays} days)", RetentionDays);
 
-            // Remove workflow history older than retention period
-            await _historyStore.CleanupOldHistoryAsync(RetentionDays);
+            // Create scope to get scoped services
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var historyStore = scope.ServiceProvider.GetRequiredService<IWorkflowHistoryStore>();
+                await historyStore.CleanupOldHistoryAsync(RetentionDays);
+            }
 
             // TODO: Also remove old workflow instances from Elsa persistence store
             // when Elsa 3.7.1 APIs expose cleanup methods
