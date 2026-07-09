@@ -12,6 +12,9 @@
   <ItemGroup>
     <PackageReference Include="Elsa" Version="3.5.3" />
     <PackageReference Include="Elsa.EntityFrameworkCore.SqlServer" Version="3.5.3" />
+    <PackageReference Include="Elsa.Persistence.Dapper" Version="3.5.3" />
+    <PackageReference Include="Elsa.Persistence.Dapper.Migrations" Version="3.6.0" />
+    <PackageReference Include="FluentMigrator.Runner" Version="7.2.0" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.17" />
     <PackageReference Include="HotChocolate.Authorization" Version="15.1.17" />
     <PackageReference Include="HotChocolate.Language" Version="15.1.17" />
