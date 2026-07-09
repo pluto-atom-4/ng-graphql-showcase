@@ -11,6 +11,7 @@ using FactoryApp.WebApi.Middleware;
 using Elsa.Extensions;
 using Elsa.Persistence.Dapper.Extensions;
 using Elsa.Persistence.Dapper.Services;
+using FluentMigrator.Runner;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -99,13 +100,20 @@ builder.Services.AddSingleton<IObserver<DiagnosticListener>>(sp =>
     new EFCoreDiagnosticObserver(sp.GetRequiredService<DatabaseQueryListener>()));
 
 // 2.5 Elsa Workflows v3.5.3 (Phase 5d - Dapper SQL Server Persistence)
-// Note: UseMigrations() requires FluentMigrator DI configuration not provided by Elsa.
-// Workflows will use Dapper persistence (may auto-create tables or use existing schema).
+// Configure FluentMigrator for Elsa Dapper schema initialization
+builder.Services
+    .AddFluentMigratorCore()
+    .ConfigureRunner(runner => runner
+        .AddSqlServer()
+        .WithGlobalConnectionString(connectionString)
+        .ScanIn(System.Reflection.Assembly.Load("Elsa.Persistence.Dapper.Migrations")).For.Migrations());
+
 builder.Services.AddElsa(elsa =>
 {
     elsa.UseDapper(dapper =>
     {
         dapper.DbConnectionProvider = _ => new SqlServerDbConnectionProvider(connectionString);
+        dapper.UseMigrations();
     });
 
     elsa.UseWorkflowManagement(management => management.UseDapper());
@@ -156,6 +164,13 @@ app.UseAuthorization();
 
 // 3.9 Add query complexity check middleware (issue #146)
 app.UseMiddleware<QueryComplexityCheckMiddleware>();
+
+// 3.11 Run Elsa Dapper migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+    runner.MigrateUp();
+}
 
 // 4. Seed test data in development or when TEST_SEED_DATA is set
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("TEST_SEED_DATA") == "true")
