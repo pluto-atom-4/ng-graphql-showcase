@@ -16,7 +16,7 @@ public class BuildMutationWorkflowTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         var options = new DbContextOptionsBuilder<FactoryDbContext>()
-            .UseSqlServer("Server=localhost,1433;Database=FactoryAppDb_Test;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;")
+            .UseSqlServer("Server=localhost,1433;Database=FactoryAppDb_Test_Mutations;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;")
             .Options;
 
         _dbContext = new FactoryDbContext(options);
