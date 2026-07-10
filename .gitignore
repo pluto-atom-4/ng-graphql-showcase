@@ -28,6 +28,11 @@ node_modules/
 backend/src/FactoryApp.WebApi/http-tests/http-client.private.env.json
 **/appsettings.Development.json
 
+# Multi-Agent Orchestration (Temporary Workflow Files)
+tasks.md
+.claude/agent_state.json
+.claude/errors.log
+
 # Database
 *.db
 *.sqlite
