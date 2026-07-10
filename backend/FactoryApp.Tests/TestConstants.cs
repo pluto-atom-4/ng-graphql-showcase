@@ -7,5 +7,8 @@ public static class TestConstants
 
     public const int WorkflowTimeoutSeconds = 30;
     public const int MaxConcurrentWorkflows = 1000;
-    public const int WorkflowMaxActivityExecutionSeconds = 5;
+
+    public const int ActivityTimeoutMs = 5000;
+    public const int HappyPathTimeoutMs = 30000;
+    public const int PerformanceThresholdMs = 30000;
 }
