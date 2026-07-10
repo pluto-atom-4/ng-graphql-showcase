@@ -1,0 +1,378 @@
+# Multi-Agent Orchestration Governance
+
+Operational rules for autonomous multi-agent loops. Prevent token wastage, ensure recovery from failures, and establish clear handovers between specialized agents.
+
+---
+
+## 1. Explicit Role Responsibilities
+
+Do not let agents pick personas. Assign tasks to specific agent types.
+
+### Architect/Planner Agent
+
+**Responsibilities:**
+
+- Read CLAUDE.md, DESIGN.md, SKILLS.md for guidance
+- Create/update `tasks.md` plan file
+- Design implementation strategy
+- Identify architectural risks + dependencies
+
+**Forbidden:**
+
+- ❌ Write production code files
+- ❌ Modify implementation without human approval
+- ❌ Execute shell commands (Bash, git, etc.)
+- ❌ Read/modify test files
+
+**Tools Allowed:**
+
+- Read (all files)
+- Write (tasks.md, .claude/agent_state.json only)
+
+**Escalation:** If planning exceeds 200 lines or identifies blockers → halt and report to human
+
+---
+
+### Coder Agent
+
+**Responsibilities:**
+
+- Read tasks.md implementation steps
+- Write/edit production code files
+- Run local builds for verification
+- Commit changes with detailed messages
+
+**Forbidden:**
+
+- ❌ Modify tasks.md plan without explicit human approval
+- ❌ Change project structure/architecture
+- ❌ Mock DbContext or break testing patterns
+- ❌ Skip type checking or linting
+
+**Tools Allowed:**
+
+- Read (all project files)
+- Edit/Write (src/, backend/, frontend/ only)
+- Bash (dotnet, pnpm, git commands only)
+
+**Escalation:** If target file doesn't exist or requires schema changes → stop, log error, request human guidance
+
+---
+
+### Reviewer/Tester Agent
+
+**Responsibilities:**
+
+- Run build + test suite per CLAUDE.md
+- Verify no regressions
+- Report test coverage + performance metrics
+- Validate against acceptance criteria
+
+**Forbidden:**
+
+- ❌ Modify production code
+- ❌ Skip tests or lower thresholds
+- ❌ Force-push or rewrite history
+- ❌ Approve/merge PRs autonomously
+
+**Tools Allowed:**
+
+- Read (all files)
+- Edit/Write (.test.ts, .test.cs, .spec.ts files only)
+- Bash (dotnet test, pnpm test, git commands only)
+
+**Escalation:** If test suite fails → capture logs, halt, report failure with context
+
+---
+
+## 2. Handover & Escalation Protocol
+
+### Three-Strike Rule
+
+**If agent encounters same error 3 times consecutively:**
+
+1. Halt all operations immediately
+2. Write execution log to `.claude/errors.log`
+3. Dump current state to `.claude/agent_state.json`
+4. Yield control back to human with:
+   - Error type + count
+   - Last attempted action
+   - Suggested remediation
+
+**Example:**
+
+```
+Error: "Type 'BuildId' not found"
+Count: 3 consecutive attempts
+Last Action: dotnet build
+Suggested: Run 'dotnet clean' then retry
+```
+
+### State Locking
+
+**Before spawning sub-agent:**
+
+- Parent agent writes current state to `.claude/agent_state.json`
+- Include: current task, completed steps, next steps, uncommitted changes
+- Sub-agent reads state, validates context
+- Sub-agent writes updated state before yielding
+
+**State File Format:**
+
+```json
+{
+  "timestamp": "2026-07-10T18:30:00Z",
+  "parentAgent": "architect",
+  "currentTask": "Implement migration-generator skill",
+  "completedSteps": ["Read requirements", "Design API"],
+  "nextStep": "Write CLI handler",
+  "uncommittedChanges": ["SKILLS.md"],
+  "blockers": null,
+  "escalationNeeded": false
+}
+```
+
+**Recovery:** If sub-agent crashes, parent reads `.claude/agent_state.json` and resumes from last saved state.
+
+### Handover Checklist
+
+Before spawning next agent:
+
+- [ ] Current state written to `.claude/agent_state.json`
+- [ ] All uncommitted changes staged or stashed
+- [ ] Git log shows clean history (no merge conflicts)
+- [ ] Next agent role + scope explicitly defined
+- [ ] Success criteria documented in tasks.md
+
+---
+
+## 3. Bound Agent Permissions
+
+### Network Access
+
+**Only Planner Agent can:**
+
+- Fetch external API documentation
+- Query GitHub for issue/PR context
+- Access web resources for research
+
+**All other agents:**
+
+- ❌ No network access (work with cached docs only)
+
+**Rationale:** Prevent agents from hallucinating or fetching stale API specs mid-implementation.
+
+### File System Boundaries
+
+| Agent     | Read | Write                      | Scope               |
+| --------- | ---- | -------------------------- | ------------------- |
+| Architect | All  | tasks.md, agent_state.json | Planning only       |
+| Coder     | All  | src/, backend/, frontend/  | Implementation only |
+| Reviewer  | All  | .test.ts, .spec.ts         | Testing only        |
+
+**Enforcement:** `.claude/settings.json` specifies per-role "writeScope" restrictions.
+
+### Bash Command Boundaries
+
+| Command Type   | Architect | Coder           | Reviewer               |
+| -------------- | --------- | --------------- | ---------------------- |
+| `dotnet build` | ❌        | ✅              | ✅                     |
+| `dotnet test`  | ❌        | ✅ (local only) | ✅                     |
+| `pnpm codegen` | ❌        | ✅              | ❌                     |
+| `git push`     | ❌        | ❌              | ❌ (requires approval) |
+| `git commit`   | ❌        | ✅              | ❌                     |
+
+---
+
+## 4. Error Recovery & Escalation Triggers
+
+### Escalation Conditions
+
+**Halt + Report if:**
+
+| Condition              | Agent     | Action                                     |
+| ---------------------- | --------- | ------------------------------------------ |
+| Same error 3 times     | Any       | Write `.claude/errors.log`, yield to human |
+| File doesn't exist     | Coder     | Stop, request human guidance               |
+| Test suite fails       | Reviewer  | Log failures, halt merge                   |
+| Ambiguous requirements | Architect | Flag in tasks.md, request clarification    |
+| Network timeout        | Planner   | Retry 2x, then use cached docs             |
+| Merge conflict         | Coder     | Halt, request human intervention           |
+| Permission denied      | Any       | Log error, yield control                   |
+
+### Error Log Format
+
+**`.claude/errors.log`** (append-only):
+
+```
+[2026-07-10T18:35:20Z] Coder Agent
+Error: MSB1003: Specify a project or solution file
+Attempts: 3
+Context: Trying to build ./backend/
+Last Command: dotnet build ./backend/
+Suggested Fix: Run from FactoryApp.WebApi directory
+---
+```
+
+---
+
+## 5. Configuration Enforcement
+
+### `.claude/settings.json` Integration
+
+```json
+{
+  "agentOrchestration": {
+    "maxConsecutiveErrors": 3,
+    "stateFile": ".claude/agent_state.json",
+    "errorLog": ".claude/errors.log",
+    "roleDefinitions": {
+      "architect": {
+        "tools": ["Read", "Plan"],
+        "writeScope": ["tasks.md", ".claude/agent_state.json"],
+        "networkAccess": true,
+        "canExecuteBash": false
+      },
+      "coder": {
+        "tools": ["Read", "Edit", "Write", "Bash"],
+        "writeScope": ["src/", "backend/", "frontend/"],
+        "networkAccess": false,
+        "bashRestrictions": ["-c git push", "-c git rebase"]
+      },
+      "reviewer": {
+        "tools": ["Read", "Bash"],
+        "writeScope": [".test.ts", ".spec.ts"],
+        "networkAccess": false,
+        "bashRestrictions": ["-c git push", "-c git reset"]
+      }
+    }
+  }
+}
+```
+
+### Compliance Checks
+
+Before each agent operation:
+
+1. Verify agent role matches task type
+2. Check file path against writeScope
+3. Validate Bash command against restrictions
+4. Read `.claude/agent_state.json` for context recovery
+
+---
+
+## 6. Multi-Agent Loop Example
+
+**Scenario:** Implement new feature (PR review + merge)
+
+### Step 1: Architect Phase
+
+```
+Agent: Planner
+Task: Design implementation
+Output: tasks.md with steps
+State: Write to .claude/agent_state.json
+Result: ✅ Plan approved by human
+```
+
+### Step 2: Coder Phase
+
+```
+Agent: Coder
+Input: Read tasks.md + agent_state.json
+Task: Implement feature
+Commands: dotnet build, git commit
+Output: Feature branch ready
+State: Update .claude/agent_state.json
+Result: Code written + local tests pass
+```
+
+### Step 3: Reviewer Phase
+
+```
+Agent: Reviewer
+Input: Read feature branch + agent_state.json
+Task: Run full test suite
+Commands: pnpm test, dotnet test
+Output: Test report + coverage metrics
+State: Final state in .claude/agent_state.json
+Result: ✅ All tests pass or ❌ Halt + report failures
+```
+
+### Error Scenario: Three-Strike Halt
+
+```
+Coder tries to run 'dotnet build' 3 times
+Each fails: "Type 'BuildId' not found"
+Action: Write to .claude/errors.log
+Halt execution
+Human reviews error + provides fix
+Coder resumes from last known state
+```
+
+---
+
+## 7. Maintenance & Auditing
+
+### Monthly Review Checklist
+
+- [ ] Review `.claude/errors.log` for patterns
+- [ ] Check `.claude/agent_state.json` for stale entries (cleanup)
+- [ ] Audit `.claude/settings.json` role definitions
+- [ ] Verify handover checklist is followed
+- [ ] Test error recovery (simulate failure + validate recovery)
+
+### Metrics to Track
+
+| Metric                 | Target   | Purpose                     |
+| ---------------------- | -------- | --------------------------- |
+| Avg errors per task    | <2       | Lower = better agent design |
+| 3-strike halts         | <1/month | Track systemic issues       |
+| State recovery success | 100%     | Validate handover protocol  |
+| Agent role adherence   | 100%     | Catch permission violations |
+
+---
+
+## 8. Quick Reference
+
+### When Spawning a Sub-Agent
+
+✅ Do:
+
+- Write current state to `.claude/agent_state.json`
+- Define role + scope explicitly
+- Provide acceptance criteria
+- Include relevant file paths
+
+❌ Don't:
+
+- Let agent pick its own role
+- Skip state saving
+- Use vague success criteria
+- Spawn without human approval
+
+### When Agent Halts
+
+✅ Do:
+
+- Write error to `.claude/errors.log`
+- Preserve `.claude/agent_state.json` for recovery
+- Report failure with context to human
+- Await human decision
+
+❌ Don't:
+
+- Force retry without fixing root cause
+- Delete logs or state files
+- Continue without explicit approval
+- Suppress errors
+
+---
+
+## Related Files
+
+- **CLAUDE.md** — Core behavior rules + quick ref
+- **AGENTS.md** — Agent onboarding + guardrails
+- **SKILLS.md** — Procedural workflow automation index
+- **.claude/settings.json** — Orchestration config (permissions, roles, constraints)
+- **.claude/friction-log.md** — Maintenance log for configuration updates

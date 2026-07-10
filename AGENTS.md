@@ -102,6 +102,19 @@ pnpm docker:clean               # Remove volumes
 
 ---
 
+## Multi-Agent Orchestration
+
+For complex tasks spanning planning → coding → testing, see `.claude/MULTI_AGENT_GOVERNANCE.md` for:
+
+- **Role Responsibilities** — Architect, Coder, Reviewer agents with explicit boundaries
+- **Handover Protocol** — Three-Strike Rule (halt on 3 consecutive errors), state locking for recovery
+- **Bound Permissions** — Network access, file-system scope restrictions per role
+- **Escalation Triggers** — When to halt + yield control back to human
+
+Agents enforce constraints via `.claude/settings.json` configuration (model overrides, permission layers, orchestration rules).
+
+---
+
 ## Related Documentation
 
 - **[CLAUDE.md](./CLAUDE.md)** — Extended AI agent guidance + rules router

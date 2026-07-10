@@ -2,13 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "defaultMode": "default",
-    "allow": [
-      "Bash(npm *)",
-      "Bash(dotnet *)",
-      "Bash(git *)",
-      "Read",
-      "Edit"
-    ]
+    "allow": ["Bash(npm *)", "Bash(dotnet *)", "Bash(git *)", "Read", "Edit"]
   },
   "skillOverrides": {
     "fix-github-issues": "on",
@@ -17,6 +11,43 @@
     "example-skills:doc-coauthoring": "on",
     "update-config": "on",
     "secure-github-repo": "on"
+  },
+  "claudeMdExcludes": [
+    "**/node_modules/**/CLAUDE.md",
+    "**/vendor/**/CLAUDE.md"
+  ],
+  "instructionBudget": {
+    "maxLines": 200,
+    "frictionLogFile": ".claude/friction-log.md",
+    "auditSchedule": "monthly"
+  },
+  "agentOrchestration": {
+    "maxConsecutiveErrors": 3,
+    "stateFile": ".claude/agent_state.json",
+    "errorLog": ".claude/errors.log",
+    "roleDefinitions": {
+      "architect": {
+        "tools": ["Read", "Plan"],
+        "writeScope": ["tasks.md", ".claude/agent_state.json"],
+        "networkAccess": true,
+        "canExecuteBash": false,
+        "description": "Planning & design (NEVER write production code)"
+      },
+      "coder": {
+        "tools": ["Read", "Edit", "Write", "Bash"],
+        "writeScope": ["src/", "backend/", "frontend/"],
+        "networkAccess": false,
+        "bashRestrictions": ["git push", "git rebase --force"],
+        "description": "Implementation (NEVER modify plan without approval)"
+      },
+      "reviewer": {
+        "tools": ["Read", "Bash"],
+        "writeScope": [".test.ts", ".spec.ts"],
+        "networkAccess": false,
+        "bashRestrictions": ["git push", "git reset --hard"],
+        "description": "Testing & validation (write-only test files)"
+      }
+    }
   },
   "autoMemoryEnabled": true,
   "alwaysThinkingEnabled": true,
