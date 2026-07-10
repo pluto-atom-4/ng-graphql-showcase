@@ -37,13 +37,18 @@ public class BuildProcessWorkflowPerformanceTests : IAsyncLifetime
     [Fact]
     public async Task WorkflowHistory_Bulk_InsertFast()
     {
-        // Arrange: Create 100 workflow history records
-        var records = Enumerable.Range(0, 100)
-            .Select(i => new WorkflowHistoryRecord
+        // Arrange: Create 100 builds first (FK requirement)
+        var buildIds = Enumerable.Range(0, 100).Select(_ => Guid.NewGuid()).ToList();
+        var builds = buildIds.Select(id => new Build { Id = id, Name = "Test", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }).ToList();
+        _dbContext.Builds.AddRange(builds);
+        await _dbContext.SaveChangesAsync();
+
+        var records = buildIds
+            .Select((buildId, i) => new WorkflowHistoryRecord
             {
                 Id = Guid.NewGuid(),
                 WorkflowInstanceId = Guid.NewGuid(),
-                BuildId = Guid.NewGuid(),
+                BuildId = buildId,
                 EventType = "Executed",
                 ActivityName = $"Activity-{i}",
                 OldStatus = "Running",
@@ -65,8 +70,11 @@ public class BuildProcessWorkflowPerformanceTests : IAsyncLifetime
     [Fact]
     public async Task WorkflowHistory_Query_ReturnsQuickly()
     {
-        // Arrange: Create 50 records
+        // Arrange: Create build first (FK requirement)
         var buildId = Guid.NewGuid();
+        _dbContext.Builds.Add(new() { Id = buildId, Name = "Test", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await _dbContext.SaveChangesAsync();
+
         var records = Enumerable.Range(0, 50)
             .Select(i => new WorkflowHistoryRecord
             {
@@ -106,6 +114,10 @@ public class BuildProcessWorkflowPerformanceTests : IAsyncLifetime
         for (int exec = 0; exec < 10; exec++)
         {
             var buildId = Guid.NewGuid();
+            // Create build first (FK requirement)
+            _dbContext.Builds.Add(new() { Id = buildId, Name = "Test", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+            await _dbContext.SaveChangesAsync();
+
             var records = Enumerable.Range(0, 10)
                 .Select(i => new WorkflowHistoryRecord
                 {

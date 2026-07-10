@@ -36,10 +36,13 @@ public class BuildProcessWorkflowPersistenceTests : IAsyncLifetime
     [Fact]
     public async Task WorkflowHistory_Records_PersistToDatbase()
     {
-        // Arrange: Create workflow history records
+        // Arrange: Create build first (FK requirement)
         var buildId = Guid.NewGuid();
-        var instanceId = Guid.NewGuid();
+        var build = new Build { Id = buildId, Name = "Test", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        _dbContext.Builds.Add(build);
+        await _dbContext.SaveChangesAsync();
 
+        var instanceId = Guid.NewGuid();
         var records = new List<WorkflowHistoryRecord>
         {
             new() { Id = Guid.NewGuid(), WorkflowInstanceId = instanceId, BuildId = buildId, EventType = "Started", ActivityName = "GetBuildActivity", OldStatus = "Created", NewStatus = "Running", RecordedAt = DateTime.UtcNow },
@@ -63,9 +66,16 @@ public class BuildProcessWorkflowPersistenceTests : IAsyncLifetime
     [Fact]
     public async Task WorkflowHistory_QueryByBuildId_ReturnsFiltdHistory()
     {
-        // Arrange: Create records for 2 builds
+        // Arrange: Create builds first (FK requirement)
         var build1Id = Guid.NewGuid();
         var build2Id = Guid.NewGuid();
+
+        _dbContext.Builds.AddRange(new List<Build>
+        {
+            new() { Id = build1Id, Name = "Build1", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new() { Id = build2Id, Name = "Build2", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
+        });
+        await _dbContext.SaveChangesAsync();
 
         var records = new List<WorkflowHistoryRecord>
         {
@@ -89,8 +99,11 @@ public class BuildProcessWorkflowPersistenceTests : IAsyncLifetime
     [Fact]
     public async Task WorkflowHistory_QueryRecentDays_FiltersCorrectly()
     {
-        // Arrange: Create records spanning multiple days
+        // Arrange: Create build first (FK requirement)
         var buildId = Guid.NewGuid();
+        _dbContext.Builds.Add(new() { Id = buildId, Name = "Test", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await _dbContext.SaveChangesAsync();
+
         var today = DateTime.UtcNow.Date;
 
         var records = new List<WorkflowHistoryRecord>
@@ -116,10 +129,12 @@ public class BuildProcessWorkflowPersistenceTests : IAsyncLifetime
     [Fact]
     public async Task WorkflowHistory_Timestamps_RecordedAccurately()
     {
-        // Arrange
+        // Arrange: Create build first (FK requirement)
         var buildId = Guid.NewGuid();
-        var startTime = DateTime.UtcNow;
+        _dbContext.Builds.Add(new() { Id = buildId, Name = "Test", Status = BuildStatus.Pending, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await _dbContext.SaveChangesAsync();
 
+        var startTime = DateTime.UtcNow;
         var record = new WorkflowHistoryRecord
         {
             Id = Guid.NewGuid(),
