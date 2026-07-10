@@ -33,6 +33,12 @@ tasks.md
 .claude/agent_state.json
 .claude/errors.log
 
+# Issue & Chore Documentation (Reference/Draft Files)
+issue-content*.json
+gh-issue-comment*.md
+gh-issue-draft*.md
+chore-idea.md
+
 # Database
 *.db
 *.sqlite

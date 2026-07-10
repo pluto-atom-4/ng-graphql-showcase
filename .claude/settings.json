@@ -1,9 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "respectGitignore": true,
   "permissions": {
-    "defaultMode": "default",
-    "allow": ["Bash(npm *)", "Bash(dotnet *)", "Bash(git *)", "Read", "Edit"]
+    "allow": ["Bash(npm *)", "Bash(dotnet *)", "Read", "Edit"],
+    "defaultMode": "default"
   },
+  "model": "claude-haiku-4-5-20251001",
   "skillOverrides": {
     "fix-github-issues": "on",
     "example-skills:session-blog-to-gist": "on",
@@ -12,6 +14,9 @@
     "update-config": "on",
     "secure-github-repo": "on"
   },
+  "spinnerTipsEnabled": true,
+  "alwaysThinkingEnabled": true,
+  "autoMemoryEnabled": true,
   "claudeMdExcludes": [
     "**/node_modules/**/CLAUDE.md",
     "**/vendor/**/CLAUDE.md"
@@ -49,10 +54,5 @@
       }
     }
   },
-  "autoMemoryEnabled": true,
-  "alwaysThinkingEnabled": true,
-  "model": "claude-haiku-4-5-20251001",
-  "modelOverride": "haiku",
-  "respectGitignore": true,
-  "spinnerTipsEnabled": true
+  "modelOverride": "haiku"
 }

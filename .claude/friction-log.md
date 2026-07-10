@@ -33,7 +33,14 @@ Track AI agent issues, hallucinations, and outdated patterns. Updates inform CLA
 
 ## Recent Entries
 
-_None yet. Entries added as friction events occur._
+**Date**: 2026-07-10  
+**Event Type**: Configuration  
+**Description**: Pre-commit hook showed CRLF line ending warnings during settings.json + markdown file formatting. LLM briefly uncertain whether commit actually succeeded (husky pre-commit ran, prettier auto-formatted files).  
+**Impact**: Low. Commit succeeded; warnings are expected in mixed Windows/Unix environment. BUT: Unclear error output could confuse future agents during multi-agent loops.  
+**Fix**: Documented in this entry. Future: Update husky deprecation warning in CLAUDE.md or add note to PROCEDURES.md about pre-commit hook expectations.  
+**Tokens Saved**: ~10 tokens (documented in friction-log so future agents aware)
+
+---
 
 ---
 
