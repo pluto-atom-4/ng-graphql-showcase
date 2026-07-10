@@ -342,6 +342,82 @@ PRs automatically request review from code owners.
 
 ---
 
+## AI Configuration Governance
+
+This repository follows **Progressive Disclosure** for AI agent guidance. This section describes the maintenance loop.
+
+### Configuration Architecture
+
+The guidance is organized in layers:
+
+1. **CLAUDE.md** (<200 lines) — Core behaviors, quick ref, NEVER DO patterns
+2. **DESIGN.md** — Visual consistency, read-on-demand (JiT loading)
+3. **SKILLS.md** — Procedural workflow automation index
+4. **.claude/rules/** — 5 domain-specific rule files (database, GraphQL, backend, frontend, workflows)
+5. **.claude/settings.json** — Model orchestration, instruction budget, permissions
+6. **.claude/friction-log.md** — Maintenance log, friction events, update triggers
+
+For details, see **README.md** § "AI Agent Guidance Architecture".
+
+### Maintenance Loop
+
+**Trigger Events** (log immediately in `.claude/friction-log.md`):
+
+- Agent hallucinated API route or outdated script → Add correct ref to CLAUDE.md or rule file
+- Common friction task takes >30min → Convert to skill in `.claude/skills/`
+- Rule file exceeds 1000 lines → Split into focused sub-files
+- Repeated agent errors on same pattern → Strengthen corresponding rule file
+
+**Weekly Audit:**
+
+- Scan friction-log.md for patterns
+- Check for duplicated guardrails across files (grep)
+- Verify all `@/` references in CLAUDE.md still exist
+
+**Monthly Review (scheduled):**
+
+- Run token counter on CLAUDE.md (target: <200 lines)
+- Archive resolved entries from friction-log.md to `/docs/friction-history.md`
+- Verify `.claude/rules/` files remain <1000 lines each
+
+**Post-Refactor Validation:**
+
+- After config changes, run manual agent tests
+- Confirm sub-agents receive correct path-scoped context
+- Verify model routing works as intended
+
+### Adding/Updating Configuration
+
+**When to add to CLAUDE.md:**
+
+- Critical guardrail (NEVER DO this)
+- Project-specific anomaly
+- Essential quick-ref command
+
+**When to move to a rule file:**
+
+- > 2 lines of explanation
+- Domain-specific pattern (database, GraphQL, etc.)
+- Shared across multiple contexts
+
+**When to create a skill:**
+
+- Task requires 3+ manual steps
+- Runs monthly or more frequently
+- Procedure has strict ordering/validation needs
+- Friction log reports it as repeated bottleneck
+
+### Configuration Maintenance Checklist
+
+- [ ] CLAUDE.md <200 lines
+- [ ] No duplicated guardrails across files (grep verified)
+- [ ] All `@/docs/` and `.claude/rules/` references resolve
+- [ ] Friction-log.md updated with recent events
+- [ ] Monthly audit completed (token count, rule sizes)
+- [ ] README.md Configuration Architecture section up-to-date
+
+---
+
 ## References
 
 - **README.md** — Quickstart

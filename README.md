@@ -103,17 +103,47 @@ Type safety is fully automated during a local build. Changing a backend C# DTO o
 
 ## 🤖 AI Agent Guidance Architecture
 
-This repository uses a **Progressive Disclosure** model for AI agent guidance, minimizing context pollution while maximizing agent effectiveness.
+This repository uses a **Progressive Disclosure** model for AI agent guidance, minimizing context pollution while maximizing agent effectiveness. Target: Frontier LLMs degrade after 150–200 system instructions; this structure keeps root-level context lean while delegating specialized logic to path-scoped files.
 
-### Structure
+### Directory Structure
 
-**Layer 1: Router** (`./CLAUDE.md`)
+```
+root/
+├── CLAUDE.md                  # Core behaviors & guardrails (<200 lines)
+├── DESIGN.md                  # Visual consistency & UI boundaries (read-on-demand)
+├── SKILLS.md                  # Procedural workflow automation index
+├── .claude/
+│   ├── settings.json          # Orchestration config (model routing, permission layers)
+│   ├── friction-log.md        # Maintenance log (AI friction events, updates)
+│   ├── skills/
+│   │   ├── pr-review-workflow/
+│   │   ├── migration-generator/
+│   │   ├── codegen-sync/
+│   │   └── lsp-setup/
+│   └── rules/                 # Symlink → ../.ai/rules/
+└── .ai/
+    └── rules/                 # Canonical rule location (5 domain files)
+        ├── database-rules.md
+        ├── graphql-patterns.md
+        ├── backend-patterns.md
+        ├── frontend-patterns.md
+        └── workflow-integration.md
+```
 
-- Project overview, stack, NEVER DO THIS section
-- Quick-start commands, essential references
-- <200 lines, acts as entry point
+### Layer Descriptions
 
-**Layer 2: Domain Rules** (`.claude/rules/` + `.ai/rules/`)
+**Layer 1: Router** (`CLAUDE.md`)
+
+- Project overview, stack, critical guardrails
+- Quick-start commands + phase-based ordering
+- <200 lines; agents load first
+
+**Layer 2: Visual & Behavioral Guidance**
+
+- `DESIGN.md` — Semantic tokens, component patterns, UI boundaries (JiT loading)
+- `SKILLS.md` — Procedural workflow index + execution patterns
+
+**Layer 3: Domain Rules** (`.claude/rules/` → `.ai/rules/`)
 
 - `database-rules.md` — Transactions, testing strategy, EF Core + Dapper
 - `graphql-patterns.md` — Query depth, entity exposure, type safety pipeline
@@ -121,32 +151,39 @@ This repository uses a **Progressive Disclosure** model for AI agent guidance, m
 - `frontend-patterns.md` — Angular patterns, trackBy, buffering, codegen sync
 - `workflow-integration.md` — Elsa v3 state management, activity patterns
 
-**Layer 3: Executable Skills** (`.claude/skills/`)
+**Layer 4: Executable Skills** (`.claude/skills/`)
 
-- `pr-review-workflow/` — Automated PR quality, security, testing checks
-- `migration-generator/` — Safe EF Core migration generation
-- `codegen-sync/` — Sync schema.graphql → graphql.ts type generation
+- Deterministic playbooks for: PR reviews, EF Core migrations, codegen, LSP setup
+- Trigger via `/skill-name` or inline references
 
-**Layer 4: Cross-Platform Unification** (`.ai/`)
+**Layer 5: Orchestration** (`.claude/settings.json`)
 
-- Canonical rule location: `.ai/rules/`
-- Symlinks: `.claude/rules/` → `.ai/rules/`, `.cursor/rules/` → `.ai/rules/`
-- Ensures Claude Code + Cursor use identical guidance
+- Model tier pinning, permission layers
+- Instruction budget tracking (max 200 lines CLAUDE.md)
+- Friction log file reference for maintenance
+
+**Layer 6: Maintenance** (`.claude/friction-log.md`)
+
+- Track AI hallucinations, outdated patterns
+- Reactive update triggers for CLAUDE.md + rules
+- Monthly audit schedule
 
 ### Usage
 
-1. **Review CLAUDE.md** for quick ref + NEVER DO THIS patterns
-2. **Navigate to `.claude/rules/`** for domain-specific deep dives
-3. **Use `.claude/skills/`** for automated workflows (migrations, PR reviews, codegen)
-4. **Cross-reference** via `[[rule-name]]` links for related patterns
+1. **Read CLAUDE.md** for quick ref + NEVER DO patterns
+2. **Navigate .claude/rules/** for domain-specific deep dives
+3. **Reference DESIGN.md** when adding UI components or styling
+4. **Use SKILLS.md** to find automated workflows (migrations, PR reviews)
+5. **Log friction** in `.claude/friction-log.md` when agent issues occur
 
 ### Why Progressive Disclosure
 
-✅ Agents load context efficiently (router-first)  
-✅ Rules isolated by domain (easier to maintain)  
+✅ Agents load context efficiently (router-first, JiT loading for specialized guidance)  
+✅ Rules isolated by domain (easier to maintain, evolve independently)  
 ✅ Explicit anti-patterns prevent common mistakes  
-✅ Skills codify repeatable workflows  
-✅ Unified across Claude Code + Cursor (`.ai/` symlinks)
+✅ Skills codify repeatable workflows (PRs auto-reviewed, migrations auto-generated)  
+✅ Unified across Claude Code + Cursor (`.ai/` symlinks)  
+✅ Friction-based maintenance prevents token bloat over time
 
 ---
 
