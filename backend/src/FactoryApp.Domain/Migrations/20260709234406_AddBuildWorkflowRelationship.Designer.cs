@@ -4,6 +4,7 @@ using FactoryApp.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FactoryApp.Domain.Migrations
 {
     [DbContext(typeof(FactoryDbContext))]
-    partial class FactoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709234406_AddBuildWorkflowRelationship")]
+    partial class AddBuildWorkflowRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

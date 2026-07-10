@@ -5,8 +5,8 @@ using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.GraphQL.Types;
-using FactoryApp.Workflows.Activities;
 using FactoryApp.Workflows.Services;
+using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
 using Elsa.Extensions;
@@ -144,6 +144,7 @@ builder.Services
     .AddMutationType<BuildMutationType>()
     .AddSubscriptionType<BuildSubscription>()
     .AddObjectType<BuildType>()
+    .AddObjectType<WorkflowHistoryType>()
     .AddInMemorySubscriptions();
 
 var app = builder.Build();

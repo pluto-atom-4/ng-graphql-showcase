@@ -16,6 +16,11 @@ public class WorkflowHistoryRecord
     [Required]
     public Guid WorkflowInstanceId { get; set; }
 
+    // Phase 6: Optional correlation to Build entity
+    [ForeignKey(nameof(Build))]
+    public Guid? BuildId { get; set; }
+    public Build? Build { get; set; }
+
     [Required]
     public string EventType { get; set; } = null!; // Created, Started, ActivityExecuted, Completed, Failed
 
