@@ -4,6 +4,7 @@ using FactoryApp.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FactoryApp.Domain.Migrations
 {
     [DbContext(typeof(FactoryDbContext))]
-    partial class FactoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709231539_AddWorkflowHistory")]
+    partial class AddWorkflowHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,9 +81,6 @@ namespace FactoryApp.Domain.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("WorkflowInstanceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -173,9 +173,6 @@ namespace FactoryApp.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("BuildId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<long?>("ElapsedMilliseconds")
                         .HasColumnType("bigint");
 
@@ -211,8 +208,6 @@ namespace FactoryApp.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BuildId");
-
                     b.ToTable("WorkflowHistory", "dbo");
                 });
 
@@ -238,22 +233,11 @@ namespace FactoryApp.Domain.Migrations
                     b.Navigation("Build");
                 });
 
-            modelBuilder.Entity("FactoryApp.Domain.Entities.WorkflowHistoryRecord", b =>
-                {
-                    b.HasOne("FactoryApp.Domain.Entities.Build", "Build")
-                        .WithMany("WorkflowHistory")
-                        .HasForeignKey("BuildId");
-
-                    b.Navigation("Build");
-                });
-
             modelBuilder.Entity("FactoryApp.Domain.Entities.Build", b =>
                 {
                     b.Navigation("Parts");
 
                     b.Navigation("TestRuns");
-
-                    b.Navigation("WorkflowHistory");
                 });
 #pragma warning restore 612, 618
         }

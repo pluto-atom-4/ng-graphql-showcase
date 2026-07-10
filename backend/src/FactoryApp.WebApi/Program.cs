@@ -5,6 +5,7 @@ using FactoryApp.GraphQL;
 using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.Services;
 using FactoryApp.GraphQL.Types;
+using FactoryApp.Workflows.Services;
 using FactoryApp.Workflows.Activities;
 using FactoryApp.WebApi.GraphQL;
 using FactoryApp.WebApi.Middleware;
@@ -87,6 +88,11 @@ builder.Services.AddScoped<BuildDataLoaders>();
 builder.Services.AddSingleton<SubscriptionRateLimiter>();
 builder.Services.AddHttpContextAccessor();
 
+// 2.2a Phase 6 - Workflow Recovery & History
+builder.Services.AddScoped<IWorkflowHistoryStore, WorkflowHistoryStore>();
+builder.Services.AddHostedService<WorkflowRecoveryService>();
+builder.Services.AddHostedService<WorkflowCleanupService>();
+
 // 2.4 Query Complexity Limits (issue #146)
 builder.Services.Configure<QueryComplexityOptions>(builder.Configuration.GetSection("GraphQL:QueryComplexity"));
 builder.Services.AddScoped<FieldCostCalculator>(sp =>
@@ -138,6 +144,7 @@ builder.Services
     .AddMutationType<BuildMutationType>()
     .AddSubscriptionType<BuildSubscription>()
     .AddObjectType<BuildType>()
+    .AddObjectType<WorkflowHistoryType>()
     .AddInMemorySubscriptions();
 
 var app = builder.Build();

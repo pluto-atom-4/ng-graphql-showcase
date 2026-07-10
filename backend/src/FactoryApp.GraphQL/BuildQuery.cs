@@ -1,5 +1,6 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.GraphQL.DTOs;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +107,71 @@ public class BuildQueryType
             loggingService.LogQueryError(nameof(GetBuildsAdmin), ex);
             throw new GraphQLException("Failed to fetch admin builds", ex);
         }
+    }
+
+    // Phase 6: Workflow history queries
+    /// <summary>
+    /// Get workflow execution history for a build.
+    /// </summary>
+    public async Task<IEnumerable<WorkflowHistoryDto>> GetBuildWorkflowHistory(
+        Guid buildId,
+        [Service] FactoryDbContext context)
+    {
+        var history = await context.Set<WorkflowHistoryRecord>()
+            .Where(h => h.BuildId == buildId)
+            .OrderBy(h => h.RecordedAt)
+            .Select(h => new WorkflowHistoryDto
+            {
+                Id = h.Id,
+                WorkflowInstanceId = h.WorkflowInstanceId,
+                BuildId = h.BuildId,
+                EventType = h.EventType,
+                ActivityName = h.ActivityName,
+                OldStatus = h.OldStatus,
+                NewStatus = h.NewStatus,
+                StateSnapshot = h.StateSnapshot,
+                ErrorMessage = h.ErrorMessage,
+                RecordedAt = h.RecordedAt,
+                ExecutionStarted = h.ExecutionStarted,
+                ExecutionCompleted = h.ExecutionCompleted,
+                ElapsedMilliseconds = h.ElapsedMilliseconds
+            })
+            .ToListAsync();
+
+        return history;
+    }
+
+    /// <summary>
+    /// Get recent workflow history (last N days).
+    /// </summary>
+    public async Task<IEnumerable<WorkflowHistoryDto>> GetRecentWorkflowHistory(
+        [Service] FactoryDbContext context,
+        int days = 7)
+    {
+        var cutoffDate = DateTime.UtcNow.AddDays(-days);
+
+        var history = await context.Set<WorkflowHistoryRecord>()
+            .Where(h => h.RecordedAt >= cutoffDate)
+            .OrderByDescending(h => h.RecordedAt)
+            .Select(h => new WorkflowHistoryDto
+            {
+                Id = h.Id,
+                WorkflowInstanceId = h.WorkflowInstanceId,
+                BuildId = h.BuildId,
+                EventType = h.EventType,
+                ActivityName = h.ActivityName,
+                OldStatus = h.OldStatus,
+                NewStatus = h.NewStatus,
+                StateSnapshot = h.StateSnapshot,
+                ErrorMessage = h.ErrorMessage,
+                RecordedAt = h.RecordedAt,
+                ExecutionStarted = h.ExecutionStarted,
+                ExecutionCompleted = h.ExecutionCompleted,
+                ElapsedMilliseconds = h.ElapsedMilliseconds
+            })
+            .ToListAsync();
+
+        return history;
     }
 }
 
