@@ -165,6 +165,10 @@ builder.Services
     .AddObjectType<BuildType>()
     .AddObjectType<WorkflowHistoryType>()
     .AddInMemorySubscriptions();
+// Note: RateLimitDirective scaffolded in FactoryApp.GraphQL.Directives but NOT registered.
+// Reason: Hot Chocolate v15 directive middleware runs after resolver execution, unsuitable
+// for rate-limit enforcement. HTTP middleware (RateLimitMiddleware) covers all use cases.
+// See RateLimitDirective.cs for future enhancement plan (Phase 5).
 
 var app = builder.Build();
 
