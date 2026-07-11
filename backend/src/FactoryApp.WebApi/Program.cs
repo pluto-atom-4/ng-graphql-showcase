@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,24 @@ builder.Services.AddScoped<BuildDataLoaders>();
 builder.Services.AddSingleton<SubscriptionRateLimiter>();
 builder.Services.AddHttpContextAccessor();
 
+// 2.2b Rate Limiting (issue #147) - Redis + sliding window
+var rateLimitOptions = new RateLimitOptions();
+builder.Configuration.GetSection("RateLimiting").Bind(rateLimitOptions);
+builder.Services.AddSingleton(rateLimitOptions);
+
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
+try
+{
+    var redis = ConnectionMultiplexer.Connect(redisConnectionString);
+    builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+}
+catch (Exception ex)
+{
+    // Log warning but allow startup if Redis is unavailable
+    Console.WriteLine($"Warning: Could not connect to Redis at {redisConnectionString}: {ex.Message}");
+    Console.WriteLine("Rate limiting will be disabled. Redis is required for production.");
+}
+
 // 2.2a Phase 6 - Workflow Recovery & History
 builder.Services.AddScoped<IWorkflowHistoryStore, WorkflowHistoryStore>();
 builder.Services.AddHostedService<WorkflowRecoveryService>();
@@ -146,6 +165,10 @@ builder.Services
     .AddObjectType<BuildType>()
     .AddObjectType<WorkflowHistoryType>()
     .AddInMemorySubscriptions();
+// Note: RateLimitDirective scaffolded in FactoryApp.GraphQL.Directives but NOT registered.
+// Reason: Hot Chocolate v15 directive middleware runs after resolver execution, unsuitable
+// for rate-limit enforcement. HTTP middleware (RateLimitMiddleware) covers all use cases.
+// See RateLimitDirective.cs for future enhancement plan (Phase 5).
 
 var app = builder.Build();
 
@@ -168,6 +191,9 @@ app.Use(async (context, next) =>
 // 3.8 Add authentication & authorization middleware (issue #133)
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 3.8b Add rate limiting middleware (issue #147)
+app.UseMiddleware<RateLimitMiddleware>();
 
 // 3.9 Add query complexity check middleware (issue #146)
 app.UseMiddleware<QueryComplexityCheckMiddleware>();
