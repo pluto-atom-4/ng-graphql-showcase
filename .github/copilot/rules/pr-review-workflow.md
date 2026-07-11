@@ -52,17 +52,17 @@ task:
   description: Review PR against requirements and conventions
   prompt: |
     Review PR #[NUMBER]: [TITLE]
-    
+
     Issue: [ISSUE_LINK]
     Changed files: [LIST]
-    
+
     Focus on:
     - Requirements fulfillment
     - Architecture violations
     - Type safety issues
     - Security concerns
     - Logic errors
-    
+
     Do NOT comment on style or trivial matters.
 ```
 
@@ -87,15 +87,19 @@ Create a structured review containing:
 # 🔍 PR Review: [PR Title]
 
 ## Executive Summary
+
 [1-2 sentence verdict: Approved, Request Changes, or Comment]
 
 ## Requirements vs Deliverables
-| Requirement | Implementation | Status |
-|---|---|---|
+
+| Requirement  | Implementation    | Status                            |
+| ------------ | ----------------- | --------------------------------- |
 | [from issue] | [how PR meets it] | ✅ Done / ⚠️ Partial / ❌ Missing |
 
 ## File-by-File Analysis
+
 ### [File 1]
+
 - **Purpose**: What this file does
 - **Quality**: Code quality assessment (no errors, consistent)
 - **Impact**: Effect on codebase (schema changes, architecture)
@@ -103,6 +107,7 @@ Create a structured review containing:
 - **Risk**: Any potential issues
 
 ## Verification Results
+
 - [x] Follows monorepo conventions
 - [x] Architecture patterns correct
 - [x] Type safety maintained
@@ -110,14 +115,17 @@ Create a structured review containing:
 - [ ] [PR-specific item]
 
 ## Known Issues & Considerations
+
 - [Issue or consideration for team awareness]
 
 ## Verdict
+
 **✅ APPROVED FOR MERGE**
 (Or: **⚠️ REQUEST CHANGES** - [specific items])
 
 ---
-*Copilot Review | Generated at [TIMESTAMP]*
+
+_Copilot Review | Generated at [TIMESTAMP]_
 ```
 
 ---
@@ -131,10 +139,39 @@ Create a structured review containing:
 After completing analysis and generating the assessment document:
 
 ```bash
-# Post review as GitHub PR comment
-gh pr comment <OWNER>/<REPO>#<PR_NUMBER> \
-  --body "$(cat review_assessment.md)"
+# Post review as GitHub PR comment using here-document (safe from shell injection)
+gh pr comment <PR_NUMBER> --body "$(cat <<'EOF'
+[Review content goes here]
+EOF
+)"
 ```
+
+**Safe Command Pattern:**
+
+For multi-line review bodies, always use the here-document syntax to avoid shell injection:
+
+```bash
+gh pr comment 42 --body "$(cat <<'EOF'
+# 🔍 PR Review: [Title]
+
+## Summary
+✅ APPROVED FOR MERGE
+
+## File Analysis
+- [Details]
+
+## Verdict
+**✅ APPROVED FOR MERGE**
+EOF
+)"
+```
+
+**Why this pattern?**
+
+- Avoids shell expansion vulnerabilities with inline `"..."` strings
+- Properly handles newlines and special characters in review text
+- `'EOF'` (single quotes) prevents variable expansion in the here-document
+- Safe to execute in restricted shell environments
 
 ### 3.2 Comment Content Requirements
 
@@ -168,11 +205,13 @@ The posted comment MUST include:
 ### 3.3 When to Post Comments
 
 **Post immediately after analysis if:**
+
 - ✅ Analysis is complete and thorough
 - ✅ All required sections are present
 - ✅ At least one file was analyzed
 
 **Do NOT post if:**
+
 - ❌ Analysis is incomplete or partial
 - ❌ You need clarification on requirements
 - ❌ Error occurred during code review
@@ -236,7 +275,7 @@ The posted comment MUST include:
 
 ### Scenario: Review PR #42
 
-```bash
+````bash
 # User requests review
 > "Review PR #42 and add your assessment to the GitHub comment"
 
@@ -252,41 +291,47 @@ The posted comment MUST include:
 → Generates 2.5KB assessment document
 
 # Copilot executes Phase 3 (MANDATORY)
-→ Posts comment to GitHub PR:
-   "# 🔍 PR Review: Add DataLoader for Parts
-    
-    ## Summary
-    ✅ APPROVED FOR MERGE — Correctly implements batch loading pattern
-    
-    ## Requirements vs Deliverables
-    | Requirement | Implementation | Status |
-    |---|---|---|
-    | Prevent N+1 on Parts query | DataLoader batches PartIds correctly | ✅ Done |
-    | Maintain type safety | Types auto-generated from schema | ✅ Done |
-    | Include tests | Batch + single scenarios covered | ✅ Done |
-    
-    ## File Analysis
-    ### PartDataLoader.cs
-    - Implements standard BatchFetchAsync pattern
-    - Handles null keys gracefully
-    - ✅ Good error handling
-    
-    ### PartQueryResolver.cs
-    - Uses DataLoader correctly
-    - No N+1 paths remain
-    - ✅ Query depth respects 5-layer limit
-    
-    ## Verification
-    - [x] Follows DataLoader pattern
-    - [x] All tests pass (9 new tests)
-    - [x] CI/CD green
-    
-    **Verdict: APPROVED FOR MERGE**"
+→ Posts comment to GitHub PR using safe here-document:
+```bash
+gh pr comment 42 --body "$(cat <<'EOF'
+# 🔍 PR Review: Add DataLoader for Parts
+
+## Summary
+✅ APPROVED FOR MERGE — Correctly implements batch loading pattern
+
+## Requirements vs Deliverables
+| Requirement | Implementation | Status |
+|---|---|---|
+| Prevent N+1 on Parts query | DataLoader batches PartIds correctly | ✅ Done |
+| Maintain type safety | Types auto-generated from schema | ✅ Done |
+| Include tests | Batch + single scenarios covered | ✅ Done |
+
+## File Analysis
+### PartDataLoader.cs
+- Implements standard BatchFetchAsync pattern
+- Handles null keys gracefully
+- ✅ Good error handling
+
+### PartQueryResolver.cs
+- Uses DataLoader correctly
+- No N+1 paths remain
+- ✅ Query depth respects 5-layer limit
+
+## Verification
+- [x] Follows DataLoader pattern
+- [x] All tests pass (9 new tests)
+- [x] CI/CD green
+
+**Verdict: APPROVED FOR MERGE**
+EOF
+)"
+````
 
 → Comment posted successfully at 10:35 UTC
 → Team sees assessment immediately on PR page
 → Merge can proceed with confidence
-```
+
+````
 
 ---
 
@@ -301,7 +346,7 @@ gh copilot suggest "review PR #42 and add to GitHub"
 
 # Copilot follows this workflow and posts comment to GitHub
 # User can verify result on GitHub PR page
-```
+````
 
 The comment posting is built into the workflow, so it executes automatically when review is complete.
 
@@ -314,6 +359,7 @@ The comment posting is built into the workflow, so it executes automatically whe
 **Problem**: `gh pr comment` returns error
 
 **Solutions**:
+
 1. Verify PR number and repository are correct
 2. Check GitHub CLI authentication: `gh auth status`
 3. Ensure comment text is valid Markdown
@@ -324,6 +370,7 @@ The comment posting is built into the workflow, so it executes automatically whe
 **Problem**: Review already posted for this PR
 
 **Solutions**:
+
 1. Edit existing comment if minor updates needed
 2. Post new comment if substantive changes found
 3. Reference prior comment to avoid duplication
@@ -333,6 +380,7 @@ The comment posting is built into the workflow, so it executes automatically whe
 **Problem**: Can't determine if PR meets requirements
 
 **Solutions**:
+
 1. Add clarification question in comment
 2. Request author to clarify in PR description
 3. Link to related issue for context
@@ -351,8 +399,8 @@ The comment posting is built into the workflow, so it executes automatically whe
 
 ## Revision History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                      | Author  |
+| ---------- | --------------------------- | ------- |
 | 2026-05-22 | Initial workflow definition | Copilot |
 
 ---
