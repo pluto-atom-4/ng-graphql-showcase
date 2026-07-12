@@ -3,7 +3,7 @@ import { BuildProgressCardComponent } from './build-progress-card.component';
 import { BuildStatusService } from '../api/build-status.service';
 // Import Apollo mock (vitest alias replaces apollo-angular with apollo.mock.ts)
 import { Apollo } from 'apollo-angular';
-import { BuildStatus } from '../api/generated/graphql';
+import type { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 import { vi } from 'vitest';
 
 // Mock BuildStatusService to avoid Apollo subscription issues
@@ -75,30 +75,26 @@ describe('BuildProgressCardComponent', () => {
 
   // Method tests - these access private methods via reflection
   describe('Private Methods', () => {
-    it('should have getDefaultStatus method', () => {
+    it('should have getDefaultUpdate method', () => {
       const comp = component as any;
-      expect(typeof comp.getDefaultStatus).toBe('function');
+      expect(typeof comp.getDefaultUpdate).toBe('function');
     });
 
-    it('should return default status structure', () => {
+    it('should return BuildStatusUpdate structure', () => {
       const comp = component as any;
-      const defaultStatus = comp.getDefaultStatus();
-      expect(defaultStatus).toHaveProperty('status');
-      expect(defaultStatus).toHaveProperty('progress');
-      expect(defaultStatus).toHaveProperty('testsPassed');
-      expect(defaultStatus).toHaveProperty('testsTotal');
-      expect(defaultStatus).toHaveProperty('duration');
-      expect(defaultStatus).toHaveProperty('timestamp');
+      const defaultUpdate = comp.getDefaultUpdate();
+      expect(defaultUpdate).toHaveProperty('buildId');
+      expect(defaultUpdate).toHaveProperty('newStatus');
+      expect(defaultUpdate).toHaveProperty('oldStatus');
+      expect(defaultUpdate).toHaveProperty('timestamp');
     });
 
-    it('should have default status values', () => {
+    it('should have default update values', () => {
       const comp = component as any;
-      const status = comp.getDefaultStatus();
-      expect(status.status).toBe('Starting');
-      expect(status.progress).toBe(0);
-      expect(status.testsPassed).toBe(0);
-      expect(status.testsTotal).toBe(0);
-      expect(status.duration).toBe(0);
+      const update: BuildStatusUpdate = comp.getDefaultUpdate();
+      expect(update.newStatus).toBe('PENDING');
+      expect(update.oldStatus).toBe('PENDING');
+      expect(update.timestamp).toBeInstanceOf(Date);
     });
 
     it('should have mapStatus method', () => {
@@ -106,70 +102,55 @@ describe('BuildProgressCardComponent', () => {
       expect(typeof comp.mapStatus).toBe('function');
     });
 
-    it('should map BuildStatus.Pending to Starting', () => {
+    it('should map PENDING to Pending', () => {
       const comp = component as any;
-      expect(comp.mapStatus(BuildStatus.Pending)).toBe('Starting');
+      expect(comp.mapStatus('PENDING')).toBe('Pending');
     });
 
-    it('should map BuildStatus.Running to In Progress', () => {
+    it('should map RUNNING to Running', () => {
       const comp = component as any;
-      expect(comp.mapStatus(BuildStatus.Running)).toBe('In Progress');
+      expect(comp.mapStatus('RUNNING')).toBe('Running');
     });
 
-    it('should map BuildStatus.Complete to Complete', () => {
+    it('should map COMPLETE to Complete', () => {
       const comp = component as any;
-      expect(comp.mapStatus(BuildStatus.Complete)).toBe('Complete');
+      expect(comp.mapStatus('COMPLETE')).toBe('Complete');
     });
 
-    it('should map BuildStatus.Failed to Failed', () => {
+    it('should map FAILED to Failed', () => {
       const comp = component as any;
-      expect(comp.mapStatus(BuildStatus.Failed)).toBe('Failed');
+      expect(comp.mapStatus('FAILED')).toBe('Failed');
     });
 
-    it('should have mapUpdatesToDisplay method', () => {
+    it('should have getLatestUpdate method', () => {
       const comp = component as any;
-      expect(typeof comp.mapUpdatesToDisplay).toBe('function');
+      expect(typeof comp.getLatestUpdate).toBe('function');
     });
 
     it('should handle empty updates array', () => {
       const comp = component as any;
-      const result = comp.mapUpdatesToDisplay([]);
-      expect(result.status).toBe('Starting');
+      const result: BuildStatusUpdate = comp.getLatestUpdate([]);
+      expect(result.newStatus).toBe('PENDING');
     });
 
-    it('should map single update', () => {
+    it('should get latest update from array', () => {
       const comp = component as any;
       const updates = [
         {
           buildId: 'build-1',
-          oldStatus: BuildStatus.Pending,
-          newStatus: BuildStatus.Running,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      ];
-      const result = comp.mapUpdatesToDisplay(updates);
-      expect(result.status).toBe('In Progress');
-      expect(result.timestamp).toBeInstanceOf(Date);
-    });
-
-    it('should use latest update in array', () => {
-      const comp = component as any;
-      const updates = [
-        {
-          buildId: 'build-1',
-          oldStatus: BuildStatus.Pending,
-          newStatus: BuildStatus.Running,
-          timestamp: '2024-01-01T00:00:00Z'
+          oldStatus: 'PENDING' as BuildStatus,
+          newStatus: 'RUNNING' as BuildStatus,
+          timestamp: new Date('2024-01-01T00:00:00Z')
         },
         {
           buildId: 'build-1',
-          oldStatus: BuildStatus.Running,
-          newStatus: BuildStatus.Complete,
-          timestamp: '2024-01-01T00:01:00Z'
+          oldStatus: 'RUNNING' as BuildStatus,
+          newStatus: 'COMPLETE' as BuildStatus,
+          timestamp: new Date('2024-01-01T00:01:00Z')
         }
       ];
-      const result = comp.mapUpdatesToDisplay(updates);
-      expect(result.status).toBe('Complete');
+      const result: BuildStatusUpdate = comp.getLatestUpdate(updates);
+      expect(result.newStatus).toBe('COMPLETE');
     });
   });
 

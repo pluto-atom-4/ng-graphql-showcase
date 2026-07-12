@@ -13,6 +13,8 @@ const config: CodegenConfig = {
       config: {
         skipTypename: false,
         strictScalars: true,
+        enumsAsTypes: true,
+        onlyOperationTypes: false,
         scalars: {
           DateTime: 'Date',
           Decimal: 'number',
