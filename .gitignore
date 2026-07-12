@@ -56,3 +56,6 @@ temp/
 *.tmp
 
 test-results
+pr-content.json
+sub-issues-contents.json
+gh-issue-draft.md*
