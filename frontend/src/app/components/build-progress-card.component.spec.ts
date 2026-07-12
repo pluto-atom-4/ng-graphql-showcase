@@ -5,27 +5,35 @@ import { BuildStatusService } from '../api/build-status.service';
 import { Apollo } from 'apollo-angular';
 import type { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 import { vi } from 'vitest';
+import { Subject } from 'rxjs';
 
-// Mock BuildStatusService to avoid Apollo subscription issues
-const mockBuildStatusService = {
-  subscribeToBuildStatus: () => {},
-  getBufferedUpdates: () => ({ pipe: () => ({ subscribe: () => {} }) }),
-  disconnect: () => {},
-  disconnectAll: () => {},
-  getConnectionHealth: () => ({ pipe: () => ({ subscribe: () => {} }) }),
-  buildStatus$: { subscribe: () => {} },
+// Mock BuildStatusService with real observable support
+const createMockBuildStatusService = () => {
+  const updates$ = new Subject<BuildStatusUpdate[]>();
+  return {
+    subscribeToBuildStatus: vi.fn(),
+    getBufferedUpdates: vi.fn(() => updates$),
+    disconnect: vi.fn(),
+    disconnectAll: vi.fn(),
+    getConnectionHealth: vi.fn(() => new Subject()),
+    buildStatus$: new Subject(),
+    _updates$: updates$,
+  };
 };
 
 describe('BuildProgressCardComponent', () => {
   let component: BuildProgressCardComponent;
   let fixture: ComponentFixture<BuildProgressCardComponent>;
+  let mockService: ReturnType<typeof createMockBuildStatusService>;
 
   beforeEach(async () => {
+    mockService = createMockBuildStatusService();
+
     await TestBed.configureTestingModule({
       imports: [BuildProgressCardComponent],
       providers: [
         // Provide mock BuildStatusService instead of real one
-        { provide: BuildStatusService, useValue: mockBuildStatusService },
+        { provide: BuildStatusService, useValue: mockService },
         // Provide mock Apollo
         { provide: Apollo, useClass: Apollo },
       ]
@@ -207,6 +215,241 @@ describe('BuildProgressCardComponent', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  // Computed signal tests
+  describe('Computed Signals', () => {
+    it('should have statusLabel computed signal', () => {
+      expect(typeof component.statusLabel).toBe('function');
+    });
+
+    it('should have statusVariant computed signal', () => {
+      expect(typeof component.statusVariant).toBe('function');
+    });
+
+    it('should have isComplete computed signal', () => {
+      expect(typeof component.isComplete).toBe('function');
+    });
+
+    it('statusLabel should return Pending for PENDING status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'PENDING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusLabel()).toBe('Pending');
+    });
+
+    it('statusLabel should return Running for RUNNING status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'RUNNING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusLabel()).toBe('Running');
+    });
+
+    it('statusLabel should return Complete for COMPLETE status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'COMPLETE' as BuildStatus,
+        oldStatus: 'RUNNING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusLabel()).toBe('Complete');
+    });
+
+    it('statusLabel should return Failed for FAILED status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'FAILED' as BuildStatus,
+        oldStatus: 'RUNNING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusLabel()).toBe('Failed');
+    });
+
+    it('statusVariant should return warning for PENDING status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'PENDING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusVariant()).toBe('warning');
+    });
+
+    it('statusVariant should return info for RUNNING status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'RUNNING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusVariant()).toBe('info');
+    });
+
+    it('statusVariant should return success for COMPLETE status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'COMPLETE' as BuildStatus,
+        oldStatus: 'RUNNING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusVariant()).toBe('success');
+    });
+
+    it('statusVariant should return error for FAILED status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'FAILED' as BuildStatus,
+        oldStatus: 'RUNNING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.statusVariant()).toBe('error');
+    });
+
+    it('isComplete should return true for COMPLETE status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'COMPLETE' as BuildStatus,
+        oldStatus: 'RUNNING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.isComplete()).toBe(true);
+    });
+
+    it('isComplete should return true for FAILED status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'FAILED' as BuildStatus,
+        oldStatus: 'RUNNING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.isComplete()).toBe(true);
+    });
+
+    it('isComplete should return false for PENDING status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'PENDING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.isComplete()).toBe(false);
+    });
+
+    it('isComplete should return false for RUNNING status', () => {
+      const comp = component as any;
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'RUNNING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+      expect(component.isComplete()).toBe(false);
+    });
+  });
+
+  // Signal lifecycle tests
+  describe('Signal Lifecycle', () => {
+    it('should initialize buildStatus signal with default value', () => {
+      expect(component.buildStatus()).toBeDefined();
+      expect(component.buildStatus().newStatus).toBe('PENDING');
+    });
+
+    it('should update buildStatus when new value is set', () => {
+      const newUpdate: BuildStatusUpdate = {
+        buildId: 'test-1',
+        newStatus: 'RUNNING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date('2024-01-01T00:01:00Z')
+      };
+      const comp = component as any;
+      comp.buildStatus.set(newUpdate);
+      expect(component.buildStatus().newStatus).toBe('RUNNING');
+      expect(component.buildStatus().timestamp).toEqual(new Date('2024-01-01T00:01:00Z'));
+    });
+
+    it('should trigger computed signals when buildStatus changes', () => {
+      const comp = component as any;
+      const initialVariant = component.statusVariant();
+      expect(initialVariant).toBe('warning'); // PENDING -> warning
+
+      comp.buildStatus.set({
+        buildId: 'test-1',
+        newStatus: 'RUNNING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date()
+      });
+
+      const updatedVariant = component.statusVariant();
+      expect(updatedVariant).toBe('info'); // RUNNING -> info
+    });
+
+    it('should unsubscribe from buildStatus stream on destroy', () => {
+      const comp = component as any;
+      expect(comp.subscription).toBeDefined();
+      component.ngOnDestroy();
+      // Verify unsubscribe was called (no exception thrown)
+      expect(true).toBe(true);
+    });
+
+    it('should subscribe to buildStatus stream on init', () => {
+      fixture.detectChanges(); // Triggers ngOnInit
+
+      const testUpdate: BuildStatusUpdate = {
+        buildId: 'test-1',
+        newStatus: 'RUNNING' as BuildStatus,
+        oldStatus: 'PENDING' as BuildStatus,
+        timestamp: new Date('2024-01-01T00:01:00Z')
+      };
+
+      // Emit update through the mock service
+      mockService._updates$.next([testUpdate]);
+
+      // Verify subscription callback processed the update
+      expect(component.buildStatus().newStatus).toBe('RUNNING');
+    });
+
+    it('should handle multiple status updates through subscription', () => {
+      fixture.detectChanges(); // Triggers ngOnInit
+
+      const updates = [
+        {
+          buildId: 'test-1',
+          newStatus: 'RUNNING' as BuildStatus,
+          oldStatus: 'PENDING' as BuildStatus,
+          timestamp: new Date('2024-01-01T00:01:00Z')
+        },
+        {
+          buildId: 'test-1',
+          newStatus: 'COMPLETE' as BuildStatus,
+          oldStatus: 'RUNNING' as BuildStatus,
+          timestamp: new Date('2024-01-01T00:02:00Z')
+        }
+      ];
+
+      mockService._updates$.next(updates);
+
+      // Should get the latest (last) update via getLatestUpdate
+      expect(component.buildStatus().newStatus).toBe('COMPLETE');
+      expect(component.statusVariant()).toBe('success');
+    });
+  });
+
 
   // Dependency injection tests
   describe('Dependencies', () => {

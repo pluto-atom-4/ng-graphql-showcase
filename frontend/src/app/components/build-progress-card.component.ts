@@ -1,8 +1,7 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { computed } from '@angular/core';
-import { map, startWith } from 'rxjs/operators';
+import { map, startWith, Subscription } from 'rxjs';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
 import { BuildStatusService } from '../api/build-status.service';
@@ -69,13 +68,14 @@ import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
   `,
 })
 
-export class BuildProgressCardComponent implements OnInit {
+export class BuildProgressCardComponent implements OnInit, OnDestroy {
   @Input() buildName = 'Build #42';
   @Input() buildId = 'build-uuid-123';
 
   private buildStatusService = inject(BuildStatusService);
+  private subscription: Subscription | null = null;
 
-  buildStatus!: () => BuildStatusUpdate;
+  buildStatus = signal<BuildStatusUpdate>(this.getDefaultUpdate());
 
   ngOnInit(): void {
     this.buildStatusService.subscribeToBuildStatus(this.buildId);
@@ -85,9 +85,13 @@ export class BuildProgressCardComponent implements OnInit {
       startWith(this.getDefaultUpdate())
     );
 
-    this.buildStatus = toSignal(buildStatusStream$, {
-      initialValue: this.getDefaultUpdate()
+    this.subscription = buildStatusStream$.subscribe(update => {
+      this.buildStatus.set(update);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.subscription?.unsubscribe();
   }
 
   private getLatestUpdate(updates: any[]): BuildStatusUpdate {
