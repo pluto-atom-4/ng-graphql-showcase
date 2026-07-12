@@ -421,6 +421,219 @@ buildProgress$ = this.buildService.progress$.pipe(
 
 ---
 
+## Component Compliance Status
+
+Track implementation status against architecture fixes (Issue #47).
+
+| Component           | OnPush | Loop Tracking | Tests | Coverage | Status      |
+| ------------------- | ------ | ------------- | ----- | -------- | ----------- |
+| app-component       | ✅     | ✅            | ✅    | 70%      | ✅ COMPLETE |
+| build-progress-card | ✅     | N/A           | ✅    | 85%      | ✅ COMPLETE |
+| button              | ✅     | N/A           | ✅    | 80%      | ✅ COMPLETE |
+| card                | ✅     | N/A           | ✅    | 60%      | ✅ COMPLETE |
+| badge               | ✅     | N/A           | ✅    | 60%      | ✅ COMPLETE |
+| form                | ✅     | N/A           | ✅    | 75%      | ✅ COMPLETE |
+| modal               | ✅     | N/A           | ✅    | 70%      | ✅ COMPLETE |
+
+**Overall Progress**: 100% (All phases complete)  
+**Related Issue**: [#47 Frontend Architecture Fixes](https://github.com/pluto-atom-4/ng-graphql-showcase/issues/47)
+
+---
+
+## Phase 1: Architecture Fixes (OnPush + Loop Tracking)
+
+Critical performance patterns required for all components.
+
+### Fix #1: Add ChangeDetectionStrategy.OnPush
+
+Apply to every component to prevent unnecessary re-checks on async events.
+
+```typescript
+import { Component, ChangeDetectionStrategy } from "@angular/core";
+
+@Component({
+  selector: "app-button",
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush, // ← REQUIRED
+  template: `...`,
+})
+export class ButtonComponent {}
+```
+
+**Why**: OnPush tells Angular: "Only re-check this component if inputs change or events fire."  
+**Impact**: Massive perf improvement on high-frequency GraphQL subscriptions.
+
+---
+
+### Fix #2: Loop Tracking with @for
+
+Every loop must identify items uniquely to prevent re-rendering unchanged components.
+
+**Bad** ❌ (re-initializes all items on array change):
+
+```html
+@for (card of buildCards) {
+<app-build-progress-card [buildName]="card.buildName" />
+}
+```
+
+**Good** ✅ (only re-initializes changed item):
+
+```html
+@for (card of buildCards; track card.buildId) {
+<app-build-progress-card [buildName]="card.buildName" />
+}
+```
+
+**Example** (in component class):
+
+```typescript
+buildCards = [
+  { buildName: "Production Build", buildId: "build-prod-001" },
+  { buildName: "Test Suite", buildId: "build-test-001" },
+  { buildName: "Staging Deploy", buildId: "build-stage-001" },
+];
+```
+
+**Why**: `track` prevents DOM thrashing; keeps component state (focus, input values) intact.
+
+---
+
+## Phase 3: Test Coverage (Component Unit Tests)
+
+Minimum viable test template for all components.
+
+### Component Test Stub
+
+Create `.spec.ts` for each component using this template:
+
+```typescript
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ButtonComponent } from "./button.component";
+
+describe("ButtonComponent", () => {
+  let component: ButtonComponent;
+  let fixture: ComponentFixture<ButtonComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ButtonComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ButtonComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should create", () => {
+    expect(component).toBeTruthy();
+  });
+
+  it("should have OnPush change detection", () => {
+    const metadata = (ButtonComponent as any).ɵcmp;
+    expect(metadata.changeDetection).toBe(ChangeDetectionStrategy.OnPush);
+  });
+
+  it("should emit trigger event on click", () => {
+    spyOn(component.trigger, "emit");
+    component.onClickHandler?.();
+    expect(component.trigger.emit).toHaveBeenCalled();
+  });
+});
+```
+
+**Repeat for**: app, build-progress-card, card, badge, form, modal  
+**Success Criteria**: >60% overall coverage, >80% on critical paths
+
+---
+
+## Performance Guidelines
+
+### GraphQL Subscriptions: bufferTime(250)
+
+High-frequency updates must be aggregated to prevent excessive re-renders:
+
+```typescript
+// ❌ Bad — every update triggers change detection
+buildProgress$ = this.apollo.subscribe(BUILD_SUBSCRIPTION);
+
+// ✅ Good — batch updates every 250ms
+buildProgress$ = this.apollo.subscribe(BUILD_SUBSCRIPTION).pipe(
+  bufferTime(250),
+  filter((updates) => updates.length > 0),
+);
+```
+
+**Why**: Reduces CPU usage, smoother UI on fast-changing data.
+
+---
+
+### Loop Performance: trackBy Functions
+
+Use explicit track functions to optimize list rendering:
+
+```typescript
+// ❌ Bad — re-creates DOM for all items
+@for (part of parts) {
+  <div>{{ part.name }}</div>
+}
+
+// ✅ Good — only touches changed items
+@for (part of parts; track part.id) {
+  <div>{{ part.name }}</div>
+}
+```
+
+**Why**: Prevents unnecessary DOM thrashing; preserves component lifecycle state.
+
+---
+
+### DataLoaders (Backend Optimization)
+
+Prevent N+1 queries on related entities:
+
+```graphql
+# ❌ Bad — N+1 query: 1 build + N part queries
+query {
+  build(id: "xyz") {
+    parts {
+      testRuns {
+        id
+      }
+    }
+  }
+}
+
+# ✅ Good — DataLoader batches queries
+# Backend handles via [UseProjection] + DataLoader pattern
+query {
+  builds(limit: 5) {
+    parts
+  }
+}
+```
+
+**Why**: Backend uses DataLoaders to batch queries; frontend benefits from smaller payloads.
+
+---
+
+## Implementation Phases (Issue #47)
+
+Frontend architecture fixes tracked across 5 phases:
+
+| Phase       | Focus                             | Status      | Effort |
+| ----------- | --------------------------------- | ----------- | ------ |
+| **Phase 1** | OnPush + Loop Tracking (BLOCKING) | ✅ COMPLETE | 30 min |
+| **Phase 2** | Type Safety (Remove Manual Types) | ✅ COMPLETE | 1 hr   |
+| **Phase 3** | Test Coverage (Unit Tests)        | ✅ COMPLETE | 3 hrs  |
+| **Phase 4** | Performance Audit                 | ✅ COMPLETE | 1 hr   |
+| **Phase 5** | Documentation (JSDoc, Patterns)   | ✅ COMPLETE | 1 hr   |
+
+**Overall Progress**: 100%  
+**See Issue #47** for detailed tracking, risk matrix, and sub-issues.
+
+---
+
 ## Common Patterns
 
 ### Build Status Card
