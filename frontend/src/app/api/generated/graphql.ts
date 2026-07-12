@@ -54,12 +54,11 @@ export type Build = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export enum BuildStatus {
-  Complete = 'COMPLETE',
-  Failed = 'FAILED',
-  Pending = 'PENDING',
-  Running = 'RUNNING'
-}
+export type BuildStatus =
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'PENDING'
+  | 'RUNNING';
 
 /** Build status update from subscription */
 export type BuildStatusUpdate = {
@@ -220,12 +219,11 @@ export type TestRunUpdate = {
   timestamp: Scalars['DateTime']['output'];
 };
 
-export enum TestStatus {
-  Failed = 'FAILED',
-  Passed = 'PASSED',
-  Pending = 'PENDING',
-  Running = 'RUNNING'
-}
+export type TestStatus =
+  | 'FAILED'
+  | 'PASSED'
+  | 'PENDING'
+  | 'RUNNING';
 
 export type GetBuildQueryVariables = Exact<{
   id: string | number;
