@@ -545,6 +545,74 @@ dotnet test --filter "MigrationTests"
 
 ---
 
+## Manual Migration File Editing
+
+### Naming Convention
+
+Migration files follow EF Core standard:
+
+```
+<YYYYMMDDHHMM>_<Description>.cs
+```
+
+Example: `20260709234406_AddBuildWorkflowRelationship.cs`
+
+- **Timestamp** (`20260709234406`): Auto-generated when migration created (2026-07-09 23:44:06)
+- **Description** (`AddBuildWorkflowRelationship`): Human-readable name from `dotnet ef migrations add <Name>`
+
+### When to Manually Edit Migrations
+
+**✓ Safe to edit (before production deploy):**
+
+- Add idempotency guards (`IF NOT EXISTS` / `IF EXISTS`)
+- Improve SQL safety or performance
+- Add data migrations or transformations
+- Before merged to main/release branch
+
+Example: Convert non-idempotent `AddColumn` to SQL with guard:
+
+```csharp
+// ❌ Original (non-idempotent)
+migrationBuilder.AddColumn<string>(name: "Email", table: "Users", defaultValue: "");
+
+// ✓ Edited for safety (idempotent)
+migrationBuilder.Sql(@"
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'Email'
+    )
+    BEGIN
+        ALTER TABLE [Users] ADD [Email] nvarchar(256) NOT NULL DEFAULT '';
+    END
+");
+```
+
+**✗ Unsafe (after production apply):**
+
+- Never edit already-applied migrations
+- Create new revert migration instead
+
+### Files to NEVER Manually Edit
+
+| File                               | Why                                        | Impact                                    |
+| ---------------------------------- | ------------------------------------------ | ----------------------------------------- |
+| `Designer.cs`                      | Auto-generated EF Core metadata            | Regenerated on `dotnet ef migrations add` |
+| `__EFMigrationsHistory`            | Database table tracking applied migrations | Tracks which migrations were applied      |
+| `FactoryDbContextModelSnapshot.cs` | Auto-generated model state snapshot        | Updated when new migrations created       |
+
+Editing Designer.cs causes EF Core to regenerate it, losing your changes.
+
+### Best Practice Workflow
+
+1. **Create** migration: `dotnet ef migrations add AddFeature`
+2. **Review** generated Up/Down methods
+3. **Edit** for idempotency/safety BEFORE applying
+4. **Test** locally: `dotnet ef database update`
+5. **Commit** and push
+6. **Deploy** to production
+
+---
+
 ## References
 
 - **README.md** — Quickstart, service URLs
