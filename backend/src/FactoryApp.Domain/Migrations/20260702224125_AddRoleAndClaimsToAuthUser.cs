@@ -10,36 +10,57 @@ namespace FactoryApp.Domain.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Claims",
-                schema: "dbo",
-                table: "AuthUsers",
-                type: "nvarchar(2000)",
-                maxLength: 2000,
-                nullable: false,
-                defaultValue: "");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'AuthUsers'
+                    AND COLUMN_NAME = 'Claims'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[AuthUsers]
+                    ADD [Claims] [nvarchar](2000) NOT NULL DEFAULT N'';
+                END
 
-            migrationBuilder.AddColumn<int>(
-                name: "Role",
-                schema: "dbo",
-                table: "AuthUsers",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'AuthUsers'
+                    AND COLUMN_NAME = 'Role'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[AuthUsers]
+                    ADD [Role] [int] NOT NULL DEFAULT 0;
+                END
+            ");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Claims",
-                schema: "dbo",
-                table: "AuthUsers");
+            migrationBuilder.Sql(@"
+                IF EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'AuthUsers'
+                    AND COLUMN_NAME = 'Claims'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[AuthUsers]
+                    DROP COLUMN [Claims];
+                END
 
-            migrationBuilder.DropColumn(
-                name: "Role",
-                schema: "dbo",
-                table: "AuthUsers");
+                IF EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'AuthUsers'
+                    AND COLUMN_NAME = 'Role'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[AuthUsers]
+                    DROP COLUMN [Role];
+                END
+            ");
         }
     }
 }

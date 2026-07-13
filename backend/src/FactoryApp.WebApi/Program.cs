@@ -165,7 +165,7 @@ builder.Services
     .AddMutationType<BuildMutationType>()
     .AddSubscriptionType<BuildSubscription>()
     .AddObjectType<BuildType>()
-    .AddObjectType<WorkflowHistoryType>()
+    .AddType<WorkflowHistoryType>()
     .AddInMemorySubscriptions();
 // Note: RateLimitDirective scaffolded in FactoryApp.GraphQL.Directives but NOT registered.
 // Reason: Hot Chocolate v15 directive middleware runs after resolver execution, unsuitable

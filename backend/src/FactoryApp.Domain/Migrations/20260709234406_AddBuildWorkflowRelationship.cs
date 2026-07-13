@@ -11,58 +11,92 @@ namespace FactoryApp.Domain.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<Guid>(
-                name: "BuildId",
-                schema: "dbo",
-                table: "WorkflowHistory",
-                type: "uniqueidentifier",
-                nullable: true);
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'WorkflowHistory'
+                    AND COLUMN_NAME = 'BuildId'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[WorkflowHistory]
+                    ADD [BuildId] [uniqueidentifier] NULL;
+                END
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "WorkflowInstanceId",
-                schema: "dbo",
-                table: "Builds",
-                type: "uniqueidentifier",
-                nullable: true);
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'Builds'
+                    AND COLUMN_NAME = 'WorkflowInstanceId'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[Builds]
+                    ADD [WorkflowInstanceId] [uniqueidentifier] NULL;
+                END
 
-            migrationBuilder.CreateIndex(
-                name: "IX_WorkflowHistory_BuildId",
-                schema: "dbo",
-                table: "WorkflowHistory",
-                column: "BuildId");
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = 'IX_WorkflowHistory_BuildId'
+                )
+                BEGIN
+                    CREATE INDEX IX_WorkflowHistory_BuildId ON [dbo].[WorkflowHistory]([BuildId]);
+                END
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_WorkflowHistory_Builds_BuildId",
-                schema: "dbo",
-                table: "WorkflowHistory",
-                column: "BuildId",
-                principalSchema: "dbo",
-                principalTable: "Builds",
-                principalColumn: "Id");
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+                    WHERE CONSTRAINT_NAME = 'FK_WorkflowHistory_Builds_BuildId'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[WorkflowHistory]
+                    ADD CONSTRAINT FK_WorkflowHistory_Builds_BuildId
+                    FOREIGN KEY ([BuildId]) REFERENCES [dbo].[Builds]([Id]);
+                END
+            ");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_WorkflowHistory_Builds_BuildId",
-                schema: "dbo",
-                table: "WorkflowHistory");
+            migrationBuilder.Sql(@"
+                IF EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+                    WHERE CONSTRAINT_NAME = 'FK_WorkflowHistory_Builds_BuildId'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[WorkflowHistory]
+                    DROP CONSTRAINT FK_WorkflowHistory_Builds_BuildId;
+                END
 
-            migrationBuilder.DropIndex(
-                name: "IX_WorkflowHistory_BuildId",
-                schema: "dbo",
-                table: "WorkflowHistory");
+                IF EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = 'IX_WorkflowHistory_BuildId'
+                )
+                BEGIN
+                    DROP INDEX IX_WorkflowHistory_BuildId ON [dbo].[WorkflowHistory];
+                END
 
-            migrationBuilder.DropColumn(
-                name: "BuildId",
-                schema: "dbo",
-                table: "WorkflowHistory");
+                IF EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'WorkflowHistory'
+                    AND COLUMN_NAME = 'BuildId'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[WorkflowHistory]
+                    DROP COLUMN [BuildId];
+                END
 
-            migrationBuilder.DropColumn(
-                name: "WorkflowInstanceId",
-                schema: "dbo",
-                table: "Builds");
+                IF EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'Builds'
+                    AND COLUMN_NAME = 'WorkflowInstanceId'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[Builds]
+                    DROP COLUMN [WorkflowInstanceId];
+                END
+            ");
         }
     }
 }

@@ -21,7 +21,6 @@ namespace FactoryApp.Domain.Migrations
                     CREATE TABLE [dbo].[WorkflowHistory] (
                         [Id] [uniqueidentifier] NOT NULL,
                         [WorkflowInstanceId] [uniqueidentifier] NOT NULL,
-                        [BuildId] [uniqueidentifier] NULL,
                         [EventType] [nvarchar](max) NOT NULL,
                         [ActivityName] [nvarchar](max) NOT NULL,
                         [OldStatus] [nvarchar](max) NOT NULL,
@@ -32,12 +31,9 @@ namespace FactoryApp.Domain.Migrations
                         [ExecutionStarted] [datetime2] NULL,
                         [ExecutionCompleted] [datetime2] NULL,
                         [ElapsedMilliseconds] [bigint] NULL,
-                        CONSTRAINT [PK_WorkflowHistory] PRIMARY KEY CLUSTERED ([Id] ASC),
-                        CONSTRAINT [FK_WorkflowHistory_Builds_BuildId] FOREIGN KEY ([BuildId])
-                            REFERENCES [dbo].[Builds]([Id])
+                        CONSTRAINT [PK_WorkflowHistory] PRIMARY KEY CLUSTERED ([Id] ASC)
                     );
 
-                    CREATE INDEX [IX_WorkflowHistory_BuildId] ON [dbo].[WorkflowHistory]([BuildId]);
                     CREATE INDEX [IX_WorkflowHistory_WorkflowInstanceId] ON [dbo].[WorkflowHistory]([WorkflowInstanceId]);
                     CREATE INDEX [IX_WorkflowHistory_RecordedAt] ON [dbo].[WorkflowHistory]([RecordedAt]);
                 END
