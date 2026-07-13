@@ -95,10 +95,12 @@ builder.Configuration.GetSection("RateLimiting").Bind(rateLimitOptions);
 builder.Services.AddSingleton(rateLimitOptions);
 
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
+var redisAvailable = false;
 try
 {
     var redis = ConnectionMultiplexer.Connect(redisConnectionString);
     builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+    redisAvailable = true;
 }
 catch (Exception ex)
 {
@@ -193,18 +195,37 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // 3.8b Add rate limiting middleware (issue #147)
-app.UseMiddleware<RateLimitMiddleware>();
+if (redisAvailable)
+{
+    app.UseMiddleware<RateLimitMiddleware>();
+}
+else
+{
+    Console.WriteLine("⚠️  Rate limiting middleware disabled: Redis unavailable");
+}
 
 // 3.9 Add query complexity check middleware (issue #146)
 app.UseMiddleware<QueryComplexityCheckMiddleware>();
 
-// 3.11 Run Elsa Dapper migrations on startup
+// 3.11 Run migrations on startup (EF Core first, then Elsa FluentMigrator)
 using (var scope = app.Services.CreateScope())
 {
-    var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
     var dbContext = scope.ServiceProvider.GetRequiredService<FactoryDbContext>();
+    var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
 
-    // Clean up duplicate columns before running Elsa migrations (fixes V3_7 idempotency issue #196)
+    // 3.11a Apply EF Core migrations first (owns: Builds, Parts, TestRuns, WorkflowHistory, AuthUsers, etc.)
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+        Console.WriteLine("✓ EF Core migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"⚠️  EF Core migration error: {ex.Message}");
+        Console.Error.WriteLine("⚠️  Continuing with application startup. Core schema may be incomplete.");
+    }
+
+    // 3.11b Clean up duplicate columns before running Elsa migrations (fixes V3_7 idempotency issue #196)
     try
     {
         await dbContext.Database.ExecuteSqlAsync($@"
@@ -231,15 +252,16 @@ using (var scope = app.Services.CreateScope())
         // Silently ignore if operation fails (column may not exist or constraints are different)
     }
 
-    // Now run Elsa migrations safely
+    // 3.11c Run Elsa FluentMigrator migrations (owns: ActivityExecutionRecords, WorkflowDefinitions, etc.)
     try
     {
         runner.MigrateUp();
+        Console.WriteLine("✓ Elsa migrations applied successfully");
     }
     catch (Exception ex)
     {
         Console.Error.WriteLine($"⚠️  Elsa migration error (non-fatal): {ex.Message}");
-        Console.Error.WriteLine("⚠️  Continuing with application startup. Schema may be incomplete.");
+        Console.Error.WriteLine("⚠️  Continuing with application startup. Elsa schema may be incomplete.");
     }
 }
 

@@ -11,36 +11,52 @@ namespace FactoryApp.Domain.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "WorkflowHistory",
-                schema: "dbo",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    WorkflowInstanceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EventType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ActivityName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OldStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    NewStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StateSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RecordedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExecutionStarted = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ExecutionCompleted = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ElapsedMilliseconds = table.Column<long>(type: "bigint", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_WorkflowHistory", x => x.Id);
-                });
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.TABLES
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'WorkflowHistory'
+                )
+                BEGIN
+                    CREATE TABLE [dbo].[WorkflowHistory] (
+                        [Id] [uniqueidentifier] NOT NULL,
+                        [WorkflowInstanceId] [uniqueidentifier] NOT NULL,
+                        [BuildId] [uniqueidentifier] NULL,
+                        [EventType] [nvarchar](max) NOT NULL,
+                        [ActivityName] [nvarchar](max) NOT NULL,
+                        [OldStatus] [nvarchar](max) NOT NULL,
+                        [NewStatus] [nvarchar](max) NOT NULL,
+                        [StateSnapshot] [nvarchar](max) NULL,
+                        [ErrorMessage] [nvarchar](max) NULL,
+                        [RecordedAt] [datetime2] NOT NULL,
+                        [ExecutionStarted] [datetime2] NULL,
+                        [ExecutionCompleted] [datetime2] NULL,
+                        [ElapsedMilliseconds] [bigint] NULL,
+                        CONSTRAINT [PK_WorkflowHistory] PRIMARY KEY CLUSTERED ([Id] ASC),
+                        CONSTRAINT [FK_WorkflowHistory_Builds_BuildId] FOREIGN KEY ([BuildId])
+                            REFERENCES [dbo].[Builds]([Id])
+                    );
+
+                    CREATE INDEX [IX_WorkflowHistory_BuildId] ON [dbo].[WorkflowHistory]([BuildId]);
+                    CREATE INDEX [IX_WorkflowHistory_WorkflowInstanceId] ON [dbo].[WorkflowHistory]([WorkflowInstanceId]);
+                    CREATE INDEX [IX_WorkflowHistory_RecordedAt] ON [dbo].[WorkflowHistory]([RecordedAt]);
+                END
+            ");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "WorkflowHistory",
-                schema: "dbo");
+            migrationBuilder.Sql(@"
+                IF EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.TABLES
+                    WHERE TABLE_SCHEMA = 'dbo'
+                    AND TABLE_NAME = 'WorkflowHistory'
+                )
+                BEGIN
+                    DROP TABLE [dbo].[WorkflowHistory];
+                END
+            ");
         }
     }
 }
