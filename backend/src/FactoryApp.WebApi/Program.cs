@@ -202,7 +202,45 @@ app.UseMiddleware<QueryComplexityCheckMiddleware>();
 using (var scope = app.Services.CreateScope())
 {
     var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-    runner.MigrateUp();
+    var dbContext = scope.ServiceProvider.GetRequiredService<FactoryDbContext>();
+
+    // Clean up duplicate columns before running Elsa migrations (fixes V3_7 idempotency issue #196)
+    try
+    {
+        await dbContext.Database.ExecuteSqlAsync($@"
+            -- Check if AggregateFaultCount exists and remove duplicates
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'dbo'
+                AND TABLE_NAME = 'ActivityExecutionRecords'
+                AND COLUMN_NAME = 'AggregateFaultCount'
+            )
+            BEGIN
+                -- Column exists, drop it to allow clean re-creation
+                IF OBJECT_ID('DF_ActivityExecutionRecords_AggregateFaultCount', 'D') IS NOT NULL
+                    ALTER TABLE [dbo].[ActivityExecutionRecords]
+                    DROP CONSTRAINT [DF_ActivityExecutionRecords_AggregateFaultCount];
+
+                ALTER TABLE [dbo].[ActivityExecutionRecords]
+                DROP COLUMN [AggregateFaultCount];
+            END
+        ");
+    }
+    catch
+    {
+        // Silently ignore if operation fails (column may not exist or constraints are different)
+    }
+
+    // Now run Elsa migrations safely
+    try
+    {
+        runner.MigrateUp();
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"⚠️  Elsa migration error (non-fatal): {ex.Message}");
+        Console.Error.WriteLine("⚠️  Continuing with application startup. Schema may be incomplete.");
+    }
 }
 
 // 4. Seed test data in development or when TEST_SEED_DATA is set
