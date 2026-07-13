@@ -70,8 +70,8 @@ public class WorkflowRecoveryService : IHostedService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during workflow recovery");
-            throw;
+            _logger.LogError(ex, "⚠️  Error during workflow recovery startup - service disabled (application will continue)");
+            // Fail gracefully - don't crash the app if recovery service has issues
         }
     }
 

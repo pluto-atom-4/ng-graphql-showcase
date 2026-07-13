@@ -398,8 +398,224 @@ pnpm db:migrate
 
 ---
 
+## Migration Safety & Idempotency
+
+### Critical Rule: All Migrations Must Be Idempotent
+
+Migrations must be safe to run multiple times without errors. This prevents duplicate column errors and allows safe deployment retry.
+
+### Idempotent AddColumn Pattern
+
+**❌ BROKEN** (Fails on rerun):
+
+```csharp
+migrationBuilder.AddColumn<int>(
+    name: "AggregateFaultCount",
+    table: "ActivityExecutionRecords",
+    nullable: false,
+    defaultValue: 0);
+```
+
+**✅ SAFE** (Idempotent):
+
+```csharp
+migrationBuilder.Sql(@"
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'dbo'
+        AND TABLE_NAME = 'ActivityExecutionRecords'
+        AND COLUMN_NAME = 'AggregateFaultCount'
+    )
+    BEGIN
+        ALTER TABLE [dbo].[ActivityExecutionRecords]
+        ADD [AggregateFaultCount] INT NOT NULL DEFAULT 0;
+    END
+");
+```
+
+### Idempotent DropColumn Pattern
+
+**❌ BROKEN**:
+
+```csharp
+migrationBuilder.DropColumn(name: "AggregateFaultCount", table: "ActivityExecutionRecords");
+```
+
+**✅ SAFE**:
+
+```csharp
+migrationBuilder.Sql(@"
+    IF EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'dbo'
+        AND TABLE_NAME = 'ActivityExecutionRecords'
+        AND COLUMN_NAME = 'AggregateFaultCount'
+    )
+    BEGIN
+        ALTER TABLE [dbo].[ActivityExecutionRecords]
+        DROP COLUMN [AggregateFaultCount];
+    END
+");
+```
+
+### Idempotent CreateIndex Pattern
+
+**❌ BROKEN**:
+
+```csharp
+migrationBuilder.CreateIndex(
+    name: "IX_Build_Status",
+    table: "Builds",
+    column: "Status");
+```
+
+**✅ SAFE**:
+
+```csharp
+migrationBuilder.Sql(@"
+    IF NOT EXISTS (
+        SELECT 1 FROM sys.indexes
+        WHERE name = 'IX_Build_Status'
+    )
+    BEGIN
+        CREATE INDEX IX_Build_Status ON [dbo].[Builds] (Status);
+    END
+");
+```
+
+### Migration Validation Checklist
+
+Before merging a migration, verify:
+
+- [ ] Migration uses `IF NOT EXISTS` / `IF EXISTS` checks
+- [ ] Down() migration is also idempotent
+- [ ] No duplicate constraint names
+- [ ] Foreign keys have corresponding indexes
+- [ ] Tested against real SQL Server (not in-memory)
+- [ ] No hardcoded data values (use DEFAULT)
+
+### Common Anti-Patterns to Avoid
+
+**❌ No Existence Check**
+
+```csharp
+// Will fail if migration runs twice
+Alter.Table("Users").AddColumn("Email").AsString();
+```
+
+**❌ Hardcoded Data**
+
+```csharp
+// Not idempotent - violates single responsibility
+migrationBuilder.Sql("INSERT INTO Roles VALUES (1, 'Admin')");
+```
+
+**❌ Missing Constraint Names**
+
+```csharp
+// Hard to debug and may conflict
+migrationBuilder.CreateIndex(null, "Users", "Email");
+```
+
+### Testing Idempotent Migrations
+
+```csharp
+[Fact]
+public async Task Migration_ShouldBeIdempotent()
+{
+    // First run
+    await context.Database.MigrateAsync();
+
+    // Second run (simulates deployment retry)
+    await context.Database.MigrateAsync();
+
+    // Should complete without error
+}
+```
+
+Always test against real SQL Server:
+
+```bash
+# Never use in-memory for migration tests
+pnpm docker:up
+sleep 15
+pnpm db:migrate
+dotnet test --filter "MigrationTests"
+```
+
+---
+
+## Manual Migration File Editing
+
+### Naming Convention
+
+Migration files follow EF Core standard:
+
+```
+<YYYYMMDDHHMM>_<Description>.cs
+```
+
+Example: `20260709234406_AddBuildWorkflowRelationship.cs`
+
+- **Timestamp** (`20260709234406`): Auto-generated when migration created (2026-07-09 23:44:06)
+- **Description** (`AddBuildWorkflowRelationship`): Human-readable name from `dotnet ef migrations add <Name>`
+
+### When to Manually Edit Migrations
+
+**✓ Safe to edit (before production deploy):**
+
+- Add idempotency guards (`IF NOT EXISTS` / `IF EXISTS`)
+- Improve SQL safety or performance
+- Add data migrations or transformations
+- Before merged to main/release branch
+
+Example: Convert non-idempotent `AddColumn` to SQL with guard:
+
+```csharp
+// ❌ Original (non-idempotent)
+migrationBuilder.AddColumn<string>(name: "Email", table: "Users", defaultValue: "");
+
+// ✓ Edited for safety (idempotent)
+migrationBuilder.Sql(@"
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'Email'
+    )
+    BEGIN
+        ALTER TABLE [Users] ADD [Email] nvarchar(256) NOT NULL DEFAULT '';
+    END
+");
+```
+
+**✗ Unsafe (after production apply):**
+
+- Never edit already-applied migrations
+- Create new revert migration instead
+
+### Files to NEVER Manually Edit
+
+| File                               | Why                                        | Impact                                    |
+| ---------------------------------- | ------------------------------------------ | ----------------------------------------- |
+| `Designer.cs`                      | Auto-generated EF Core metadata            | Regenerated on `dotnet ef migrations add` |
+| `__EFMigrationsHistory`            | Database table tracking applied migrations | Tracks which migrations were applied      |
+| `FactoryDbContextModelSnapshot.cs` | Auto-generated model state snapshot        | Updated when new migrations created       |
+
+Editing Designer.cs causes EF Core to regenerate it, losing your changes.
+
+### Best Practice Workflow
+
+1. **Create** migration: `dotnet ef migrations add AddFeature`
+2. **Review** generated Up/Down methods
+3. **Edit** for idempotency/safety BEFORE applying
+4. **Test** locally: `dotnet ef database update`
+5. **Commit** and push
+6. **Deploy** to production
+
+---
+
 ## References
 
 - **README.md** — Quickstart, service URLs
 - **docs/ARCHITECTURE.md** — EF Core vs Dapper patterns
 - **docs/DEVELOPMENT.md** — IDE debugging with databases
+- **CLAUDE.md** — Database rules and transaction patterns (see database-rules.md)
