@@ -12,11 +12,17 @@ namespace FactoryApp.Tests.Workflows;
 public class BuildProcessWorkflowPersistenceTests : IAsyncLifetime
 {
     private FactoryDbContext _dbContext = null!;
+    private string _testDbName = null!;
 
     public async Task InitializeAsync()
     {
+        _testDbName = $"FactoryAppDb_Test_{Guid.NewGuid():N}";
+        var connectionString = TestConstants.TestConnectionString.Replace(
+            "Database=FactoryAppDb_Test",
+            $"Database={_testDbName}");
+
         var options = new DbContextOptionsBuilder<FactoryDbContext>()
-            .UseSqlServer(TestConstants.TestConnectionString)
+            .UseSqlServer(connectionString)
             .Options;
 
         _dbContext = new FactoryDbContext(options);
