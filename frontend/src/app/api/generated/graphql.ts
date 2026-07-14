@@ -19,17 +19,315 @@ export type Scalars = {
   Long: { input: number; output: number; }
 };
 
+export type AuthPayload = {
+  __typename?: 'AuthPayload';
+  /** JWT token for authentication */
+  token: Scalars['String']['output'];
+  /** User that authenticated */
+  user: AuthUser;
+};
+
+export type AuthUser = {
+  __typename?: 'AuthUser';
+  /** User email address */
+  email: Scalars['String']['output'];
+  /** User unique identifier */
+  id: Scalars['ID']['output'];
+};
+
+export type Build = {
+  __typename?: 'Build';
+  /** Timestamp when build was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Optional description */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Build unique identifier */
+  id: Scalars['ID']['output'];
+  /** Build name/identifier */
+  name: Scalars['String']['output'];
+  /** Parts included in this build (batched via DataLoader to prevent N+1) */
+  parts: Array<Part>;
+  /** Current build status */
+  status: BuildStatus;
+  /** Test runs for this build (batched via DataLoader to prevent N+1) */
+  testRuns: Array<TestRun>;
+  /** Timestamp of last update */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type BuildStatus =
   | 'COMPLETE'
   | 'FAILED'
   | 'PENDING'
   | 'RUNNING';
 
+/** Build status update from subscription */
+export type BuildStatusUpdate = {
+  __typename?: 'BuildStatusUpdate';
+  /** Build ID being updated */
+  buildId: Scalars['ID']['output'];
+  /** New build status */
+  newStatus: BuildStatus;
+  /** Previous build status */
+  oldStatus: BuildStatus;
+  /** Timestamp of update */
+  timestamp: Scalars['DateTime']['output'];
+};
+
+export type Mutation = {
+  __typename?: 'Mutation';
+  /** Add a part to a build */
+  addPart: Part;
+  /** Create a new build */
+  createBuild: Build;
+  /** Authenticate user with email and password */
+  login: AuthPayload;
+  /** Submit a test run for a build */
+  submitTestRun: TestRun;
+  /** Update build status and emit buildStatusUpdated subscription event */
+  updateBuildStatus: Build;
+};
+
+
+export type MutationAddPartArgs = {
+  buildId: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+  quantity: Scalars['Decimal']['input'];
+  sku: Scalars['String']['input'];
+};
+
+
+export type MutationCreateBuildArgs = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+};
+
+
+export type MutationLoginArgs = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
+
+export type MutationSubmitTestRunArgs = {
+  buildId: Scalars['ID']['input'];
+  fileUrl?: InputMaybe<Scalars['String']['input']>;
+  result?: InputMaybe<Scalars['String']['input']>;
+  status: TestStatus;
+};
+
+
+export type MutationUpdateBuildStatusArgs = {
+  id: Scalars['ID']['input'];
+  status: BuildStatus;
+};
+
+export type PaginatedBuilds = {
+  __typename?: 'PaginatedBuilds';
+  /** Whether there is a next page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there is a previous page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** Array of builds for the current page */
+  items: Array<Build>;
+  /** Total number of builds */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type Part = {
+  __typename?: 'Part';
+  /** Build this part belongs to */
+  buildId: Scalars['ID']['output'];
+  /** Timestamp when part was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Part unique identifier */
+  id: Scalars['ID']['output'];
+  /** Part name */
+  name: Scalars['String']['output'];
+  /** Quantity in build */
+  quantity: Scalars['Decimal']['output'];
+  /** Stock keeping unit */
+  sku: Scalars['String']['output'];
+};
+
+export type Query = {
+  __typename?: 'Query';
+  /** Fetch a build by ID */
+  build?: Maybe<Build>;
+  /** Fetch paginated builds */
+  builds: PaginatedBuilds;
+  /** Fetch workflow instance by ID with full history and activities */
+  workflow?: Maybe<WorkflowInstance>;
+  /** Fetch workflow history records with pagination */
+  workflowHistory: Array<WorkflowHistory>;
+  /** Fetch workflow instances for a specific build */
+  workflowsByBuild: Array<WorkflowInstance>;
+};
+
+
+export type QueryBuildArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryBuildsArgs = {
+  limit: Scalars['Int']['input'];
+  offset: Scalars['Int']['input'];
+};
+
+
+export type QueryWorkflowArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkflowHistoryArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  workflowId: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkflowsByBuildArgs = {
+  buildId: Scalars['ID']['input'];
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  /** Subscribe to real-time build status updates for a specific build */
+  buildStatusUpdated: BuildStatusUpdate;
+  /** Subscribe to test run completion events for a specific build */
+  testRunCompleted: TestRunUpdate;
+  /** Subscribe to new workflow history events (real-time activity records) */
+  workflowHistoryAdded: WorkflowHistory;
+  /** Subscribe to workflow status changes (Idle → Running → Completed/Faulted) */
+  workflowUpdated: WorkflowInstance;
+};
+
+
+export type SubscriptionBuildStatusUpdatedArgs = {
+  buildId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionTestRunCompletedArgs = {
+  buildId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionWorkflowHistoryAddedArgs = {
+  workflowId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionWorkflowUpdatedArgs = {
+  workflowId: Scalars['ID']['input'];
+};
+
+export type TestRun = {
+  __typename?: 'TestRun';
+  /** Build this test run belongs to */
+  buildId: Scalars['ID']['output'];
+  /** Timestamp when test completed */
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Timestamp when test was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** URL to test result file */
+  fileUrl?: Maybe<Scalars['String']['output']>;
+  /** TestRun unique identifier */
+  id: Scalars['ID']['output'];
+  /** Test result summary */
+  result?: Maybe<Scalars['String']['output']>;
+  /** Current test status */
+  status: TestStatus;
+  /** Timestamp of last update */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** Test run completion update from subscription */
+export type TestRunUpdate = {
+  __typename?: 'TestRunUpdate';
+  /** Build ID */
+  buildId: Scalars['ID']['output'];
+  /** Test status */
+  status: TestStatus;
+  /** Test run ID */
+  testRunId: Scalars['ID']['output'];
+  /** Timestamp of update */
+  timestamp: Scalars['DateTime']['output'];
+};
+
 export type TestStatus =
   | 'FAILED'
   | 'PASSED'
   | 'PENDING'
   | 'RUNNING';
+
+/** Workflow activity execution record */
+export type WorkflowActivity = {
+  __typename?: 'WorkflowActivity';
+  /** Execution duration in milliseconds */
+  durationMs?: Maybe<Scalars['Long']['output']>;
+  /** Activity end timestamp */
+  endTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Error message if activity failed */
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  /** Activity display name */
+  name: Scalars['String']['output'];
+  /** Activity start timestamp */
+  startTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Activity execution status (Pending, Running, Completed, Faulted) */
+  status: Scalars['String']['output'];
+};
+
+/** Workflow history record (event from WorkflowHistoryRecord entity) */
+export type WorkflowHistory = {
+  __typename?: 'WorkflowHistory';
+  /** Activity or workflow name */
+  activityName: Scalars['String']['output'];
+  /** Associated build (if linked) */
+  buildId?: Maybe<Scalars['ID']['output']>;
+  /** Total execution time in milliseconds */
+  elapsedMilliseconds?: Maybe<Scalars['Long']['output']>;
+  /** Error message if event represents failure */
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  /** Event type (Created, Started, ActivityExecuted, Completed, Suspended, Failed, etc.) */
+  eventType: Scalars['String']['output'];
+  /** Activity execution end timestamp */
+  executionCompleted?: Maybe<Scalars['DateTime']['output']>;
+  /** Activity execution start timestamp */
+  executionStarted?: Maybe<Scalars['DateTime']['output']>;
+  /** History record unique identifier */
+  id: Scalars['ID']['output'];
+  /** New status after this transition */
+  newStatus: Scalars['String']['output'];
+  /** Previous status before this transition */
+  oldStatus: Scalars['String']['output'];
+  /** Timestamp when event was recorded */
+  recordedAt: Scalars['DateTime']['output'];
+  /** JSON snapshot of workflow state at this event */
+  stateSnapshot?: Maybe<Scalars['String']['output']>;
+  /** Elsa workflow instance identifier */
+  workflowInstanceId: Scalars['ID']['output'];
+};
+
+/** Workflow instance with history and activity details */
+export type WorkflowInstance = {
+  __typename?: 'WorkflowInstance';
+  /** Individual activity execution records */
+  activities: Array<WorkflowActivity>;
+  /** Associated build identifier (if linked) */
+  buildId?: Maybe<Scalars['ID']['output']>;
+  /** Workflow completion timestamp */
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Complete workflow history (state transitions, events) */
+  history: Array<WorkflowHistory>;
+  /** Workflow instance unique identifier */
+  id: Scalars['ID']['output'];
+  /** Workflow start timestamp */
+  startedAt: Scalars['DateTime']['output'];
+  /** Workflow execution status (Idle, Running, Completed, Faulted) */
+  status: Scalars['String']['output'];
+};
 
 export type BuildStatus =
   | 'COMPLETE'

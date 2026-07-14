@@ -14,7 +14,21 @@ const config: CodegenConfig = {
         skipTypename: false,
         strictScalars: true,
         enumsAsTypes: true,
-        onlyOperationTypes: true,
+        onlyOperationTypes: false,
+        enumValues: {
+          BuildStatus: {
+            PENDING: 'PENDING',
+            RUNNING: 'RUNNING',
+            COMPLETE: 'COMPLETE',
+            FAILED: 'FAILED',
+          },
+          TestStatus: {
+            PENDING: 'PENDING',
+            RUNNING: 'RUNNING',
+            PASSED: 'PASSED',
+            FAILED: 'FAILED',
+          },
+        },
         scalars: {
           DateTime: 'Date',
           Decimal: 'number',
