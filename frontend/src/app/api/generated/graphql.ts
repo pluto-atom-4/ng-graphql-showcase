@@ -16,6 +16,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
   DateTime: { input: Date; output: Date; }
   Decimal: { input: number; output: number; }
+  Long: { input: number; output: number; }
 };
 
 export type AuthPayload = {
@@ -155,6 +156,12 @@ export type Query = {
   build?: Maybe<Build>;
   /** Fetch paginated builds */
   builds: PaginatedBuilds;
+  /** Fetch workflow instance by ID with full history and activities */
+  workflow?: Maybe<WorkflowInstance>;
+  /** Fetch workflow history records with pagination */
+  workflowHistory: Array<WorkflowHistory>;
+  /** Fetch workflow instances for a specific build */
+  workflowsByBuild: Array<WorkflowInstance>;
 };
 
 
@@ -168,12 +175,32 @@ export type QueryBuildsArgs = {
   offset: Scalars['Int']['input'];
 };
 
+
+export type QueryWorkflowArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkflowHistoryArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  workflowId: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkflowsByBuildArgs = {
+  buildId: Scalars['ID']['input'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   /** Subscribe to real-time build status updates for a specific build */
   buildStatusUpdated: BuildStatusUpdate;
   /** Subscribe to test run completion events for a specific build */
   testRunCompleted: TestRunUpdate;
+  /** Subscribe to new workflow history events (real-time activity records) */
+  workflowHistoryAdded: WorkflowHistory;
+  /** Subscribe to workflow status changes (Idle → Running → Completed/Faulted) */
+  workflowUpdated: WorkflowInstance;
 };
 
 
@@ -184,6 +211,16 @@ export type SubscriptionBuildStatusUpdatedArgs = {
 
 export type SubscriptionTestRunCompletedArgs = {
   buildId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionWorkflowHistoryAddedArgs = {
+  workflowId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionWorkflowUpdatedArgs = {
+  workflowId: Scalars['ID']['input'];
 };
 
 export type TestRun = {
@@ -218,6 +255,85 @@ export type TestRunUpdate = {
   /** Timestamp of update */
   timestamp: Scalars['DateTime']['output'];
 };
+
+export type TestStatus =
+  | 'FAILED'
+  | 'PASSED'
+  | 'PENDING'
+  | 'RUNNING';
+
+/** Workflow activity execution record */
+export type WorkflowActivity = {
+  __typename?: 'WorkflowActivity';
+  /** Execution duration in milliseconds */
+  durationMs?: Maybe<Scalars['Long']['output']>;
+  /** Activity end timestamp */
+  endTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Error message if activity failed */
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  /** Activity display name */
+  name: Scalars['String']['output'];
+  /** Activity start timestamp */
+  startTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Activity execution status (Pending, Running, Completed, Faulted) */
+  status: Scalars['String']['output'];
+};
+
+/** Workflow history record (event from WorkflowHistoryRecord entity) */
+export type WorkflowHistory = {
+  __typename?: 'WorkflowHistory';
+  /** Activity or workflow name */
+  activityName: Scalars['String']['output'];
+  /** Associated build (if linked) */
+  buildId?: Maybe<Scalars['ID']['output']>;
+  /** Total execution time in milliseconds */
+  elapsedMilliseconds?: Maybe<Scalars['Long']['output']>;
+  /** Error message if event represents failure */
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  /** Event type (Created, Started, ActivityExecuted, Completed, Suspended, Failed, etc.) */
+  eventType: Scalars['String']['output'];
+  /** Activity execution end timestamp */
+  executionCompleted?: Maybe<Scalars['DateTime']['output']>;
+  /** Activity execution start timestamp */
+  executionStarted?: Maybe<Scalars['DateTime']['output']>;
+  /** History record unique identifier */
+  id: Scalars['ID']['output'];
+  /** New status after this transition */
+  newStatus: Scalars['String']['output'];
+  /** Previous status before this transition */
+  oldStatus: Scalars['String']['output'];
+  /** Timestamp when event was recorded */
+  recordedAt: Scalars['DateTime']['output'];
+  /** JSON snapshot of workflow state at this event */
+  stateSnapshot?: Maybe<Scalars['String']['output']>;
+  /** Elsa workflow instance identifier */
+  workflowInstanceId: Scalars['ID']['output'];
+};
+
+/** Workflow instance with history and activity details */
+export type WorkflowInstance = {
+  __typename?: 'WorkflowInstance';
+  /** Individual activity execution records */
+  activities: Array<WorkflowActivity>;
+  /** Associated build identifier (if linked) */
+  buildId?: Maybe<Scalars['ID']['output']>;
+  /** Workflow completion timestamp */
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Complete workflow history (state transitions, events) */
+  history: Array<WorkflowHistory>;
+  /** Workflow instance unique identifier */
+  id: Scalars['ID']['output'];
+  /** Workflow start timestamp */
+  startedAt: Scalars['DateTime']['output'];
+  /** Workflow execution status (Idle, Running, Completed, Faulted) */
+  status: Scalars['String']['output'];
+};
+
+export type BuildStatus =
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'PENDING'
+  | 'RUNNING';
 
 export type TestStatus =
   | 'FAILED'
