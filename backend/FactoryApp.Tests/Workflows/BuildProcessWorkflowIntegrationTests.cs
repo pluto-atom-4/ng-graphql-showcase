@@ -16,6 +16,7 @@ public class BuildProcessWorkflowIntegrationTests : IAsyncLifetime
 {
     private readonly Mock<ITopicEventSender> _eventSenderMock;
     private FactoryDbContext _dbContext = null!;
+    private string _testDbName = null!;
 
     public BuildProcessWorkflowIntegrationTests()
     {
@@ -24,12 +25,18 @@ public class BuildProcessWorkflowIntegrationTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        _testDbName = $"FactoryAppDb_Test_{Guid.NewGuid():N}";
+        var connectionString = "Server=localhost,1433;Database=FactoryAppDb_Test;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;".Replace(
+            "Database=FactoryAppDb_Test",
+            $"Database={_testDbName}");
+
         var options = new DbContextOptionsBuilder<FactoryDbContext>()
-            .UseSqlServer("Server=localhost,1433;Database=FactoryAppDb_Test;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;")
+            .UseSqlServer(connectionString)
             .Options;
 
         _dbContext = new FactoryDbContext(options);
-        await _dbContext.Database.EnsureCreatedAsync();
+        await _dbContext.Database.EnsureDeletedAsync();
+        await _dbContext.Database.MigrateAsync();
     }
 
     public async Task DisposeAsync()
