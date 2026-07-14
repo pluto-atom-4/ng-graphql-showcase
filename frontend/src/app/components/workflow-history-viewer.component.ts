@@ -194,8 +194,14 @@ export class WorkflowHistoryViewerComponent
       .subscribeToWorkflowUpdates(id)
       .pipe(takeUntil(this.destroy$))
       .subscribe((updated) => {
-        if (updated) {
-          this.workflow.set(updated);
+        if (updated && this.workflow()) {
+          // Merge subscription update with existing workflow (preserve history)
+          const current = this.workflow()!;
+          this.workflow.set({
+            ...current,
+            ...updated,
+            history: current.history, // Keep existing history
+          });
           this.lastUpdated.set(new Date());
           this.isSubscribed.set(true);
         }
