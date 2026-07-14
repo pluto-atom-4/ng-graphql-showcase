@@ -14,7 +14,7 @@ const config: CodegenConfig = {
         skipTypename: false,
         strictScalars: true,
         enumsAsTypes: true,
-        onlyOperationTypes: false,
+        onlyOperationTypes: true,
         scalars: {
           DateTime: 'Date',
           Decimal: 'number',
