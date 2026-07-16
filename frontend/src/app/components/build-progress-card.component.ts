@@ -1,9 +1,10 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy, signal, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, signal, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { computed } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { map, startWith, Subscription } from 'rxjs';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
+import { BuildStatusService } from '../api/build-status.service';
 import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 
 /**
@@ -73,19 +74,52 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   @Input() buildId = 'build-uuid-123';
   @Output() buildClicked = new EventEmitter<string>();
 
+  private buildStatusService?: BuildStatusService;
   private subscription: Subscription | null = null;
 
   buildStatus = signal<BuildStatusUpdate>(this.getDefaultUpdate());
 
+  constructor() {
+    try {
+      this.buildStatusService = inject(BuildStatusService);
+    } catch (error) {
+      console.warn('BuildStatusService injection failed, continuing without subscriptions:', error);
+    }
+  }
+
   ngOnInit(): void {
-    // BuildStatusService injection disabled to diagnose circular DI
+    if (!this.buildStatusService) {
+      console.warn(`BuildStatusService not available for ${this.buildId}`);
+      return;
+    }
+
+    try {
+      this.buildStatusService.subscribeToBuildStatus(this.buildId);
+
+      const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
+        map(updates => this.getLatestUpdate(updates)),
+        startWith(this.getDefaultUpdate())
+      );
+
+      this.subscription = buildStatusStream$.subscribe(
+        update => {
+          this.buildStatus.set(update);
+        },
+        error => {
+          console.warn(`Subscription error for build ${this.buildId}:`, error);
+        }
+      );
+    } catch (error) {
+      console.warn(`Failed to initialize subscription for ${this.buildId}:`, error);
+    }
   }
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
+    this.buildStatusService?.disconnect(this.buildId);
   }
 
-  private getLatestUpdate(updates: any[]): BuildStatusUpdate {
+  private getLatestUpdate(updates: BuildStatusUpdate[]): BuildStatusUpdate {
     return updates[updates.length - 1] || this.getDefaultUpdate();
   }
 
