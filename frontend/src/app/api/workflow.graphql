@@ -1,0 +1,106 @@
+query GetWorkflow($id: ID!) {
+  workflow(id: $id) {
+    id
+    buildId
+    status
+    startedAt
+    completedAt
+    activities {
+      name
+      status
+      startTime
+      endTime
+      durationMs
+      errorMessage
+    }
+    history {
+      id
+      workflowInstanceId
+      buildId
+      eventType
+      activityName
+      oldStatus
+      newStatus
+      stateSnapshot
+      errorMessage
+      recordedAt
+      executionStarted
+      executionCompleted
+      elapsedMilliseconds
+    }
+  }
+}
+
+query GetWorkflowsByBuild($buildId: ID!) {
+  workflowsByBuild(buildId: $buildId) {
+    id
+    buildId
+    status
+    startedAt
+    completedAt
+    activities {
+      name
+      status
+      durationMs
+    }
+    history {
+      id
+      eventType
+      recordedAt
+    }
+  }
+}
+
+query GetWorkflowHistory($workflowId: ID!, $limit: Int = 100) {
+  workflowHistory(workflowId: $workflowId, limit: $limit) {
+    id
+    workflowInstanceId
+    buildId
+    eventType
+    activityName
+    oldStatus
+    newStatus
+    stateSnapshot
+    errorMessage
+    recordedAt
+    executionStarted
+    executionCompleted
+    elapsedMilliseconds
+  }
+}
+
+subscription WorkflowUpdated($workflowId: ID!) {
+  workflowUpdated(workflowId: $workflowId) {
+    id
+    buildId
+    status
+    startedAt
+    completedAt
+    activities {
+      name
+      status
+      startTime
+      endTime
+      durationMs
+      errorMessage
+    }
+  }
+}
+
+subscription WorkflowHistoryAdded($workflowId: ID!) {
+  workflowHistoryAdded(workflowId: $workflowId) {
+    id
+    workflowInstanceId
+    buildId
+    eventType
+    activityName
+    oldStatus
+    newStatus
+    stateSnapshot
+    errorMessage
+    recordedAt
+    executionStarted
+    executionCompleted
+    elapsedMilliseconds
+  }
+}

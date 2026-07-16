@@ -16,6 +16,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
   DateTime: { input: Date; output: Date; }
   Decimal: { input: number; output: number; }
+  Long: { input: number; output: number; }
 };
 
 export type AuthPayload = {
@@ -155,6 +156,12 @@ export type Query = {
   build?: Maybe<Build>;
   /** Fetch paginated builds */
   builds: PaginatedBuilds;
+  /** Fetch workflow instance by ID with full history and activities */
+  workflow?: Maybe<WorkflowInstance>;
+  /** Fetch workflow history records with pagination */
+  workflowHistory: Array<WorkflowHistory>;
+  /** Fetch workflow instances for a specific build */
+  workflowsByBuild: Array<WorkflowInstance>;
 };
 
 
@@ -168,12 +175,32 @@ export type QueryBuildsArgs = {
   offset: Scalars['Int']['input'];
 };
 
+
+export type QueryWorkflowArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkflowHistoryArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  workflowId: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkflowsByBuildArgs = {
+  buildId: Scalars['ID']['input'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   /** Subscribe to real-time build status updates for a specific build */
   buildStatusUpdated: BuildStatusUpdate;
   /** Subscribe to test run completion events for a specific build */
   testRunCompleted: TestRunUpdate;
+  /** Subscribe to new workflow history events (real-time activity records) */
+  workflowHistoryAdded: WorkflowHistory;
+  /** Subscribe to workflow status changes (Idle → Running → Completed/Faulted) */
+  workflowUpdated: WorkflowInstance;
 };
 
 
@@ -184,6 +211,16 @@ export type SubscriptionBuildStatusUpdatedArgs = {
 
 export type SubscriptionTestRunCompletedArgs = {
   buildId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionWorkflowHistoryAddedArgs = {
+  workflowId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionWorkflowUpdatedArgs = {
+  workflowId: Scalars['ID']['input'];
 };
 
 export type TestRun = {
@@ -224,6 +261,110 @@ export type TestStatus =
   | 'PASSED'
   | 'PENDING'
   | 'RUNNING';
+
+/** Workflow activity execution record */
+export type WorkflowActivity = {
+  __typename?: 'WorkflowActivity';
+  /** Execution duration in milliseconds */
+  durationMs?: Maybe<Scalars['Long']['output']>;
+  /** Activity end timestamp */
+  endTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Error message if activity failed */
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  /** Activity display name */
+  name: Scalars['String']['output'];
+  /** Activity start timestamp */
+  startTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Activity execution status (Pending, Running, Completed, Faulted) */
+  status: Scalars['String']['output'];
+};
+
+/** Workflow history record (event from WorkflowHistoryRecord entity) */
+export type WorkflowHistory = {
+  __typename?: 'WorkflowHistory';
+  /** Activity or workflow name */
+  activityName: Scalars['String']['output'];
+  /** Associated build (if linked) */
+  buildId?: Maybe<Scalars['ID']['output']>;
+  /** Total execution time in milliseconds */
+  elapsedMilliseconds?: Maybe<Scalars['Long']['output']>;
+  /** Error message if event represents failure */
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  /** Event type (Created, Started, ActivityExecuted, Completed, Suspended, Failed, etc.) */
+  eventType: Scalars['String']['output'];
+  /** Activity execution end timestamp */
+  executionCompleted?: Maybe<Scalars['DateTime']['output']>;
+  /** Activity execution start timestamp */
+  executionStarted?: Maybe<Scalars['DateTime']['output']>;
+  /** History record unique identifier */
+  id: Scalars['ID']['output'];
+  /** New status after this transition */
+  newStatus: Scalars['String']['output'];
+  /** Previous status before this transition */
+  oldStatus: Scalars['String']['output'];
+  /** Timestamp when event was recorded */
+  recordedAt: Scalars['DateTime']['output'];
+  /** JSON snapshot of workflow state at this event */
+  stateSnapshot?: Maybe<Scalars['String']['output']>;
+  /** Elsa workflow instance identifier */
+  workflowInstanceId: Scalars['ID']['output'];
+};
+
+/** Workflow instance with history and activity details */
+export type WorkflowInstance = {
+  __typename?: 'WorkflowInstance';
+  /** Individual activity execution records */
+  activities: Array<WorkflowActivity>;
+  /** Associated build identifier (if linked) */
+  buildId?: Maybe<Scalars['ID']['output']>;
+  /** Workflow completion timestamp */
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Complete workflow history (state transitions, events) */
+  history: Array<WorkflowHistory>;
+  /** Workflow instance unique identifier */
+  id: Scalars['ID']['output'];
+  /** Workflow start timestamp */
+  startedAt: Scalars['DateTime']['output'];
+  /** Workflow execution status (Idle, Running, Completed, Faulted) */
+  status: Scalars['String']['output'];
+};
+
+
+export type GetWorkflowQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type GetWorkflowQuery = { workflow: { id: string, buildId: string | null, status: string, startedAt: Date, completedAt: Date | null, activities: Array<{ name: string, status: string, startTime: Date | null, endTime: Date | null, durationMs: number | null, errorMessage: string | null }>, history: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> } | null };
+
+export type GetWorkflowsByBuildQueryVariables = Exact<{
+  buildId: string | number;
+}>;
+
+
+export type GetWorkflowsByBuildQuery = { workflowsByBuild: Array<{ id: string, buildId: string | null, status: string, startedAt: Date, completedAt: Date | null, activities: Array<{ name: string, status: string, durationMs: number | null }>, history: Array<{ id: string, eventType: string, recordedAt: Date }> }> };
+
+export type GetWorkflowHistoryQueryVariables = Exact<{
+  workflowId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type GetWorkflowHistoryQuery = { workflowHistory: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> };
+
+export type WorkflowUpdatedSubscriptionVariables = Exact<{
+  workflowId: string | number;
+}>;
+
+
+export type WorkflowUpdatedSubscription = { workflowUpdated: { id: string, buildId: string | null, status: string, startedAt: Date, completedAt: Date | null, activities: Array<{ name: string, status: string, startTime: Date | null, endTime: Date | null, durationMs: number | null, errorMessage: string | null }> } };
+
+export type WorkflowHistoryAddedSubscriptionVariables = Exact<{
+  workflowId: string | number;
+}>;
+
+
+export type WorkflowHistoryAddedSubscription = { workflowHistoryAdded: { id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null } };
 
 export type GetBuildQueryVariables = Exact<{
   id: string | number;
@@ -290,6 +431,173 @@ export type TestRunCompletedSubscriptionVariables = Exact<{
 
 export type TestRunCompletedSubscription = { testRunCompleted: { testRunId: string, buildId: string, status: TestStatus, timestamp: Date } };
 
+export const GetWorkflowDocument = gql`
+    query GetWorkflow($id: ID!) {
+  workflow(id: $id) {
+    id
+    buildId
+    status
+    startedAt
+    completedAt
+    activities {
+      name
+      status
+      startTime
+      endTime
+      durationMs
+      errorMessage
+    }
+    history {
+      id
+      workflowInstanceId
+      buildId
+      eventType
+      activityName
+      oldStatus
+      newStatus
+      stateSnapshot
+      errorMessage
+      recordedAt
+      executionStarted
+      executionCompleted
+      elapsedMilliseconds
+    }
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class GetWorkflowGQL extends Apollo.Query<GetWorkflowQuery, GetWorkflowQueryVariables> {
+    document = GetWorkflowDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
+export const GetWorkflowsByBuildDocument = gql`
+    query GetWorkflowsByBuild($buildId: ID!) {
+  workflowsByBuild(buildId: $buildId) {
+    id
+    buildId
+    status
+    startedAt
+    completedAt
+    activities {
+      name
+      status
+      durationMs
+    }
+    history {
+      id
+      eventType
+      recordedAt
+    }
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class GetWorkflowsByBuildGQL extends Apollo.Query<GetWorkflowsByBuildQuery, GetWorkflowsByBuildQueryVariables> {
+    document = GetWorkflowsByBuildDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
+export const GetWorkflowHistoryDocument = gql`
+    query GetWorkflowHistory($workflowId: ID!, $limit: Int = 100) {
+  workflowHistory(workflowId: $workflowId, limit: $limit) {
+    id
+    workflowInstanceId
+    buildId
+    eventType
+    activityName
+    oldStatus
+    newStatus
+    stateSnapshot
+    errorMessage
+    recordedAt
+    executionStarted
+    executionCompleted
+    elapsedMilliseconds
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class GetWorkflowHistoryGQL extends Apollo.Query<GetWorkflowHistoryQuery, GetWorkflowHistoryQueryVariables> {
+    document = GetWorkflowHistoryDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
+export const WorkflowUpdatedDocument = gql`
+    subscription WorkflowUpdated($workflowId: ID!) {
+  workflowUpdated(workflowId: $workflowId) {
+    id
+    buildId
+    status
+    startedAt
+    completedAt
+    activities {
+      name
+      status
+      startTime
+      endTime
+      durationMs
+      errorMessage
+    }
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class WorkflowUpdatedGQL extends Apollo.Subscription<WorkflowUpdatedSubscription, WorkflowUpdatedSubscriptionVariables> {
+    document = WorkflowUpdatedDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
+export const WorkflowHistoryAddedDocument = gql`
+    subscription WorkflowHistoryAdded($workflowId: ID!) {
+  workflowHistoryAdded(workflowId: $workflowId) {
+    id
+    workflowInstanceId
+    buildId
+    eventType
+    activityName
+    oldStatus
+    newStatus
+    stateSnapshot
+    errorMessage
+    recordedAt
+    executionStarted
+    executionCompleted
+    elapsedMilliseconds
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class WorkflowHistoryAddedGQL extends Apollo.Subscription<WorkflowHistoryAddedSubscription, WorkflowHistoryAddedSubscriptionVariables> {
+    document = WorkflowHistoryAddedDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
 export const GetBuildDocument = gql`
     query GetBuild($id: ID!) {
   build(id: $id) {

@@ -4,6 +4,7 @@
 
 scalar DateTime
 scalar Decimal
+scalar Long
 
 enum BuildStatus {
   PENDING
@@ -151,12 +152,108 @@ type TestRunUpdate {
   timestamp: DateTime!
 }
 
+"""Workflow activity execution record"""
+type WorkflowActivity {
+  """Activity display name"""
+  name: String!
+
+  """Activity execution status (Pending, Running, Completed, Faulted)"""
+  status: String!
+
+  """Activity start timestamp"""
+  startTime: DateTime
+
+  """Activity end timestamp"""
+  endTime: DateTime
+
+  """Execution duration in milliseconds"""
+  durationMs: Long
+
+  """Error message if activity failed"""
+  errorMessage: String
+}
+
+"""Workflow instance with history and activity details"""
+type WorkflowInstance {
+  """Workflow instance unique identifier"""
+  id: ID!
+
+  """Associated build identifier (if linked)"""
+  buildId: ID
+
+  """Workflow execution status (Idle, Running, Completed, Faulted)"""
+  status: String!
+
+  """Workflow start timestamp"""
+  startedAt: DateTime!
+
+  """Workflow completion timestamp"""
+  completedAt: DateTime
+
+  """Individual activity execution records"""
+  activities: [WorkflowActivity!]!
+
+  """Complete workflow history (state transitions, events)"""
+  history: [WorkflowHistory!]!
+}
+
+"""Workflow history record (event from WorkflowHistoryRecord entity)"""
+type WorkflowHistory {
+  """History record unique identifier"""
+  id: ID!
+
+  """Elsa workflow instance identifier"""
+  workflowInstanceId: ID!
+
+  """Associated build (if linked)"""
+  buildId: ID
+
+  """Event type (Created, Started, ActivityExecuted, Completed, Suspended, Failed, etc.)"""
+  eventType: String!
+
+  """Activity or workflow name"""
+  activityName: String!
+
+  """Previous status before this transition"""
+  oldStatus: String!
+
+  """New status after this transition"""
+  newStatus: String!
+
+  """JSON snapshot of workflow state at this event"""
+  stateSnapshot: String
+
+  """Error message if event represents failure"""
+  errorMessage: String
+
+  """Timestamp when event was recorded"""
+  recordedAt: DateTime!
+
+  """Activity execution start timestamp"""
+  executionStarted: DateTime
+
+  """Activity execution end timestamp"""
+  executionCompleted: DateTime
+
+  """Total execution time in milliseconds"""
+  elapsedMilliseconds: Long
+}
+
 type Query {
   """Fetch a build by ID"""
   build(id: ID!): Build
 
   """Fetch paginated builds"""
   builds(limit: Int!, offset: Int!): PaginatedBuilds!
+
+  """Fetch workflow instance by ID with full history and activities"""
+  workflow(id: ID!): WorkflowInstance
+
+  """Fetch workflow instances for a specific build"""
+  workflowsByBuild(buildId: ID!): [WorkflowInstance!]!
+
+  """Fetch workflow history records with pagination"""
+  workflowHistory(workflowId: ID!, limit: Int = 100): [WorkflowHistory!]!
 }
 
 type Mutation {
@@ -182,4 +279,10 @@ type Subscription {
 
   """Subscribe to test run completion events for a specific build"""
   testRunCompleted(buildId: ID!): TestRunUpdate!
+
+  """Subscribe to workflow status changes (Idle → Running → Completed/Faulted)"""
+  workflowUpdated(workflowId: ID!): WorkflowInstance!
+
+  """Subscribe to new workflow history events (real-time activity records)"""
+  workflowHistoryAdded(workflowId: ID!): WorkflowHistory!
 }
