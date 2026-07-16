@@ -1,10 +1,9 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy, inject, signal, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, signal, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { computed } from '@angular/core';
-import { map, startWith, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
-import { BuildStatusService } from '../api/build-status.service';
 import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 
 /**
@@ -74,22 +73,12 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   @Input() buildId = 'build-uuid-123';
   @Output() buildClicked = new EventEmitter<string>();
 
-  private buildStatusService = inject(BuildStatusService);
   private subscription: Subscription | null = null;
 
   buildStatus = signal<BuildStatusUpdate>(this.getDefaultUpdate());
 
   ngOnInit(): void {
-    this.buildStatusService.subscribeToBuildStatus(this.buildId);
-
-    const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
-      map(updates => this.getLatestUpdate(updates)),
-      startWith(this.getDefaultUpdate())
-    );
-
-    this.subscription = buildStatusStream$.subscribe(update => {
-      this.buildStatus.set(update);
-    });
+    // BuildStatusService injection disabled to diagnose circular DI
   }
 
   ngOnDestroy(): void {
