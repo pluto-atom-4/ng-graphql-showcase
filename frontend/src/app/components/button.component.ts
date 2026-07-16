@@ -45,18 +45,12 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <!-- 3. Read the signals/computed values directly in the template by calling them () -->
     <button
       [attr.disabled]="isDisabled() ? true : null"
       [ngClass]="classes()"
       (click)="onClickHandler()"
     >
-      @if (!loading()) {
-        <span>{{ label() }}</span>
-      }
-      @if (loading()) {
-        <span class="loading loading-spinner loading-sm"></span>
-      }
+      <span>{{ label() }}</span>
     </button>
   `,
 })

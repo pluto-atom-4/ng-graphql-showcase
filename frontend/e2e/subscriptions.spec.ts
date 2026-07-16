@@ -47,22 +47,17 @@ test.describe('GraphQL Subscriptions', () => {
     await expect(appRoot).toBeVisible();
   });
 
-  test('should update UI when subscription receives data', async ({ page, context }) => {
+  test('should update UI when subscription receives data', async ({ page }) => {
     // Open dev tools console to monitor subscription messages
     const consoleMessages: string[] = [];
     page.on('console', (msg) => {
-      if (msg.type() === 'log' || msg.type() === 'warn' || msg.type() === 'error') {
+      if (msg.type() === 'log' || msg.type() === 'error') {
         consoleMessages.push(`[${msg.type()}] ${msg.text()}`);
       }
     });
 
     await page.goto('/');
     await page.waitForTimeout(2000);
-
-    // Check for subscription-related console messages
-    const hasSubscriptionSetup = consoleMessages.some((msg) =>
-      msg.toLowerCase().includes('subscription')
-    );
 
     // At minimum, app should load without subscription errors
     const errorMessages = consoleMessages.filter((msg) => msg.includes('[error]'));
@@ -145,5 +140,179 @@ test.describe('GraphQL Subscriptions', () => {
     // DaisyUI should apply base colors
     expect(bodyStyles.backgroundColor).toBeTruthy();
     expect(bodyStyles.color).toBeTruthy();
+  });
+
+  test('should render dashboard header and title', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Check for dashboard heading
+    const heading = page.locator('h1');
+    await expect(heading).toContainText('Manufacturing Workflow Dashboard');
+  });
+
+  test('should render buttons with labels', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Find button components
+    const buttons = page.locator('app-button');
+    const count = await buttons.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Check that buttons have span content with labels
+    const primaryButton = buttons.first();
+    const buttonText = await primaryButton.locator('span').textContent();
+    expect(buttonText).toBeTruthy();
+    expect(buttonText?.trim().length).toBeGreaterThan(0);
+  });
+
+  test('should render build progress cards', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Check for build progress card components
+    const cards = page.locator('app-build-progress-card');
+    const count = await cards.count();
+    expect(count).toBeGreaterThanOrEqual(3); // At least 3 demo builds
+  });
+
+  test('should render badges with variant styling', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Check for badge components
+    const badges = page.locator('app-badge');
+    const count = await badges.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Verify badges have labels
+    const firstBadge = badges.first();
+    const badgeText = await firstBadge.textContent();
+    expect(badgeText).toBeTruthy();
+  });
+
+  test('should render component showcase section', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Check for component showcase card
+    const showcaseCard = page.locator('app-card');
+    await expect(showcaseCard.first()).toBeVisible();
+
+    // Verify showcase has multiple button variants
+    const buttonVariants = ['Primary', 'Secondary', 'Accent', 'Ghost', 'Outline'];
+    for (const variant of buttonVariants) {
+      const button = page.locator('app-button', { has: page.locator(`span:has-text("${variant}")`) });
+      await expect(button).toBeVisible();
+    }
+  });
+
+  test('should render build cards grid layout', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Check grid structure
+    const gridDiv = page.locator('div.grid');
+    await expect(gridDiv).toBeVisible();
+
+    // Check for build cards inside
+    const cards = page.locator('app-build-progress-card');
+    const firstCard = cards.first();
+    await expect(firstCard).toBeVisible();
+  });
+
+  test('page should have no critical console errors', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        // Filter out expected errors
+        const text = msg.text();
+        if (!text.includes('Failed to load resource') && !text.includes('WebSocket')) {
+          errors.push(text);
+        }
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+    await page.waitForTimeout(2000);
+
+    expect(errors.length).toBe(0);
+  });
+
+  test('should record full page interaction flow', async ({ page }) => {
+    // Capture page load performance
+    const loadStartTime = Date.now();
+    await page.goto('/');
+    const loadTime = Date.now() - loadStartTime;
+
+    // Wait for Angular to render
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Verify key elements are interactive
+    const primaryButton = page.locator('app-button').first();
+    await expect(primaryButton).toBeVisible();
+
+    // Simulate user interaction - click first button
+    const clickStartTime = Date.now();
+    await primaryButton.click();
+    const clickTime = Date.now() - clickStartTime;
+
+    // Log performance metrics for behavioral analysis
+    console.log(`Page load time: ${loadTime}ms`);
+    console.log(`Button click response time: ${clickTime}ms`);
+
+    // Verify page remains responsive
+    expect(loadTime).toBeLessThan(10000);
+    expect(clickTime).toBeLessThan(1000);
+  });
+
+  test('should capture component render lifecycle', async ({ page }) => {
+    const lifecycleEvents: string[] = [];
+
+    // Intercept Angular lifecycle events
+    page.on('console', (msg) => {
+      const text = msg.text();
+      if (text.includes('ngOnInit') || text.includes('ngAfterViewInit') || text.includes('change detection')) {
+        lifecycleEvents.push(text);
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+    await page.waitForTimeout(1000);
+
+    // Verify components rendered
+    const cardCount = await page.locator('app-card').count();
+    const buttonCount = await page.locator('app-button').count();
+
+    // Log component counts for behavioral verification
+    console.log(`Cards rendered: ${cardCount}`);
+    console.log(`Buttons rendered: ${buttonCount}`);
+
+    expect(cardCount).toBeGreaterThan(0);
+    expect(buttonCount).toBeGreaterThan(0);
+  });
+
+  test('should verify signal reactivity with DOM updates', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('app-root', { timeout: 10000 });
+
+    // Get initial button count
+    const initialButtonCount = await page.locator('app-button').count();
+
+    // Verify each button has rendered content
+    for (let i = 0; i < Math.min(initialButtonCount, 5); i++) {
+      const button = page.locator('app-button').nth(i);
+      const text = await button.locator('span').textContent();
+
+      // Document button labels for behavioral record
+      console.log(`Button ${i} label: ${text}`);
+
+      expect(text?.trim().length).toBeGreaterThan(0);
+    }
+
+    expect(initialButtonCount).toBeGreaterThan(0);
   });
 });

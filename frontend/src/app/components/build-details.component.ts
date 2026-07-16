@@ -32,7 +32,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-bold text-lg">
-            Build Details: {{ build()?.name }}
+            Build Details: {{ build().name }}
           </h3>
           <button
             class="btn btn-sm btn-circle btn-ghost"
@@ -46,19 +46,19 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         <div class="grid grid-cols-4 gap-4 mb-6 p-4 bg-base-200 rounded">
           <div>
             <span class="text-xs font-semibold text-gray-500">ID</span>
-            <p class="font-mono text-sm">{{ build()?.id | slice: 0:8 }}</p>
+            <p class="font-mono text-sm">{{ build().id | slice: 0:8 }}</p>
           </div>
           <div>
             <span class="text-xs font-semibold text-gray-500">Status</span>
-            <p [class]="statusBadgeClass()">{{ build()?.status }}</p>
+            <p [class]="statusBadgeClass()">{{ build().status }}</p>
           </div>
           <div>
             <span class="text-xs font-semibold text-gray-500">Created</span>
-            <p class="text-sm">{{ build()?.createdAt | date: 'short' }}</p>
+            <p class="text-sm">{{ build().createdAt | date: 'short' }}</p>
           </div>
           <div>
             <span class="text-xs font-semibold text-gray-500">Updated</span>
-            <p class="text-sm">{{ build()?.updatedAt | date: 'short' }}</p>
+            <p class="text-sm">{{ build().updatedAt | date: 'short' }}</p>
           </div>
         </div>
 
@@ -76,14 +76,14 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
             class="tab"
             (click)="activeTab.set('parts')"
           >
-            📦 Parts ({{ build()?.parts?.length || 0 }})
+            📦 Parts ({{ build().parts.length || 0 }})
           </button>
           <button
             [class.tab-active]="activeTab() === 'testRuns'"
             class="tab"
             (click)="activeTab.set('testRuns')"
           >
-            🧪 Test Runs ({{ build()?.testRuns?.length || 0 }})
+            🧪 Test Runs ({{ build().testRuns.length || 0 }})
           </button>
         </div>
 
@@ -91,14 +91,14 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         <div class="bg-base-100 rounded-lg p-4 min-h-96">
           @switch (activeTab()) {
             @case ('workflow') {
-              @if (build()?.id) {
-                <app-workflow-history-viewer [workflowId]="build()!.id" />
+              @if (build().id) {
+                <app-workflow-history-viewer [workflowId]="build().id" />
               }
             }
             @case ('parts') {
               <div class="space-y-2">
-                @if (build()?.parts && build()!.parts.length > 0) {
-                  @for (part of build()!.parts; track part.id) {
+                @if (build().parts && build().parts.length > 0) {
+                  @for (part of build().parts; track part.id) {
                     <div class="p-3 bg-base-200 rounded">
                       <div class="font-semibold">{{ part.name }}</div>
                       <div class="text-sm text-gray-500">
@@ -113,8 +113,8 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
             }
             @case ('testRuns') {
               <div class="space-y-2">
-                @if (build()?.testRuns && build()!.testRuns.length > 0) {
-                  @for (run of build()!.testRuns; track run.id) {
+                @if (build().testRuns && build().testRuns.length > 0) {
+                  @for (run of build().testRuns; track run.id) {
                     <div class="p-3 bg-base-200 rounded">
                       <div class="flex justify-between items-start">
                         <div>
@@ -162,7 +162,7 @@ export class BuildDetailsComponent implements OnDestroy {
   readonly activeTab = signal<DetailTab>('workflow');
 
   readonly statusBadgeClass = computed(() => {
-    const status = this.build()?.status;
+    const status = this.build().status;
     const baseClass = 'badge badge-lg';
     switch (status) {
       case 'RUNNING':
