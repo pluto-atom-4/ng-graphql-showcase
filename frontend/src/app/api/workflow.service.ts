@@ -96,7 +96,8 @@ export class WorkflowService {
         variables: { workflowId },
       })
       .pipe(
-        map((result) => result.data.workflowUpdated),
+        map((result) => result.data?.workflowUpdated),
+        filter((update) => !!update), // Filter nulls
         bufferTime(250), // Aggregate updates every 250ms
         filter((updates) => updates.length > 0), // Skip empty buffers
         map((updates) => updates[updates.length - 1]), // Take latest
@@ -113,7 +114,8 @@ export class WorkflowService {
         variables: { workflowId },
       })
       .pipe(
-        map((result) => result.data.workflowUpdated),
+        map((result) => result.data?.workflowUpdated),
+        filter((update) => !!update), // Filter nulls
         bufferTime(250),
         filter((updates) => updates.length > 0),
         map((updates) => updates[updates.length - 1]),
@@ -141,7 +143,8 @@ export class WorkflowService {
         variables: { workflowId },
       })
       .pipe(
-        map((result) => result.data.workflowHistoryAdded),
+        map((result) => result.data?.workflowHistoryAdded),
+        filter((event) => !!event), // Filter nulls
         bufferTime(250), // Aggregate events every 250ms
         filter((events) => events.length > 0), // Skip empty buffers
         map((events) => events[events.length - 1]), // Take latest
@@ -161,7 +164,8 @@ export class WorkflowService {
         variables: { workflowId },
       })
       .pipe(
-        map((result) => result.data.workflowHistoryAdded),
+        map((result) => result.data?.workflowHistoryAdded),
+        filter((event) => !!event), // Filter nulls
         bufferTime(250),
         filter((events) => events.length > 0),
         map((events) => events[events.length - 1]),

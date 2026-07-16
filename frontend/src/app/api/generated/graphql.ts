@@ -329,17 +329,6 @@ export type WorkflowInstance = {
   status: Scalars['String']['output'];
 };
 
-export type BuildStatus =
-  | 'COMPLETE'
-  | 'FAILED'
-  | 'PENDING'
-  | 'RUNNING';
-
-export type TestStatus =
-  | 'FAILED'
-  | 'PASSED'
-  | 'PENDING'
-  | 'RUNNING';
 
 export type GetWorkflowQueryVariables = Exact<{
   id: string | number;

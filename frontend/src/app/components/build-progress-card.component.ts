@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy, inject, signal, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, inject, signal, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { computed } from '@angular/core';
 import { map, startWith, Subscription } from 'rxjs';
@@ -60,6 +60,7 @@ import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 
       <!-- Action buttons -->
       <div class="card-actions gap-2 pt-4 border-t border-base-300">
+        <app-button label="Details" variant="primary" size="sm" (trigger)="openDetails()" />
         <app-button label="View Logs" variant="outline" size="sm" (trigger)="viewLogs()" />
         <app-button label="Cancel Build" variant="ghost" size="sm" [disabled]="isComplete()" (trigger)="cancelBuild()" />
         <app-button label="Restart" variant="primary" size="sm" [disabled]="!isComplete()" (trigger)="restartBuild()" />
@@ -71,6 +72,7 @@ import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 export class BuildProgressCardComponent implements OnInit, OnDestroy {
   @Input() buildName = 'Build #42';
   @Input() buildId = 'build-uuid-123';
+  @Output() buildClicked = new EventEmitter<string>();
 
   private buildStatusService = inject(BuildStatusService);
   private subscription: Subscription | null = null;
@@ -141,6 +143,10 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   });
 
 
+
+  openDetails(): void {
+    this.buildClicked.emit(this.buildId);
+  }
 
   viewLogs(): void {
     console.log('Opening logs for', this.buildId);

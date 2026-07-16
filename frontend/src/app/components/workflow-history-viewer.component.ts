@@ -100,7 +100,7 @@ type Tab = 'timeline' | 'activities' | 'json';
           class="tab"
           (click)="activeTab.set('json')"
         >
-          {} Raw JSON
+          {{ '{' }}{{ '}' }} Raw JSON
         </button>
       </div>
 
@@ -114,7 +114,7 @@ type Tab = 'timeline' | 'activities' | 'json';
             <app-activity-log [activities]="workflow()?.activities || []" />
           }
           @case ('json') {
-            <pre class="text-xs overflow-auto max-h-96">{{ workflow() | json }}</pre>
+            <pre class="text-xs overflow-auto max-h-96 whitespace-pre-wrap break-words"><code>{{ jsonString() }}</code></pre>
           }
         }
       </div>
@@ -159,6 +159,11 @@ export class WorkflowHistoryViewerComponent
       default:
         return `${baseClass} badge-neutral badge-lg`;
     }
+  });
+
+  readonly jsonString = computed(() => {
+    const workflow = this.workflow();
+    return workflow ? JSON.stringify(workflow, null, 2) : '';
   });
 
   constructor(private workflowService: WorkflowService) {

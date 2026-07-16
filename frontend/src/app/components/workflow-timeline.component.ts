@@ -20,7 +20,7 @@ import { WorkflowHistory } from '../api/generated/graphql';
   template: `
     <div class="timeline timeline-vertical">
       @for (event of sortedEvents(); track event.id) {
-        <div class="timeline-item">
+        <div class="flex flex-col items-center mb-4">
           <!-- Timeline marker -->
           <div class="timeline-middle">
             <div [class]="eventIconClass(event.eventType)">
@@ -32,8 +32,8 @@ import { WorkflowHistory } from '../api/generated/graphql';
           <div
             [class]="
               event.eventType === 'Failed'
-                ? 'timeline-end timeline-box bg-error/10 border-error'
-                : 'timeline-end timeline-box'
+                ? 'timeline-end border-2 border-error rounded-lg p-3 bg-error/10'
+                : 'timeline-end border-2 border-neutral/20 rounded-lg p-3 bg-base-100'
             "
           >
             <time class="text-xs font-mono">
@@ -62,17 +62,6 @@ import { WorkflowHistory } from '../api/generated/graphql';
       }
     </div>
   `,
-  styles: [
-    `
-      .timeline-item {
-        @apply flex flex-col items-center mb-4;
-      }
-
-      .timeline-box {
-        @apply border-2 border-base-300 rounded-lg p-3 bg-base-100;
-      }
-    `,
-  ],
 })
 export class WorkflowTimelineComponent {
   readonly history = input<WorkflowHistory[]>([]);
