@@ -116,7 +116,7 @@ public class PublishBuildStatusActivity : Activity
             };
 
             // Send to Hot Chocolate subscribers
-            await _eventSender.SendAsync($"buildStatusUpdated_{BuildId}", @event);
+            await _eventSender.SendAsync(nameof(BuildStatusChangedEvent), @event);
             _logger.LogInformation("PublishBuildStatusActivity: Published status change for build {BuildId} from {OldStatus} to {NewStatus}", buildGuid, oldStatus, newStatus);
 
             await context.CompleteActivityAsync();
