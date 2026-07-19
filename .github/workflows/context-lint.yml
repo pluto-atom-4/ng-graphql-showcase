@@ -272,7 +272,8 @@ jobs:
           echo ""
 
           # Check for npm commands in copilot-instructions.md (should use pnpm)
-          NPM_IN_COPILOT=$(grep -c "npm run\|npm install" .github/copilot-instructions.md || echo 0)
+          # Use negative lookbehind to avoid matching "pnpm install"
+          NPM_IN_COPILOT=$(grep -cE "^\s*npm (run|install)" .github/copilot-instructions.md || echo 0)
           PNPM_IN_COPILOT=$(grep -c "pnpm" .github/copilot-instructions.md || echo 0)
 
           echo "copilot-instructions.md:"
