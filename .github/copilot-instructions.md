@@ -207,44 +207,12 @@ This decouples schema evolution from database design.
 
 ## Repository Structure
 
-```
-ng-graphql-playground/
-├── backend/src/
-│   ├── FactoryApp.WebApi/
-│   │   ├── Program.cs                    # Hot Chocolate setup, Elsa runtime
-│   │   ├── schema.graphql                # [AUTO-GENERATED] GraphQL schema
-│   │   └── FactoryApp.WebApi.csproj      # MSBuild targets for schema export
-│   ├── FactoryApp.Domain/
-│   │   ├── FactoryDbContext.cs           # EF Core DbContext (NoTracking default)
-│   │   ├── Entities/                     # Build, Part, TestRun entities
-│   │   └── Migrations/                   # Database migrations
-│   ├── FactoryApp.GraphQL/
-│   │   ├── Queries/                      # GraphQL query resolvers
-│   │   ├── Mutations/                    # GraphQL mutation resolvers
-│   │   └── DataLoaders/                  # Batch loaders for N+1 prevention
-│   ├── FactoryApp.Workflows/
-│   │   ├── Activities/                   # Custom Elsa activities
-│   │   └── Definitions/                  # Workflow definitions
-│   └── FactoryApp.sln
-├── frontend/
-│   ├── src/app/
-│   │   ├── graphql/                      # GraphQL operation definitions (.graphql files)
-│   │   ├── api/generated/
-│   │   │   └── graphql.ts                # [AUTO-GENERATED] Type-safe services
-│   │   ├── components/                   # Smart/Dumb components (OnPush enabled)
-│   │   └── services/                     # Custom services (Apollo/Urql setup)
-│   ├── codegen.ts                        # GraphQL Code-Gen configuration
-│   ├── angular.json
-│   ├── tsconfig.json
-│   └── package.json
-├── docs/
-│   ├── research-architecuture-design.md  # Detailed design trade-offs
-│   └── monorepo-assessment.md            # Tooling & structure recommendations
-├── README.md
-├── CLAUDE.md
-└── .github/
-    └── copilot-instructions.md           # This file
-```
+See README.md for directory layout. Key files:
+
+- `backend/FactoryApp.slnx` — Main .NET solution
+- `backend/src/FactoryApp.Domain/` — EF Core entities + migrations
+- `frontend/src/app/api/generated/graphql.ts` — [AUTO-GENERATED, never edit]
+- `CLAUDE.md`, `DESIGN.md` — Core AI guidance
 
 ## IDE Recommendation
 
@@ -256,32 +224,14 @@ ng-graphql-playground/
 - Hot Chocolate schema validation & autocomplete
 - Elsa workflow visualization
 
-## Common Debugging Scenarios
+## Debugging Quick Reference
 
-**Frontend type error: property X doesn't exist**
-
-1. Verify the property exists in the C# entity
-2. Check the Hot Chocolate resolver exposes it
-3. Run `dotnet build` to re-emit `schema.graphql`
-4. Run `pnpm codegen` to regenerate Angular services
-
-**N+1 query performance issues**
-
-1. Check if the resolver uses DataLoader for child entities
-2. Add `[UseProjection]` to root query resolvers
-3. Verify GraphQL query doesn't nest deeper than 5 layers
-
-**Deadlock when updating Build + logging metrics**
-
-1. Ensure both EF Core and Dapper operations share the same transaction
-2. Confirm the transaction is not nested (one top-level scope)
-3. Check SQL Server's deadlock graph in Activity Monitor
-
-**Elsa workflow fails after schema update**
-
-1. Verify activities only store primitive keys, not entity objects
-2. Check if a column was renamed; Dapper queries will fail on old names
-3. Deploy a new workflow version; don't force-update active runs
+| Issue               | Root Cause             | Fix                                            |
+| ------------------- | ---------------------- | ---------------------------------------------- |
+| Frontend type error | Schema not regenerated | `dotnet build` → `pnpm codegen`                |
+| N+1 queries         | Missing DataLoader     | Add `[UseProjection]` to resolver              |
+| Deadlock            | Separate transactions  | Share `DbTransaction` (see Key Conventions #2) |
+| Workflow fails      | Entity stored in state | Store only primitives (Guid, string)           |
 
 ## Important Generated Files
 
