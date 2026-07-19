@@ -1,13 +1,16 @@
 # Copilot Instructions for ng-graphql-playground
 
+**Version:** 1.0.2 | **Last Updated:** 2026-07-19
+
 This guide helps Copilot work effectively in this full-stack monorepo for managing long-running manufacturing workflows.
 
 ## Project Overview
 
 **Type-safe full-stack monorepo** with:
-- **Frontend**: Angular 17+ with Apollo/Urql (GraphQL clients)
+
+- **Frontend**: Angular 19+ with Apollo/Urql (GraphQL clients)
 - **API Gateway**: Hot Chocolate GraphQL (ChilliCream)
-- **Backend**: ASP.NET Core (.NET 8/9)
+- **Backend**: ASP.NET Core (.NET 10)
 - **Workflows**: Elsa Workflows v3 (long-running state machines)
 - **Database**: Microsoft SQL Server
 - **Data Access**: Hybrid EF Core (reads) + Dapper (high-velocity writes)
@@ -21,7 +24,7 @@ This guide helps Copilot work effectively in this full-stack monorepo for managi
 dotnet restore backend/src
 
 # Build & auto-emit GraphQL schema
-dotnet build backend/src/FactoryApp.sln
+dotnet build backend/FactoryApp.slnx
 
 # Run database migrations
 cd backend/src/FactoryApp.WebApi
@@ -41,38 +44,38 @@ dotnet test backend/src/FactoryApp.Tests/FactoryApp.Tests.csproj --filter "Class
 
 ```bash
 # Install dependencies
-npm install --workspace=frontend
+pnpm install
 
 # Generate type-safe services from GraphQL schema
-npm run codegen --workspace=frontend
+pnpm --filter frontend run codegen
 
 # Start Angular dev server (HMR enabled)
-npm run ng serve --workspace=frontend
+pnpm --filter frontend run ng serve
 
 # Run all frontend tests
-npm run test --workspace=frontend
+pnpm --filter frontend run test
 
 # Run single test file
-npm run test --workspace=frontend -- --include='**/component.spec.ts'
+pnpm --filter frontend run test -- --include='**/component.spec.ts'
 
 # Lint frontend code
-npm run lint --workspace=frontend
+pnpm --filter frontend run lint
 ```
 
 ### Monorepo (Root)
 
 ```bash
 # Start both backend + frontend watchers concurrently
-npm run dev
+pnpm dev
 
 # Build both stacks
-npm run build
+pnpm build
 
 # Run all tests (backend + frontend)
-npm run test
+pnpm test
 
 # Lint entire monorepo
-npm run lint
+pnpm lint
 ```
 
 ## Architecture Overview
@@ -82,8 +85,8 @@ npm run lint
 │         Angular UI (Apollo / Urql)           │  Real-time GraphQL
 └──────────────────────┬───────────────────────┘  subscriptions via
                        │ ▲                        WebSockets / SSE
-  GraphQL Queries      │ │  
-  & Mutations          ▼ │  
+  GraphQL Queries      │ │
+  & Mutations          ▼ │
 ┌──────────────────────────────────────────────┐
 │        Hot Chocolate GraphQL Gateway         │  Auto-emits schema.graphql
 │  (Projections, DataLoaders, Subscriptions)   │  on backend build
@@ -120,9 +123,9 @@ Tracking   ▼                ▼
 Type safety is **automatically synchronized** across layers during build:
 
 1. Modify a **C# entity** in `backend/src/FactoryApp.Domain/`
-2. Run `dotnet build backend/src/FactoryApp.sln`
+2. Run `dotnet build backend/FactoryApp.slnx`
 3. Hot Chocolate **auto-emits** `backend/src/FactoryApp.WebApi/schema.graphql`
-4. Frontend file-watcher triggers GraphQL Code Generator
+4. Frontend file-watcher triggers GraphQL Code Generator via `pnpm codegen`
 5. Type-safe Angular services **auto-update** in `frontend/src/app/api/generated/graphql.ts`
 
 **Never manually edit `schema.graphql` or `graphql.ts`** — these are auto-generated.
@@ -204,84 +207,39 @@ This decouples schema evolution from database design.
 
 ## Repository Structure
 
-```
-ng-graphql-playground/
-├── backend/src/
-│   ├── FactoryApp.WebApi/
-│   │   ├── Program.cs                    # Hot Chocolate setup, Elsa runtime
-│   │   ├── schema.graphql                # [AUTO-GENERATED] GraphQL schema
-│   │   └── FactoryApp.WebApi.csproj      # MSBuild targets for schema export
-│   ├── FactoryApp.Domain/
-│   │   ├── FactoryDbContext.cs           # EF Core DbContext (NoTracking default)
-│   │   ├── Entities/                     # Build, Part, TestRun entities
-│   │   └── Migrations/                   # Database migrations
-│   ├── FactoryApp.GraphQL/
-│   │   ├── Queries/                      # GraphQL query resolvers
-│   │   ├── Mutations/                    # GraphQL mutation resolvers
-│   │   └── DataLoaders/                  # Batch loaders for N+1 prevention
-│   ├── FactoryApp.Workflows/
-│   │   ├── Activities/                   # Custom Elsa activities
-│   │   └── Definitions/                  # Workflow definitions
-│   └── FactoryApp.sln
-├── frontend/
-│   ├── src/app/
-│   │   ├── graphql/                      # GraphQL operation definitions (.graphql files)
-│   │   ├── api/generated/
-│   │   │   └── graphql.ts                # [AUTO-GENERATED] Type-safe services
-│   │   ├── components/                   # Smart/Dumb components (OnPush enabled)
-│   │   └── services/                     # Custom services (Apollo/Urql setup)
-│   ├── codegen.ts                        # GraphQL Code-Gen configuration
-│   ├── angular.json
-│   ├── tsconfig.json
-│   └── package.json
-├── docs/
-│   ├── research-architecuture-design.md  # Detailed design trade-offs
-│   └── monorepo-assessment.md            # Tooling & structure recommendations
-├── README.md
-├── CLAUDE.md
-└── .github/
-    └── copilot-instructions.md           # This file
-```
+See README.md for directory layout. Key files:
+
+- `backend/FactoryApp.slnx` — Main .NET solution
+- `backend/src/FactoryApp.Domain/` — EF Core entities + migrations
+- `frontend/src/app/api/generated/graphql.ts` — [AUTO-GENERATED, never edit]
+- `CLAUDE.md`, `DESIGN.md` — Core AI guidance
 
 ## IDE Recommendation
 
 **JetBrains Rider 2024.x** is the gold standard:
+
 - Native C# debugging with EF Core inspection
 - Integrated SQL Server profiler (critical for Dapper tuning)
 - Full-stack debugging (backend resolvers + network requests simultaneously)
 - Hot Chocolate schema validation & autocomplete
 - Elsa workflow visualization
 
-## Common Debugging Scenarios
+## Debugging Quick Reference
 
-**Frontend type error: property X doesn't exist**
-1. Verify the property exists in the C# entity
-2. Check the Hot Chocolate resolver exposes it
-3. Run `dotnet build` to re-emit `schema.graphql`
-4. Run `npm run codegen` to regenerate Angular services
-
-**N+1 query performance issues**
-1. Check if the resolver uses DataLoader for child entities
-2. Add `[UseProjection]` to root query resolvers
-3. Verify GraphQL query doesn't nest deeper than 5 layers
-
-**Deadlock when updating Build + logging metrics**
-1. Ensure both EF Core and Dapper operations share the same transaction
-2. Confirm the transaction is not nested (one top-level scope)
-3. Check SQL Server's deadlock graph in Activity Monitor
-
-**Elsa workflow fails after schema update**
-1. Verify activities only store primitive keys, not entity objects
-2. Check if a column was renamed; Dapper queries will fail on old names
-3. Deploy a new workflow version; don't force-update active runs
+| Issue               | Root Cause             | Fix                                            |
+| ------------------- | ---------------------- | ---------------------------------------------- |
+| Frontend type error | Schema not regenerated | `dotnet build` → `pnpm codegen`                |
+| N+1 queries         | Missing DataLoader     | Add `[UseProjection]` to resolver              |
+| Deadlock            | Separate transactions  | Share `DbTransaction` (see Key Conventions #2) |
+| Workflow fails      | Entity stored in state | Store only primitives (Guid, string)           |
 
 ## Important Generated Files
 
-| File | Status | Notes |
-|------|--------|-------|
-| `backend/src/FactoryApp.WebApi/schema.graphql` | Auto-generated | Commit to repo; never edit manually |
-| `frontend/src/app/api/generated/graphql.ts` | Auto-generated | Never edit manually |
-| Database migrations | Manual | Store in `backend/src/FactoryApp.Domain/Migrations/` |
+| File                                           | Status         | Notes                                                |
+| ---------------------------------------------- | -------------- | ---------------------------------------------------- |
+| `backend/src/FactoryApp.WebApi/schema.graphql` | Auto-generated | Commit to repo; never edit manually                  |
+| `frontend/src/app/api/generated/graphql.ts`    | Auto-generated | Never edit manually                                  |
+| Database migrations                            | Manual         | Store in `backend/src/FactoryApp.Domain/Migrations/` |
 
 ## Performance Checklist
 
@@ -297,9 +255,9 @@ ng-graphql-playground/
 ## Development Workflow
 
 1. **Modify** a C# entity or add a GraphQL resolver
-2. **Build**: `dotnet build backend/src/FactoryApp.sln`
+2. **Build**: `dotnet build backend/FactoryApp.slnx`
 3. **Schema updates**: Hot Chocolate auto-emits `schema.graphql`
-4. **Frontend regenerates**: File-watcher triggers `npm run codegen`
+4. **Frontend regenerates**: File-watcher triggers `pnpm codegen`
 5. **Types flow automatically** to Angular services
 6. **Angular IDE highlights** errors if queries reference removed fields
 
@@ -314,6 +272,7 @@ When reviewing GitHub PRs, Copilot executes a **three-phase automated workflow**
 **Location**: `.github/copilot/rules/pr-review-workflow.md`
 
 **Key Points**:
+
 - ✅ Phase 1: Gather PR details and examine changes
 - ✅ Phase 2: Analyze code against architecture patterns
 - ✅ Phase 3: **Post review outcomes as GitHub PR comment** ← MANDATORY
@@ -321,6 +280,7 @@ When reviewing GitHub PRs, Copilot executes a **three-phase automated workflow**
 - 📋 Review must be structured with verdict, file analysis, and quality metrics
 
 **When Reviewing a PR**:
+
 1. Read the PR description and linked issue
 2. Use `code-review` agent for high-signal analysis
 3. Generate comprehensive assessment document
@@ -332,6 +292,7 @@ For full workflow details, procedures, and examples: See `.github/copilot/rules/
 ### Additional Procedures
 
 Other Copilot procedures are documented in `.github/copilot/`:
+
 - `.github/copilot/README.md` — Index of all procedures
 - `.github/copilot/rules/` — Directory of operational rules
 

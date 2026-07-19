@@ -1,5 +1,7 @@
 # AGENTS.md — Autonomous Agent Onboarding
 
+**Version:** 1.3.0 | **Last Updated:** 2026-07-19
+
 ## Project Overview
 
 Full-stack monorepo for long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
@@ -121,7 +123,7 @@ Agents enforce constraints via `.claude/settings.json` configuration (model over
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Type-safety pipeline detail
 - **[docs/DATABASE.md](./docs/DATABASE.md)** — Transaction + testing patterns
 - **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — IDE setup + debugging
-- **[.ai/rules/](./.ai/rules/)** — Domain-specific architectural patterns
+- **[.claude/rules/](./.claude/rules/)** — Domain-specific architectural patterns
   - `database-rules.md` — Transactions, testing strategy
   - `backend-patterns.md` — EF Core, Dapper, DataLoaders
   - `frontend-patterns.md` — Angular, OnPush, trackBy, codegen

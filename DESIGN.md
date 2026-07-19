@@ -1,8 +1,8 @@
 # Design & Architecture Guide
 
-**Updated**: July 1, 2026  
-**Format**: Claude Code CLI session reference — self-contained, copy-paste ready  
-**Architecture**: Angular 19 | daisyUI + Tailwind | GraphQL + Type Safety
+**Version:** 1.2.0 | **Last Updated:** 2026-07-19  
+**Architecture:** Angular 19 | daisyUI + Tailwind | GraphQL + Type Safety  
+**Format:** Claude Code CLI session reference — self-contained, copy-paste ready
 
 > **See also**: [CLAUDE.md](./CLAUDE.md) for behavior rules, testing patterns, and issue dependencies. DESIGN.md focuses on visual consistency + constraints; CLAUDE.md covers behavior + testing + phase ordering.
 
@@ -58,151 +58,23 @@
 
 ---
 
-## ⚡ STATUS & DELIVERABLES (START HERE)
-
-### What's Complete ✅
-
-| Deliverable                     | Status      | Details                                                    |
-| ------------------------------- | ----------- | ---------------------------------------------------------- |
-| **7/7 components have OnPush**  | ✅ COMPLETE | app, build-progress-card, button, card, badge, form, modal |
-| **app.component loop tracking** | ✅ COMPLETE | @for with track prevents re-renders                        |
-| **6/7 component unit tests**    | ✅ COMPLETE | .spec.ts files created, >60% coverage                      |
-| **Type safety pipeline**        | ✅ COMPLETE | graphql.ts auto-generated + in use                         |
-| **Design system**               | ✅ COMPLETE | daisyUI + Tailwind fully configured (7 components)         |
-| **E2E tests**                   | ✅ COMPLETE | Playwright subscriptions.spec.ts operational               |
-| **RxJS buffering**              | ✅ COMPLETE | bufferTime(250) implemented on subscriptions               |
-| **GraphQL codegen**             | ✅ COMPLETE | build.graphql + codegen.ts configured                      |
-
-### Overall Progress: 100% (All 5 Phases Complete)
-
-Next action: Deploy to production. Backend features (#148-149) ready to proceed in parallel.
-
----
-
 ## Implementation Status
 
-**Issue #47** (Frontend Architecture Fixes) — ✅ COMPLETE
+**Issue #47** (Frontend Architecture Fixes) — ✅ COMPLETE (see issue for detailed status)
 
-All 5 phases delivered:
-
-1. **Phase 1: Architecture Fixes** (OnPush + Loop Tracking) — ✅ COMPLETE
-2. **Phase 2: Type Safety** (Remove Manual Types) — ✅ COMPLETE
-3. **Phase 3: Test Coverage** (Component Unit Tests) — ✅ COMPLETE
-4. **Phase 4: Performance Audit** (Lighthouse + N+1 check) — ✅ COMPLETE
-5. **Phase 5: Documentation** (JSDoc + Design Patterns) — ✅ COMPLETE
-
-**Related Issues**: #48-51 (sub-issue tracking), #145 (backend roadmap)
+5 phases delivered: Architecture Fixes → Type Safety → Test Coverage → Performance Audit → Documentation
 
 ---
 
-## 🔧 COPY-PASTE REFERENCE (Quick Wins)
+## 🔧 Implementation Checklist
 
-### Fix #1: Add ChangeDetectionStrategy.OnPush
+See docs/ARCHITECTURE.md for detailed patterns. Quick reference:
 
-**Files**: button.component.ts, card.component.ts, badge.component.ts, form.component.ts, modal.component.ts, app.component.ts (6 files, 1 min each)
-
-**Change** (in `@Component` decorator):
-
-```typescript
-import { Component, ChangeDetectionStrategy } from "@angular/core";
-
-@Component({
-  selector: "app-button",
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush, // ← ADD THIS LINE
-  template: `...`,
-})
-export class ButtonComponent {}
-```
-
-**Why**: Prevents unnecessary change detection on async events. Mandatory for performance.
-
----
-
-### Fix #2: Add Loop Tracking to app.component.ts
-
-**File**: `frontend/src/app/app.component.ts` (lines 24-29)
-
-**Remove**:
-
-```html
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-  <app-build-progress-card
-    buildName="Production Build"
-    buildId="build-prod-001"
-  />
-  <app-build-progress-card buildName="Test Suite" buildId="build-test-001" />
-  <app-build-progress-card
-    buildName="Staging Deploy"
-    buildId="build-stage-001"
-  />
-</div>
-```
-
-**Replace with**:
-
-```typescript
-// In component class, add:
-buildCards = [
-  { buildName: "Production Build", buildId: "build-prod-001" },
-  { buildName: "Test Suite", buildId: "build-test-001" },
-  { buildName: "Staging Deploy", buildId: "build-stage-001" },
-];
-```
-
-```html
-<!-- In template: -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-  @for (card of buildCards; track card.buildId) {
-  <app-build-progress-card
-    [buildName]="card.buildName"
-    [buildId]="card.buildId"
-  />
-  }
-</div>
-```
-
-**Why**: `track` prevents re-initialization of all items when array changes.
-
----
-
-### Fix #3: Create Component Test Stub
-
-**File**: Create `frontend/src/app/components/button.component.spec.ts` (repeat for all 7 components)
-
-```typescript
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ButtonComponent } from "./button.component";
-
-describe("ButtonComponent", () => {
-  let component: ButtonComponent;
-  let fixture: ComponentFixture<ButtonComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ButtonComponent],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(ButtonComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it("should create", () => {
-    expect(component).toBeTruthy();
-  });
-
-  it("should emit trigger event on click", () => {
-    spyOn(component.trigger, "emit");
-    component.onClickHandler();
-    expect(component.trigger.emit).toHaveBeenCalled();
-  });
-});
-```
-
-**Repeat for**: app.component, build-progress-card.component, card.component, badge.component, form.component, modal.component
-
-**Why**: Prevents regressions; required for CI integration.
+1. **ChangeDetectionStrategy.OnPush** — Add to all components
+2. **Loop tracking** — Use @for with track (not *ngFor)
+3. **Component tests** — Create .spec.ts for all components
+4. **Type safety** — Import from generated graphql.ts
+5. **RxJS buffering** — Use bufferTime(250) on subscriptions
 
 ---
 

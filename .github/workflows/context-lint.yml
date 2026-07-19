@@ -1,0 +1,406 @@
+name: AI Context Validation
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "CLAUDE.md"
+      - "DESIGN.md"
+      - "SKILLS.md"
+      - "AGENTS.md"
+      - ".github/copilot-instructions.md"
+      - ".claude/**"
+      - "docs/AI-CONFIG-*.md"
+  pull_request:
+    paths:
+      - "CLAUDE.md"
+      - "DESIGN.md"
+      - "SKILLS.md"
+      - "AGENTS.md"
+      - ".github/copilot-instructions.md"
+      - ".claude/**"
+      - "docs/AI-CONFIG-*.md"
+  workflow_dispatch:
+
+jobs:
+  validate-context-files:
+    runs-on: ubuntu-latest
+    name: Validate AI Context Configuration
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Critical Context Files Exist
+        id: file-presence
+        run: |
+          REQUIRED_FILES=(
+            "CLAUDE.md"
+            "DESIGN.md"
+            "SKILLS.md"
+            "AGENTS.md"
+            ".github/copilot-instructions.md"
+          )
+
+          MISSING_FILES=()
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing critical file: $file"
+              MISSING_FILES+=("$file")
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+
+          if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+            echo ""
+            echo "::error::Critical Context Files Missing (Hard Fail)"
+            for file in "${MISSING_FILES[@]}"; do
+              echo "::error::  - $file"
+            done
+            exit 1
+          else
+            echo ""
+            echo "✅ All critical context files present"
+          fi
+
+      - name: Validate File Size Budgets
+        id: size-budget
+        run: |
+          echo "Validating AI config file sizes against budgets..."
+          echo ""
+
+          FAILURES=0
+          WARNINGS=0
+
+          # CLAUDE.md: < 200 lines (strict)
+          CLAUDE_LINES=$(wc -l < CLAUDE.md)
+          echo "CLAUDE.md: $CLAUDE_LINES lines"
+          if [ "$CLAUDE_LINES" -gt 200 ]; then
+            echo "::error::CLAUDE.md exceeds budget: $CLAUDE_LINES > 200 lines"
+            FAILURES=$((FAILURES + 1))
+          elif [ "$CLAUDE_LINES" -gt 180 ]; then
+            echo "::warning::CLAUDE.md approaching budget: $CLAUDE_LINES/200 lines (90%)"
+            WARNINGS=$((WARNINGS + 1))
+          else
+            echo "✅ CLAUDE.md compliant ($CLAUDE_LINES/200)"
+          fi
+          echo ""
+
+          # DESIGN.md: 200-400 lines (soft target 350)
+          DESIGN_LINES=$(wc -l < DESIGN.md)
+          echo "DESIGN.md: $DESIGN_LINES lines"
+          if [ "$DESIGN_LINES" -gt 400 ]; then
+            echo "::error::DESIGN.md exceeds budget: $DESIGN_LINES > 400 lines"
+            FAILURES=$((FAILURES + 1))
+          elif [ "$DESIGN_LINES" -gt 380 ]; then
+            echo "::warning::DESIGN.md approaching budget: $DESIGN_LINES/400 lines (95%)"
+            WARNINGS=$((WARNINGS + 1))
+          else
+            echo "✅ DESIGN.md compliant ($DESIGN_LINES/400)"
+          fi
+          echo ""
+
+          # SKILLS.md: < 500 lines
+          SKILLS_LINES=$(wc -l < SKILLS.md)
+          echo "SKILLS.md: $SKILLS_LINES lines"
+          if [ "$SKILLS_LINES" -gt 500 ]; then
+            echo "::error::SKILLS.md exceeds budget: $SKILLS_LINES > 500 lines"
+            FAILURES=$((FAILURES + 1))
+          else
+            echo "✅ SKILLS.md compliant ($SKILLS_LINES/500)"
+          fi
+          echo ""
+
+          # AGENTS.md: ~150 lines (soft target)
+          AGENTS_LINES=$(wc -l < AGENTS.md)
+          echo "AGENTS.md: $AGENTS_LINES lines"
+          if [ "$AGENTS_LINES" -gt 180 ]; then
+            echo "::warning::AGENTS.md slightly over soft target: $AGENTS_LINES > 150 lines"
+            WARNINGS=$((WARNINGS + 1))
+          else
+            echo "✅ AGENTS.md compliant ($AGENTS_LINES/150)"
+          fi
+          echo ""
+
+          # copilot-instructions.md: < 60 lines (strict) - Issue #215 baseline audit override
+          # NOTE: Current baseline (2026-07-19) is 345 lines. This is a known violation.
+          # Phase 5 will optimize this file. For now, we set a warning at 350 lines.
+          COPILOT_LINES=$(wc -l < .github/copilot-instructions.md)
+          echo ".github/copilot-instructions.md: $COPILOT_LINES lines"
+          if [ "$COPILOT_LINES" -gt 350 ]; then
+            echo "::error::copilot-instructions.md severely exceeds target: $COPILOT_LINES lines"
+            echo "::error::  See Issue #215 Phase 5 (optimization task)"
+            FAILURES=$((FAILURES + 1))
+          elif [ "$COPILOT_LINES" -gt 300 ]; then
+            echo "::warning::copilot-instructions.md needs optimization: $COPILOT_LINES lines"
+            echo "::warning::  Target: 60 lines; Current: $COPILOT_LINES (see Issue #215 Phase 5)"
+            WARNINGS=$((WARNINGS + 1))
+          else
+            echo "✅ copilot-instructions.md improved ($COPILOT_LINES lines)"
+          fi
+          echo ""
+
+          # Summary
+          echo "========================================="
+          echo "Summary: $FAILURES failures, $WARNINGS warnings"
+          echo "========================================="
+
+          if [ $FAILURES -gt 0 ]; then
+            echo ""
+            echo "::error::Size budget validation failed"
+            exit 1
+          else
+            if [ $WARNINGS -gt 0 ]; then
+              echo ""
+              echo "⚠️  $WARNINGS warnings (review recommended)"
+            fi
+            echo ""
+            echo "✅ Size budget validation passed"
+          fi
+
+      - name: Verify Version Headers Present
+        id: version-headers
+        run: |
+          echo "Checking for version headers in config files..."
+          echo ""
+
+          MISSING_VERSIONS=0
+
+          # Check for Version: header pattern in each file
+          FILES=("CLAUDE.md" "DESIGN.md" "SKILLS.md" "AGENTS.md" ".github/copilot-instructions.md")
+
+          for file in "${FILES[@]}"; do
+            if grep -q "^Version:" "$file"; then
+              VERSION=$(grep "^Version:" "$file" | head -1)
+              echo "✅ $file: $VERSION"
+            else
+              echo "::warning::$file: Missing version header (format: Version: X.Y.Z | Last Updated: YYYY-MM-DD)"
+              MISSING_VERSIONS=$((MISSING_VERSIONS + 1))
+            fi
+          done
+
+          echo ""
+          if [ $MISSING_VERSIONS -gt 0 ]; then
+            echo "⚠️  $MISSING_VERSIONS files missing version headers (Phase 5 task)"
+          else
+            echo "✅ All files have version headers"
+          fi
+
+      - name: Check for Broken Internal Links
+        id: broken-links
+        run: |
+          echo "Scanning for broken internal links in config files..."
+          echo ""
+
+          BROKEN=0
+
+          # Check AGENTS.md for ./.claude/rules/ references
+          if grep -q "\[\.\/.\.ai\/rules\/" AGENTS.md; then
+            echo "::error::AGENTS.md: Broken link to ./.ai/rules/ (should be ./.claude/rules/)"
+            BROKEN=$((BROKEN + 1))
+          fi
+
+          # Check for references to non-existent .claude/rules files
+          REQUIRED_RULE_FILES=(
+            "./.claude/rules/database-rules.md"
+            "./.claude/rules/graphql-patterns.md"
+            "./.claude/rules/backend-patterns.md"
+            "./.claude/rules/frontend-patterns.md"
+            "./.claude/rules/workflow-integration.md"
+          )
+
+          for rule_file in "${REQUIRED_RULE_FILES[@]}"; do
+            if ! [ -f "$rule_file" ]; then
+              echo "::warning::Referenced rule file not found: $rule_file"
+              BROKEN=$((BROKEN + 1))
+            fi
+          done
+
+          # Check for broken issue references (basic format check)
+          if grep -q "#[0-9]" CLAUDE.md AGENTS.md; then
+            echo "✅ Issue references found in config files"
+          fi
+
+          echo ""
+          if [ $BROKEN -gt 0 ]; then
+            echo "⚠️  $BROKEN potential broken links found (manual review recommended)"
+          else
+            echo "✅ No obvious broken links detected"
+          fi
+
+      - name: Verify Critical Commands Are Documented
+        id: command-refs
+        run: |
+          echo "Verifying critical commands are documented..."
+          echo ""
+
+          MISSING_CMDS=0
+
+          # Check for essential commands in CLAUDE.md
+          COMMANDS=(
+            "pnpm install"
+            "pnpm codegen"
+            "dotnet build"
+            "dotnet ef migrations"
+            "pnpm docker:up"
+            "pnpm db:migrate"
+            "pnpm test"
+          )
+
+          for cmd in "${COMMANDS[@]}"; do
+            if grep -q "$cmd" CLAUDE.md; then
+              echo "✅ Documented: $cmd"
+            else
+              echo "::warning::Missing or undocumented command: $cmd"
+              MISSING_CMDS=$((MISSING_CMDS + 1))
+            fi
+          done
+
+          echo ""
+          if [ $MISSING_CMDS -gt 0 ]; then
+            echo "⚠️  $MISSING_CMDS commands not documented in CLAUDE.md"
+          else
+            echo "✅ All critical commands documented"
+          fi
+
+      - name: Validate pnpm Consistency
+        id: pnpm-consistency
+        run: |
+          echo "Checking package manager consistency (pnpm vs npm)..."
+          echo ""
+
+          # Check for npm commands in copilot-instructions.md (should use pnpm)
+          # Use negative lookbehind to avoid matching "pnpm install"
+          NPM_IN_COPILOT=$(grep -cE "^\s*npm (run|install)" .github/copilot-instructions.md || echo 0)
+          PNPM_IN_COPILOT=$(grep -c "pnpm" .github/copilot-instructions.md || echo 0)
+
+          echo "copilot-instructions.md:"
+          echo "  npm references: $NPM_IN_COPILOT"
+          echo "  pnpm references: $PNPM_IN_COPILOT"
+
+          if [ "$NPM_IN_COPILOT" -gt 0 ]; then
+            echo "::error::copilot-instructions.md contains npm commands (should use pnpm)"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Package manager consistency check passed"
+
+      - name: Check for .slnx vs .sln References
+        id: slnx-consistency
+        run: |
+          echo "Checking .NET project file references (.slnx vs .sln)..."
+          echo ""
+
+          # Should use .slnx (modern) not .sln
+          SLN_REFS=$(grep -c "\.sln" CLAUDE.md AGENTS.md .github/copilot-instructions.md 2>/dev/null || echo 0)
+          SLNX_REFS=$(grep -c "\.slnx" CLAUDE.md AGENTS.md .github/copilot-instructions.md 2>/dev/null || echo 0)
+
+          echo "References to .sln files: $SLN_REFS"
+          echo "References to .slnx files: $SLNX_REFS"
+
+          if [ "$SLN_REFS" -gt 0 ]; then
+            echo "::warning::Found .sln references (verify they're correct; should likely be .slnx)"
+          fi
+
+          # Verify the actual file exists
+          if [ -f "backend/FactoryApp.slnx" ]; then
+            echo "✅ backend/FactoryApp.slnx exists"
+          else
+            echo "::error::backend/FactoryApp.slnx not found (referenced in config files)"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ .NET project file reference check passed"
+
+      - name: Token Budget Estimate
+        id: token-count
+        run: |
+          echo "Estimating token usage of config files..."
+          echo ""
+
+          # Simple token estimation: ~1 token per 4 characters (rough)
+          # or ~5 words per token
+
+          FILES=("CLAUDE.md" "DESIGN.md" "SKILLS.md" "AGENTS.md" ".github/copilot-instructions.md")
+          TOTAL_TOKENS=0
+
+          for file in "${FILES[@]}"; do
+            CHARS=$(wc -c < "$file")
+            TOKENS=$((CHARS / 4))
+            echo "$file: ~$TOKENS tokens"
+            TOTAL_TOKENS=$((TOTAL_TOKENS + TOKENS))
+          done
+
+          echo ""
+          echo "Total estimated tokens: ~$TOTAL_TOKENS"
+          echo ""
+
+          # Warn if over 1600 tokens (approximately)
+          if [ $TOTAL_TOKENS -gt 1600 ]; then
+            echo "::warning::Config files approaching token budget limits ($TOTAL_TOKENS > 1600)"
+            echo "::warning::Consider optimization in Phase 5 (Issue #215)"
+          else
+            echo "✅ Token usage within acceptable range"
+          fi
+
+      - name: Generate Summary Report
+        if: always()
+        run: |
+          echo "## 🤖 AI Context Validation Report"
+          echo ""
+          echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "**Workflow:** ${{ github.workflow }}"
+          echo "**Event:** ${{ github.event_name }}"
+          echo ""
+          echo "### Validation Results"
+          echo ""
+          echo "- File presence: ${{ steps.file-presence.conclusion }}"
+          echo "- Size budgets: ${{ steps.size-budget.conclusion }}"
+          echo "- Version headers: ${{ steps.version-headers.conclusion }}"
+          echo "- Internal links: ${{ steps.broken-links.conclusion }}"
+          echo "- Command references: ${{ steps.command-refs.conclusion }}"
+          echo "- Package manager consistency: ${{ steps.pnpm-consistency.conclusion }}"
+          echo "- .NET project references: ${{ steps.slnx-consistency.conclusion }}"
+          echo ""
+          echo "### Related Issues"
+          echo ""
+          echo "- Issue #215: AI Configuration Maintenance & Tuning"
+          echo "- Phase 1 (Audit): docs/AI-CONFIG-AUDIT.md ✅"
+          echo "- Phase 2 (Maintenance): docs/AI-CONFIG-MAINTENANCE.md ✅"
+          echo "- Phase 3 (CI/CD): .github/workflows/context-lint.yml ✅ (this workflow)"
+          echo "- Phase 4 (Guardrails): docs/AI-CONFIG-GUARDRAILS.md 🔄"
+          echo "- Phase 5 (Updates): Config file optimization 🔄"
+          echo ""
+          echo "### Next Steps"
+          echo ""
+          echo "If this check failed:"
+          echo "1. Review the error messages above"
+          echo "2. Fix the identified issues in config files"
+          echo "3. Re-run this workflow with corrected files"
+          echo ""
+          echo "If all checks pass:"
+          echo "1. Config files are compliant with quality standards"
+          echo "2. Proceed with PR review and merge"
+          echo ""
+          echo "**See:** docs/AI-CONFIG-MAINTENANCE.md for maintenance procedures"
+
+      - name: Report Summary
+        if: always()
+        run: |
+          echo "✅ AI Context Validation Complete"
+          echo ""
+          echo "This workflow validates:"
+          echo "- ✅ File presence"
+          echo "- ✅ Size budgets"
+          echo "- ✅ Version headers"
+          echo "- ✅ Internal links"
+          echo "- ✅ Command documentation"
+          echo "- ✅ Package manager consistency"
+          echo "- ✅ .NET project references"
+          echo ""
+          echo "See docs/AI-CONFIG-MAINTENANCE.md for guidelines"
+          echo "Issue #215: AI Configuration Maintenance & Tuning"

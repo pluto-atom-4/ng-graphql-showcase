@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+**Version:** 2.1.0 | **Last Updated:** 2026-07-19
+
 AI agent guidance router. Modular rules + skills. See `/docs/` for detailed documentation.
 
 ## Project Overview
