@@ -1,5 +1,7 @@
 # SKILLS.md
 
+**Version:** 1.1.0 | **Last Updated:** 2026-07-19
+
 Procedural workflow automation macros. Each skill is a deterministic playbook for routine tasks.
 
 **Use**: Reference when you need Claude to execute a specific procedure (PR review, migration generation, codegen sync, etc.)

@@ -1,8 +1,8 @@
 # Design & Architecture Guide
 
-**Updated**: July 1, 2026  
-**Format**: Claude Code CLI session reference — self-contained, copy-paste ready  
-**Architecture**: Angular 19 | daisyUI + Tailwind | GraphQL + Type Safety
+**Version:** 1.2.0 | **Last Updated:** 2026-07-19  
+**Architecture:** Angular 19 | daisyUI + Tailwind | GraphQL + Type Safety  
+**Format:** Claude Code CLI session reference — self-contained, copy-paste ready
 
 > **See also**: [CLAUDE.md](./CLAUDE.md) for behavior rules, testing patterns, and issue dependencies. DESIGN.md focuses on visual consistency + constraints; CLAUDE.md covers behavior + testing + phase ordering.
 

@@ -1,5 +1,7 @@
 # Copilot Instructions for ng-graphql-playground
 
+**Version:** 1.0.2 | **Last Updated:** 2026-07-19
+
 This guide helps Copilot work effectively in this full-stack monorepo for managing long-running manufacturing workflows.
 
 ## Project Overview

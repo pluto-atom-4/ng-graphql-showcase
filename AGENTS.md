@@ -1,5 +1,7 @@
 # AGENTS.md — Autonomous Agent Onboarding
 
+**Version:** 1.3.0 | **Last Updated:** 2026-07-19
+
 ## Project Overview
 
 Full-stack monorepo for long-running manufacturing workflows (Build, Parts, TestRun) with type-safe end-to-end automation.
