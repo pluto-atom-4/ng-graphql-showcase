@@ -121,7 +121,7 @@ Agents enforce constraints via `.claude/settings.json` configuration (model over
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Type-safety pipeline detail
 - **[docs/DATABASE.md](./docs/DATABASE.md)** — Transaction + testing patterns
 - **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — IDE setup + debugging
-- **[.ai/rules/](./.ai/rules/)** — Domain-specific architectural patterns
+- **[.claude/rules/](./.claude/rules/)** — Domain-specific architectural patterns
   - `database-rules.md` — Transactions, testing strategy
   - `backend-patterns.md` — EF Core, Dapper, DataLoaders
   - `frontend-patterns.md` — Angular, OnPush, trackBy, codegen
