@@ -261,7 +261,7 @@ ng-graphql-playground/
 1. Verify the property exists in the C# entity
 2. Check the Hot Chocolate resolver exposes it
 3. Run `dotnet build` to re-emit `schema.graphql`
-4. Run `npm run codegen` to regenerate Angular services
+4. Run `pnpm codegen` to regenerate Angular services
 
 **N+1 query performance issues**
 
