@@ -7,7 +7,7 @@ namespace FactoryApp.GraphQL;
 
 public class BuildSubscription
 {
-    public static async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
+    public async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
         string buildId,
         [EventMessage] BuildStatusChangedEvent message)
     {
@@ -28,7 +28,7 @@ public class BuildSubscription
         }
     }
 
-    public static async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
+    public async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
         string buildId,
         [EventMessage] TestRunCompletedEvent message)
     {
