@@ -110,7 +110,7 @@ export class AppComponent {
       this.buildService
         .getBuildById(buildId)
         .pipe(takeUntilDestroyed())
-        .subscribe((build: BuildDetail | null) => {
+        .subscribe((build) => {
           this.selectedBuild.set(build);
         });
     });
