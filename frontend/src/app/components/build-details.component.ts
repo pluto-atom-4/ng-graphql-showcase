@@ -38,6 +38,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
             Build Details: {{ build().name }}
           </h3>
           <button
+            aria-label="Close modal"
             class="btn btn-sm btn-circle btn-ghost"
             (click)="onClose()"
           >
@@ -149,8 +150,8 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         </div>
       </div>
 
-      <!-- Modal backdrop -->
-      <div class="modal-backdrop" (click)="onClose()"></div>
+      <!-- Modal backdrop (pointer-events allows click-to-close) -->
+      <div class="modal-backdrop opacity-50" (click)="onClose()"></div>
     </div>
   `,
 })

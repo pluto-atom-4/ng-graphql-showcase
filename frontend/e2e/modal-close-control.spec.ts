@@ -22,9 +22,10 @@ test.describe('Modal Closing Controls', () => {
       const detailsBtn = page.locator('button:has-text("Details")').first();
       await detailsBtn.click({ timeout: 10000 });
       await page.locator('.modal-box').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(200); // Give UI time to render close button
 
-      // Find close button
-      const closeBtn = page.locator('button[aria-label*="close"], .btn-close, [class*="close"]').first();
+      // Find close button with multiple selector patterns
+      const closeBtn = page.locator('button[aria-label*="close"], button[aria-label*="Close"], .btn-close, button:has-text("✕")').first();
       const isVisible = await closeBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (isVisible) {
@@ -56,6 +57,9 @@ test.describe('Modal Closing Controls', () => {
 
         expect(modalStillOpen).toBe(false);
         console.log('✅ Modal closed via close button');
+
+        // Wait for backdrop to be removed and component destroyed
+        await page.waitForTimeout(500);
       } else {
         console.log('⚠️  Close button not available - skipping close button test');
       }
@@ -101,6 +105,7 @@ test.describe('Modal Closing Controls', () => {
       // Press Escape
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
+      await page.waitForTimeout(500); // Wait for backdrop to be removed
 
       // Check if modal closed
       const modalStillOpen = await page.locator('.modal-box').isVisible({ timeout: 2000 }).catch(() => false);
@@ -136,6 +141,7 @@ test.describe('Modal Closing Controls', () => {
         });
 
         await page.waitForTimeout(300);
+        await page.waitForTimeout(500); // Wait for backdrop to be removed
 
         // Check if modal closed
         const modalStillOpen = await page.locator('.modal-box').isVisible({ timeout: 2000 }).catch(() => false);
@@ -170,6 +176,7 @@ test.describe('Modal Closing Controls', () => {
       }
 
       await page.waitForTimeout(300);
+      await page.waitForTimeout(500); // Wait for backdrop to be removed
 
       // Verify modal state
       const modalState = await page.evaluate(() => {
