@@ -71,13 +71,16 @@ export class BuildStatusService {
             this.updateConnectionHealth(true, 0);
 
             if (result.data?.buildStatusUpdated) {
-              const update = result.data.buildStatusUpdated;
-              this.buildStatusUpdates$.next({
-                buildId: update.buildId,
-                oldStatus: update.oldStatus,
-                newStatus: update.newStatus,
-                timestamp: new Date(update.timestamp)
-              });
+              const rawUpdate = result.data.buildStatusUpdated;
+              const update = Array.isArray(rawUpdate) ? rawUpdate[0] : rawUpdate;
+              if (update) {
+                this.buildStatusUpdates$.next({
+                  buildId: update.buildId,
+                  oldStatus: update.oldStatus,
+                  newStatus: update.newStatus,
+                  timestamp: new Date(update.timestamp)
+                });
+              }
             }
           },
           error => {
