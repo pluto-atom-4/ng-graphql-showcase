@@ -163,6 +163,15 @@ export class BuildDetailsComponent implements OnDestroy {
 
   readonly activeTab = signal<DetailTab>('workflow');
 
+  constructor() {
+    // Log that component initialized with callback
+    setTimeout(() => {
+      console.log('[BuildDetails] Component initialized');
+      console.log('[BuildDetails] onClose callback type:', typeof this.onClose);
+      console.log('[BuildDetails] onClose callback defined:', !!this.onClose);
+    }, 0);
+  }
+
   @HostListener('keydown.escape')
   onEscapeKey(): void {
     console.log('[BuildDetails] Escape key pressed, calling onClose()');
@@ -170,8 +179,17 @@ export class BuildDetailsComponent implements OnDestroy {
   }
 
   handleClose(): void {
-    console.log('[BuildDetails] Close handler invoked, calling onClose callback');
-    this.onClose();
+    console.log('[BuildDetails.handleClose] invoked');
+    console.log('[BuildDetails.handleClose] onClose callback exists:', !!this.onClose);
+    console.log('[BuildDetails.handleClose] onClose callback type:', typeof this.onClose);
+    console.log('[BuildDetails.handleClose] onClose callback toString:', this.onClose?.toString().substring(0, 100));
+    try {
+      console.log('[BuildDetails.handleClose] BEFORE calling this.onClose()...');
+      const result = this.onClose();
+      console.log('[BuildDetails.handleClose] AFTER calling this.onClose(), result:', result);
+    } catch (error) {
+      console.error('[BuildDetails.handleClose] ERROR calling onClose():', error);
+    }
   }
 
   readonly statusBadgeClass = computed(() => {

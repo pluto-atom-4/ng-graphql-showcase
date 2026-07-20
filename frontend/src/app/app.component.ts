@@ -114,9 +114,12 @@ export class AppComponent {
   }
 
   closeModal = (): void => {
-    console.log('[AppComponent] closeModal called, setting selectedBuild to null');
-    console.log('[AppComponent] Before: selectedBuild =', this.selectedBuild());
+    console.log('[AppComponent.closeModal] *** ENTRY POINT ***');
+    console.log('[AppComponent.closeModal] this =', this);
+    console.log('[AppComponent.closeModal] this.selectedBuild =', this.selectedBuild);
+    console.log('[AppComponent.closeModal] Before: selectedBuild() =', this.selectedBuild());
     this.selectedBuild.set(null);
-    console.log('[AppComponent] After: selectedBuild =', this.selectedBuild());
+    console.log('[AppComponent.closeModal] After: selectedBuild() =', this.selectedBuild());
+    console.log('[AppComponent.closeModal] *** EXIT ***');
   };
 }
