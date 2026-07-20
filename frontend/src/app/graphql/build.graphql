@@ -76,7 +76,7 @@ mutation SubmitTestRun($buildId: ID!, $status: TestStatus!, $result: String, $fi
 }
 
 # Subscriptions
-subscription BuildStatusUpdated($buildId: ID!) {
+subscription BuildStatusUpdated($buildId: UUID!) {
     buildStatusUpdated(buildId: $buildId) {
         buildId
         oldStatus
@@ -85,7 +85,7 @@ subscription BuildStatusUpdated($buildId: ID!) {
     }
 }
 
-subscription TestRunCompleted($buildId: ID!) {
+subscription TestRunCompleted($buildId: UUID!) {
     testRunCompleted(buildId: $buildId) {
         testRunId
         buildId

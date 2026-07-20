@@ -198,12 +198,12 @@ export type Subscription = {
 
 
 export type SubscriptionBuildStatusUpdatedArgs = {
-  buildId: Scalars['ID']['input'];
+  buildId: Scalars['UUID']['input'];
 };
 
 
 export type SubscriptionTestRunCompletedArgs = {
-  buildId: Scalars['ID']['input'];
+  buildId: Scalars['UUID']['input'];
 };
 
 export type TestRun = {
@@ -342,14 +342,14 @@ export type SubmitTestRunMutationVariables = Exact<{
 export type SubmitTestRunMutation = { submitTestRun: { id: string, status: TestStatus, result: string | null, completedAt: Date | null } };
 
 export type BuildStatusUpdatedSubscriptionVariables = Exact<{
-  buildId: string | number;
+  buildId: string;
 }>;
 
 
 export type BuildStatusUpdatedSubscription = { buildStatusUpdated: { buildId: string, oldStatus: BuildStatus, newStatus: BuildStatus, timestamp: Date } };
 
 export type TestRunCompletedSubscriptionVariables = Exact<{
-  buildId: string | number;
+  buildId: string;
 }>;
 
 
@@ -565,7 +565,7 @@ export const SubmitTestRunDocument = gql`
     }
   }
 export const BuildStatusUpdatedDocument = gql`
-    subscription BuildStatusUpdated($buildId: ID!) {
+    subscription BuildStatusUpdated($buildId: UUID!) {
   buildStatusUpdated(buildId: $buildId) {
     buildId
     oldStatus
@@ -586,7 +586,7 @@ export const BuildStatusUpdatedDocument = gql`
     }
   }
 export const TestRunCompletedDocument = gql`
-    subscription TestRunCompleted($buildId: ID!) {
+    subscription TestRunCompleted($buildId: UUID!) {
   testRunCompleted(buildId: $buildId) {
     testRunId
     buildId
