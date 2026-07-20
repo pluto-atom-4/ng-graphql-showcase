@@ -33,6 +33,7 @@ const config: CodegenConfig = {
           DateTime: 'Date',
           Decimal: 'number',
           Long: 'number',
+          UUID: 'string',
         },
       },
     },

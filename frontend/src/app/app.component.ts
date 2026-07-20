@@ -1,12 +1,9 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, Injector, inject, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
-import { GetBuildQuery } from './api/generated/graphql';
 import { BuildService } from './services/build.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-type BuildDetail = NonNullable<GetBuildQuery['build']>;
 
 interface BuildCard {
   id: string;
@@ -34,7 +31,7 @@ interface BuildCard {
         <!-- Feature showcase -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <!-- Build cards: use @for with track to avoid re-rendering unchanged items -->
-          @for (build of builds; track build.id) {
+          @for (build of builds(); track build.id) {
             <app-build-progress-card
               [buildName]="build.name"
               [buildId]="build.id"
@@ -87,23 +84,33 @@ interface BuildCard {
   `,
 })
 export class AppComponent {
-  builds: BuildCard[] = [
-    { id: 'build-prod-001', name: 'Production Build' },
-    { id: 'build-test-001', name: 'Test Suite' },
-    { id: 'build-stage-001', name: 'Staging Deploy' },
-  ];
+  builds = signal<BuildCard[]>([]);
+  selectedBuild = signal<any>(null);
+  private injector = inject(Injector);
 
-  selectedBuild = signal<BuildDetail | null>(null);
+  constructor(private buildService: BuildService) {
+    this.loadBuilds();
+  }
 
-  constructor(private buildService: BuildService) {}
+  private loadBuilds(): void {
+    runInInjectionContext(this.injector, () => {
+      this.buildService.getAllBuilds()
+        .pipe(takeUntilDestroyed())
+        .subscribe((buildList: BuildCard[]) => {
+          this.builds.set(buildList);
+        });
+    });
+  }
 
   onBuildClicked(buildId: string): void {
-    this.buildService
-      .getBuildById(buildId)
-      .pipe(takeUntilDestroyed())
-      .subscribe((build: BuildDetail | null) => {
-        this.selectedBuild.set(build);
-      });
+    runInInjectionContext(this.injector, () => {
+      this.buildService
+        .getBuildById(buildId)
+        .pipe(takeUntilDestroyed())
+        .subscribe((build) => {
+          this.selectedBuild.set(build);
+        });
+    });
   }
 
   closeModal = (): void => {

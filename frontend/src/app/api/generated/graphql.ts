@@ -17,6 +17,7 @@ export type Scalars = {
   DateTime: { input: Date; output: Date; }
   Decimal: { input: number; output: number; }
   Long: { input: number; output: number; }
+  UUID: { input: string; output: string; }
 };
 
 export type AuthPayload = {
@@ -154,41 +155,37 @@ export type Query = {
   __typename?: 'Query';
   /** Fetch a build by ID */
   build?: Maybe<Build>;
+  /** Fetch workflow execution history for a build */
+  buildWorkflowHistory: Array<WorkflowHistory>;
+  /** Fetch all builds */
+  builds: Array<Build>;
+  /** Fetch admin builds (requires Admin role) */
+  buildsAdmin: Array<Build>;
   /** Fetch paginated builds */
-  builds: PaginatedBuilds;
-  /** Fetch workflow instance by ID with full history and activities */
-  workflow?: Maybe<WorkflowInstance>;
-  /** Fetch workflow history records with pagination */
-  workflowHistory: Array<WorkflowHistory>;
-  /** Fetch workflow instances for a specific build */
-  workflowsByBuild: Array<WorkflowInstance>;
+  buildsPaginated: PaginatedBuilds;
+  /** Fetch recent workflow history (last N days) */
+  recentWorkflowHistory: Array<WorkflowHistory>;
 };
 
 
 export type QueryBuildArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars['UUID']['input'];
 };
 
 
-export type QueryBuildsArgs = {
+export type QueryBuildWorkflowHistoryArgs = {
+  buildId: Scalars['UUID']['input'];
+};
+
+
+export type QueryBuildsPaginatedArgs = {
   limit: Scalars['Int']['input'];
   offset: Scalars['Int']['input'];
 };
 
 
-export type QueryWorkflowArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryWorkflowHistoryArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  workflowId: Scalars['ID']['input'];
-};
-
-
-export type QueryWorkflowsByBuildArgs = {
-  buildId: Scalars['ID']['input'];
+export type QueryRecentWorkflowHistoryArgs = {
+  days?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type Subscription = {
@@ -197,10 +194,6 @@ export type Subscription = {
   buildStatusUpdated: BuildStatusUpdate;
   /** Subscribe to test run completion events for a specific build */
   testRunCompleted: TestRunUpdate;
-  /** Subscribe to new workflow history events (real-time activity records) */
-  workflowHistoryAdded: WorkflowHistory;
-  /** Subscribe to workflow status changes (Idle → Running → Completed/Faulted) */
-  workflowUpdated: WorkflowInstance;
 };
 
 
@@ -211,16 +204,6 @@ export type SubscriptionBuildStatusUpdatedArgs = {
 
 export type SubscriptionTestRunCompletedArgs = {
   buildId: Scalars['ID']['input'];
-};
-
-
-export type SubscriptionWorkflowHistoryAddedArgs = {
-  workflowId: Scalars['ID']['input'];
-};
-
-
-export type SubscriptionWorkflowUpdatedArgs = {
-  workflowId: Scalars['ID']['input'];
 };
 
 export type TestRun = {
@@ -262,23 +245,6 @@ export type TestStatus =
   | 'PENDING'
   | 'RUNNING';
 
-/** Workflow activity execution record */
-export type WorkflowActivity = {
-  __typename?: 'WorkflowActivity';
-  /** Execution duration in milliseconds */
-  durationMs?: Maybe<Scalars['Long']['output']>;
-  /** Activity end timestamp */
-  endTime?: Maybe<Scalars['DateTime']['output']>;
-  /** Error message if activity failed */
-  errorMessage?: Maybe<Scalars['String']['output']>;
-  /** Activity display name */
-  name: Scalars['String']['output'];
-  /** Activity start timestamp */
-  startTime?: Maybe<Scalars['DateTime']['output']>;
-  /** Activity execution status (Pending, Running, Completed, Faulted) */
-  status: Scalars['String']['output'];
-};
-
 /** Workflow history record (event from WorkflowHistoryRecord entity) */
 export type WorkflowHistory = {
   __typename?: 'WorkflowHistory';
@@ -310,64 +276,22 @@ export type WorkflowHistory = {
   workflowInstanceId: Scalars['ID']['output'];
 };
 
-/** Workflow instance with history and activity details */
-export type WorkflowInstance = {
-  __typename?: 'WorkflowInstance';
-  /** Individual activity execution records */
-  activities: Array<WorkflowActivity>;
-  /** Associated build identifier (if linked) */
-  buildId?: Maybe<Scalars['ID']['output']>;
-  /** Workflow completion timestamp */
-  completedAt?: Maybe<Scalars['DateTime']['output']>;
-  /** Complete workflow history (state transitions, events) */
-  history: Array<WorkflowHistory>;
-  /** Workflow instance unique identifier */
-  id: Scalars['ID']['output'];
-  /** Workflow start timestamp */
-  startedAt: Scalars['DateTime']['output'];
-  /** Workflow execution status (Idle, Running, Completed, Faulted) */
-  status: Scalars['String']['output'];
-};
-
-
-export type GetWorkflowQueryVariables = Exact<{
-  id: string | number;
+export type GetBuildWorkflowHistoryQueryVariables = Exact<{
+  buildId: string;
 }>;
 
 
-export type GetWorkflowQuery = { workflow: { id: string, buildId: string | null, status: string, startedAt: Date, completedAt: Date | null, activities: Array<{ name: string, status: string, startTime: Date | null, endTime: Date | null, durationMs: number | null, errorMessage: string | null }>, history: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> } | null };
+export type GetBuildWorkflowHistoryQuery = { buildWorkflowHistory: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> };
 
-export type GetWorkflowsByBuildQueryVariables = Exact<{
-  buildId: string | number;
+export type GetRecentWorkflowHistoryQueryVariables = Exact<{
+  days?: number | null | undefined;
 }>;
 
 
-export type GetWorkflowsByBuildQuery = { workflowsByBuild: Array<{ id: string, buildId: string | null, status: string, startedAt: Date, completedAt: Date | null, activities: Array<{ name: string, status: string, durationMs: number | null }>, history: Array<{ id: string, eventType: string, recordedAt: Date }> }> };
-
-export type GetWorkflowHistoryQueryVariables = Exact<{
-  workflowId: string | number;
-  limit?: number | null | undefined;
-}>;
-
-
-export type GetWorkflowHistoryQuery = { workflowHistory: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> };
-
-export type WorkflowUpdatedSubscriptionVariables = Exact<{
-  workflowId: string | number;
-}>;
-
-
-export type WorkflowUpdatedSubscription = { workflowUpdated: { id: string, buildId: string | null, status: string, startedAt: Date, completedAt: Date | null, activities: Array<{ name: string, status: string, startTime: Date | null, endTime: Date | null, durationMs: number | null, errorMessage: string | null }> } };
-
-export type WorkflowHistoryAddedSubscriptionVariables = Exact<{
-  workflowId: string | number;
-}>;
-
-
-export type WorkflowHistoryAddedSubscription = { workflowHistoryAdded: { id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null } };
+export type GetRecentWorkflowHistoryQuery = { recentWorkflowHistory: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> };
 
 export type GetBuildQueryVariables = Exact<{
-  id: string | number;
+  id: string;
 }>;
 
 
@@ -379,7 +303,7 @@ export type ListBuildsQueryVariables = Exact<{
 }>;
 
 
-export type ListBuildsQuery = { builds: { totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, items: Array<{ id: string, name: string, status: BuildStatus, createdAt: Date }> } };
+export type ListBuildsQuery = { buildsPaginated: { totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, items: Array<{ id: string, name: string, status: BuildStatus, createdAt: Date }> } };
 
 export type CreateBuildMutationVariables = Exact<{
   name: string;
@@ -431,86 +355,9 @@ export type TestRunCompletedSubscriptionVariables = Exact<{
 
 export type TestRunCompletedSubscription = { testRunCompleted: { testRunId: string, buildId: string, status: TestStatus, timestamp: Date } };
 
-export const GetWorkflowDocument = gql`
-    query GetWorkflow($id: ID!) {
-  workflow(id: $id) {
-    id
-    buildId
-    status
-    startedAt
-    completedAt
-    activities {
-      name
-      status
-      startTime
-      endTime
-      durationMs
-      errorMessage
-    }
-    history {
-      id
-      workflowInstanceId
-      buildId
-      eventType
-      activityName
-      oldStatus
-      newStatus
-      stateSnapshot
-      errorMessage
-      recordedAt
-      executionStarted
-      executionCompleted
-      elapsedMilliseconds
-    }
-  }
-}
-    `;
-
-  @Injectable({
-    providedIn: 'root'
-  })
-  export class GetWorkflowGQL extends Apollo.Query<GetWorkflowQuery, GetWorkflowQueryVariables> {
-    document = GetWorkflowDocument;
-    
-    constructor(apollo: Apollo.Apollo) {
-      super(apollo);
-    }
-  }
-export const GetWorkflowsByBuildDocument = gql`
-    query GetWorkflowsByBuild($buildId: ID!) {
-  workflowsByBuild(buildId: $buildId) {
-    id
-    buildId
-    status
-    startedAt
-    completedAt
-    activities {
-      name
-      status
-      durationMs
-    }
-    history {
-      id
-      eventType
-      recordedAt
-    }
-  }
-}
-    `;
-
-  @Injectable({
-    providedIn: 'root'
-  })
-  export class GetWorkflowsByBuildGQL extends Apollo.Query<GetWorkflowsByBuildQuery, GetWorkflowsByBuildQueryVariables> {
-    document = GetWorkflowsByBuildDocument;
-    
-    constructor(apollo: Apollo.Apollo) {
-      super(apollo);
-    }
-  }
-export const GetWorkflowHistoryDocument = gql`
-    query GetWorkflowHistory($workflowId: ID!, $limit: Int = 100) {
-  workflowHistory(workflowId: $workflowId, limit: $limit) {
+export const GetBuildWorkflowHistoryDocument = gql`
+    query GetBuildWorkflowHistory($buildId: UUID!) {
+  buildWorkflowHistory(buildId: $buildId) {
     id
     workflowInstanceId
     buildId
@@ -531,46 +378,16 @@ export const GetWorkflowHistoryDocument = gql`
   @Injectable({
     providedIn: 'root'
   })
-  export class GetWorkflowHistoryGQL extends Apollo.Query<GetWorkflowHistoryQuery, GetWorkflowHistoryQueryVariables> {
-    document = GetWorkflowHistoryDocument;
+  export class GetBuildWorkflowHistoryGQL extends Apollo.Query<GetBuildWorkflowHistoryQuery, GetBuildWorkflowHistoryQueryVariables> {
+    document = GetBuildWorkflowHistoryDocument;
     
     constructor(apollo: Apollo.Apollo) {
       super(apollo);
     }
   }
-export const WorkflowUpdatedDocument = gql`
-    subscription WorkflowUpdated($workflowId: ID!) {
-  workflowUpdated(workflowId: $workflowId) {
-    id
-    buildId
-    status
-    startedAt
-    completedAt
-    activities {
-      name
-      status
-      startTime
-      endTime
-      durationMs
-      errorMessage
-    }
-  }
-}
-    `;
-
-  @Injectable({
-    providedIn: 'root'
-  })
-  export class WorkflowUpdatedGQL extends Apollo.Subscription<WorkflowUpdatedSubscription, WorkflowUpdatedSubscriptionVariables> {
-    document = WorkflowUpdatedDocument;
-    
-    constructor(apollo: Apollo.Apollo) {
-      super(apollo);
-    }
-  }
-export const WorkflowHistoryAddedDocument = gql`
-    subscription WorkflowHistoryAdded($workflowId: ID!) {
-  workflowHistoryAdded(workflowId: $workflowId) {
+export const GetRecentWorkflowHistoryDocument = gql`
+    query GetRecentWorkflowHistory($days: Int = 7) {
+  recentWorkflowHistory(days: $days) {
     id
     workflowInstanceId
     buildId
@@ -591,15 +408,15 @@ export const WorkflowHistoryAddedDocument = gql`
   @Injectable({
     providedIn: 'root'
   })
-  export class WorkflowHistoryAddedGQL extends Apollo.Subscription<WorkflowHistoryAddedSubscription, WorkflowHistoryAddedSubscriptionVariables> {
-    document = WorkflowHistoryAddedDocument;
+  export class GetRecentWorkflowHistoryGQL extends Apollo.Query<GetRecentWorkflowHistoryQuery, GetRecentWorkflowHistoryQueryVariables> {
+    document = GetRecentWorkflowHistoryDocument;
     
     constructor(apollo: Apollo.Apollo) {
       super(apollo);
     }
   }
 export const GetBuildDocument = gql`
-    query GetBuild($id: ID!) {
+    query GetBuild($id: UUID!) {
   build(id: $id) {
     id
     name
@@ -635,7 +452,7 @@ export const GetBuildDocument = gql`
   }
 export const ListBuildsDocument = gql`
     query ListBuilds($limit: Int!, $offset: Int!) {
-  builds(limit: $limit, offset: $offset) {
+  buildsPaginated(limit: $limit, offset: $offset) {
     items {
       id
       name
