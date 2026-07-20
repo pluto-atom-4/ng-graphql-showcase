@@ -22,53 +22,50 @@ export class BuildService {
 
   getBuildById(id: string): Observable<BuildDetail | null> {
     return this.apollo
-      .watchQuery<{ build: BuildDetail }>({
-        query: gql`
-          query {
-            build(id: "${id}") {
+      .watchQuery<{ build: BuildDetail }, { id: string }>({
+        query: gql`query GetBuildById($id: UUID!) {
+          build(id: $id) {
+            id
+            name
+            description
+            status
+            createdAt
+            updatedAt
+            parts {
               id
               name
-              description
+              sku
+              quantity
+            }
+            testRuns {
+              id
               status
-              createdAt
-              updatedAt
-              parts {
-                id
-                name
-                sku
-                quantity
-              }
-              testRuns {
-                id
-                status
-                result
-                fileUrl
-              }
+              result
+              fileUrl
             }
           }
-        `,
+        }`,
+        variables: { id },
         fetchPolicy: 'cache-first',
       })
       .valueChanges.pipe(
-        map((result) => result.data.build || null),
+        map((result) => result.data?.build || null),
       );
   }
 
   getAllBuilds(): Observable<Array<{ id: string; name: string }>> {
     return this.apollo
       .watchQuery<{ builds: Array<{ id: string; name: string }> }>({
-        query: gql`
-          query {
-            builds {
-              id
-              name
-            }
+        query: gql`query GetAllBuilds {
+          builds {
+            id
+            name
           }
-        `,
+        }`,
         fetchPolicy: 'cache-first',
       })
       .valueChanges.pipe(
-        map((result) => result.data.builds || []),
+        map((result) => result.data?.builds || []),
       );
   }
 }
