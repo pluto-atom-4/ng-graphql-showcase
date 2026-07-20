@@ -15,7 +15,7 @@ export interface ConnectionHealth {
 }
 
 const BUILD_STATUS_UPDATED_SUBSCRIPTION = gql`
-  subscription BuildStatusUpdated($buildId: ID!) {
+  subscription BuildStatusUpdated($buildId: UUID!) {
     buildStatusUpdated(buildId: $buildId) {
       buildId
       oldStatus
