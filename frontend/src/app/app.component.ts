@@ -1,7 +1,10 @@
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
 import { Build } from './api/generated/graphql';
+import { BuildService } from './services/build.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface BuildCard {
   id: string;
@@ -11,7 +14,7 @@ interface BuildCard {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [BuildProgressCardComponent, BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent],
+  imports: [CommonModule, BuildProgressCardComponent, BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-gradient-to-br from-base-100 to-base-200 p-8">
@@ -82,6 +85,11 @@ interface BuildCard {
   `,
 })
 export class AppComponent {
+  private buildService = new BuildService(
+    // This will be injected via dependency injection
+    undefined as any,
+  );
+
   builds: BuildCard[] = [
     { id: 'build-prod-001', name: 'Production Build' },
     { id: 'build-test-001', name: 'Test Suite' },
@@ -90,9 +98,17 @@ export class AppComponent {
 
   selectedBuild = signal<Build | null>(null);
 
+  constructor(buildService: BuildService) {
+    this.buildService = buildService;
+  }
+
   onBuildClicked(buildId: string): void {
-    // buildClicked wired but Apollo not configured yet
-    console.log('Build clicked:', buildId);
+    this.buildService
+      .getBuildById(buildId)
+      .pipe(takeUntilDestroyed())
+      .subscribe((build) => {
+        this.selectedBuild.set(build);
+      });
   }
 
   closeModal = (): void => {
