@@ -7,7 +7,7 @@ namespace FactoryApp.GraphQL;
 
 public class BuildSubscription
 {
-    public async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
+    public static async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
         string buildId,
         [EventMessage] BuildStatusChangedEvent message)
     {
@@ -28,7 +28,7 @@ public class BuildSubscription
         }
     }
 
-    public async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
+    public static async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
         string buildId,
         [EventMessage] TestRunCompletedEvent message)
     {
@@ -47,6 +47,29 @@ public class BuildSubscription
                 Timestamp = message.Timestamp
             };
         }
+    }
+
+    public static IAsyncEnumerable<string> TestSubscriptionSync()
+    {
+        return GetTestMessages();
+    }
+
+    private static async IAsyncEnumerable<string> GetTestMessages()
+    {
+        yield return "test1";
+        yield return "test2";
+    }
+
+    public static async IAsyncEnumerable<BuildStatusUpdate> AllBuildStatusUpdates(
+        [EventMessage] BuildStatusChangedEvent message)
+    {
+        yield return new BuildStatusUpdate
+        {
+            BuildId = message.BuildId,
+            OldStatus = message.OldStatus,
+            NewStatus = message.NewStatus,
+            Timestamp = message.Timestamp
+        };
     }
 }
 
