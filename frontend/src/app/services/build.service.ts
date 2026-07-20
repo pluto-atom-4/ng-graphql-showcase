@@ -6,22 +6,19 @@ import { Apollo, gql } from 'apollo-angular';
 type BuildDetail = {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
   parts: Array<{ id: string; name: string; sku: string; quantity: number }>;
-  testRuns: Array<{ id: string; status: string; result?: string; fileUrl?: string }>;
+  testRuns: Array<{ id: string; status: string; result: string | null; fileUrl: string | null }>;
 };
 
 @Injectable({
   providedIn: 'root',
 })
 export class BuildService {
-  constructor(
-    private getBuildGQL: GetBuildGQL,
-    private apollo: Apollo
-  ) {}
+  constructor(private apollo: Apollo) {}
 
   getBuildById(id: string): Observable<BuildDetail | null> {
     return this.apollo
