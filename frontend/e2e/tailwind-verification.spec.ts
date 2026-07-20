@@ -238,4 +238,37 @@ test.describe('Tailwind CSS Verification', () => {
     expect(responsiveRules.length).toBeGreaterThanOrEqual(0); // May be 0 if media queries not parsed this way
     console.log('Responsive rules found:', responsiveRules.length);
   });
+
+  test('Verify Tailwind core CSS layer is loaded and parsed', async ({ page }) => {
+    // Query the DOM to ensure Tailwind rules exist in document stylesheets
+    const isTailwindLoaded = await page.evaluate(() => {
+      return Array.from(document.styleSheets).some((sheet) => {
+        try {
+          // Look for custom utility syntax variables or layer markers
+          const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('');
+          return rules.includes('--tw-') || rules.includes('@theme') || rules.includes('tailwind');
+        } catch (e) {
+          // Catch cross-origin stylesheet security restrictions
+          return false;
+        }
+      });
+    });
+
+    // Strict assertion that the generated token dictionary is active
+    expect(isTailwindLoaded).toBe(true);
+    console.log('✅ Tailwind core CSS layer verified');
+  });
+
+  test('Verify Tailwind utility class converts correctly to display property', async ({ page }) => {
+    // Locate a layout container containing core layout styling properties
+    const flexContainer = page.locator('[class*="flex"]').first();
+    await expect(flexContainer).toBeVisible();
+
+    // Extract the layout mode
+    const displayValue = await flexContainer.evaluate((el) => window.getComputedStyle(el).display);
+
+    // If the CSS file failed to load, 'flex' class evaluates to 'block' or 'inline' by default
+    expect(displayValue).toBe('flex');
+    console.log('✅ Tailwind flex utility correctly renders as display: flex');
+  });
 });
