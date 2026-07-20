@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, Injector, inject, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
@@ -94,16 +94,19 @@ export class AppComponent {
   ];
 
   selectedBuild = signal<BuildDetail | null>(null);
+  private injector = inject(Injector);
 
   constructor(private buildService: BuildService) {}
 
   onBuildClicked(buildId: string): void {
-    this.buildService
-      .getBuildById(buildId)
-      .pipe(takeUntilDestroyed())
-      .subscribe((build: BuildDetail | null) => {
-        this.selectedBuild.set(build);
-      });
+    runInInjectionContext(this.injector, () => {
+      this.buildService
+        .getBuildById(buildId)
+        .pipe(takeUntilDestroyed())
+        .subscribe((build: BuildDetail | null) => {
+          this.selectedBuild.set(build);
+        });
+    });
   }
 
   closeModal = (): void => {
