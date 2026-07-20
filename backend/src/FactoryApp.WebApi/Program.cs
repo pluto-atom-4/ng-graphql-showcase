@@ -82,6 +82,21 @@ builder.Services.AddAuthorization(options =>
             .RequireClaim("view_tests", "true"));
 });
 
+// 2.1 Register CORS policy (issue #219)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:4200",      // Angular dev server
+                "http://localhost:3000")      // Alternative dev port
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();  // Required for JWT auth
+    });
+});
+
 // 2.2 Register application services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LoggingService>();
@@ -189,6 +204,9 @@ app.Use(async (context, next) =>
 // 3.7 Add middleware to inject diagnostics into GraphQL response extensions
 // DISABLED: Stream disposal issue. QueryCount tracking still functional via DatabaseQueryListener.
 // app.UseGraphQLDiagnostics();
+
+// 3.7b Add CORS middleware (issue #219) - MUST be before MapGraphQL
+app.UseCors("AllowFrontend");
 
 // 3.8 Add authentication & authorization middleware (issue #133)
 app.UseAuthentication();
