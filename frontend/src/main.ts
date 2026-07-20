@@ -1,13 +1,39 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
-import { ApolloClientOptions, InMemoryCache } from '@apollo/client/core';
+import { ApolloClientOptions, InMemoryCache, split } from '@apollo/client/core';
+import { getMainDefinition } from '@apollo/client/utilities';
 import { APOLLO_OPTIONS, Apollo } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
 import { AppComponent } from './app/app.component';
 
 function createApollo(httpLink: HttpLink): ApolloClientOptions<any> {
+  const wsLink = new GraphQLWsLink(
+    createClient({
+      url: 'ws://localhost:5275/graphql',
+      connectionParams: {
+        // Add auth headers if needed
+      },
+    })
+  );
+
+  const httpLinkInstance = httpLink.create({ uri: 'http://localhost:5275/graphql' });
+
+  const link = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === 'OperationDefinition' &&
+        definition.operation === 'subscription'
+      );
+    },
+    wsLink,
+    httpLinkInstance
+  );
+
   return {
-    link: httpLink.create({ uri: 'http://localhost:5275/graphql' }),
+    link,
     cache: new InMemoryCache(),
   };
 }
