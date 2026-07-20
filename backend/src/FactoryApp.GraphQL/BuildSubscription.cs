@@ -10,19 +10,14 @@ public class BuildSubscription
 {
     [Subscribe]
     public async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
-        string buildId,
+        Guid buildId,
         [EventMessage] BuildStatusChangedEvent message)
     {
-        if (!Guid.TryParse(buildId, out var buildGuid))
-        {
-            yield break;
-        }
-
-        if (message.BuildId == buildGuid)
+        if (message.BuildId == buildId)
         {
             yield return new BuildStatusUpdate
             {
-                BuildId = buildGuid,
+                BuildId = buildId,
                 OldStatus = message.OldStatus,
                 NewStatus = message.NewStatus,
                 Timestamp = message.Timestamp
@@ -32,15 +27,10 @@ public class BuildSubscription
 
     [Subscribe]
     public async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
-        string buildId,
+        Guid buildId,
         [EventMessage] TestRunCompletedEvent message)
     {
-        if (!Guid.TryParse(buildId, out var buildGuid))
-        {
-            yield break;
-        }
-
-        if (message.BuildId == buildGuid)
+        if (message.BuildId == buildId)
         {
             yield return new TestRunUpdate
             {
