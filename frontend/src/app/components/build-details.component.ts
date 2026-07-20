@@ -4,12 +4,15 @@ import {
   input,
   signal,
   computed,
+  output,
   OnDestroy,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GetBuildQuery } from '../api/generated/graphql';
 import { WorkflowHistoryViewerComponent } from './workflow-history-viewer.component';
-import { Subject } from 'rxjs';
 
 type BuildDetails = NonNullable<GetBuildQuery['build']>;
 
@@ -29,7 +32,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
   imports: [CommonModule, WorkflowHistoryViewerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal modal-open">
+    <div #modalRef class="modal modal-open z-50" tabindex="0" (keydown.escape)="close.emit()">
       <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
@@ -37,8 +40,9 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
             Build Details: {{ build().name }}
           </h3>
           <button
+            aria-label="Close modal"
             class="btn btn-sm btn-circle btn-ghost"
-            (click)="onClose()"
+            (click)="close.emit()"
           >
             ✕
           </button>
@@ -144,22 +148,28 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
 
         <!-- Footer -->
         <div class="modal-action mt-6">
-          <button class="btn" (click)="onClose()">Close</button>
+          <button class="btn" (click)="close.emit()">Close</button>
         </div>
       </div>
 
-      <!-- Modal backdrop -->
-      <div class="modal-backdrop" (click)="onClose()"></div>
+      <!-- Modal backdrop (pointer-events allows click-to-close) -->
+      <div class="modal-backdrop opacity-50" (click)="close.emit()"></div>
     </div>
   `,
 })
-export class BuildDetailsComponent implements OnDestroy {
-  private destroy$ = new Subject<void>();
+export class BuildDetailsComponent implements OnDestroy, AfterViewInit {
+  @ViewChild('modalRef') modalRef?: ElementRef<HTMLDivElement>;
 
   readonly build = input.required<BuildDetails>();
-  readonly onClose = input.required<() => void>();
+  readonly close = output<void>();
 
   readonly activeTab = signal<DetailTab>('workflow');
+
+  constructor() {}
+
+  ngAfterViewInit(): void {
+    this.modalRef?.nativeElement.focus();
+  }
 
   readonly statusBadgeClass = computed(() => {
     const status = this.build().status;
@@ -190,8 +200,5 @@ export class BuildDetailsComponent implements OnDestroy {
     }
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

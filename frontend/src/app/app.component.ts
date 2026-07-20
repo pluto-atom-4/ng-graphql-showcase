@@ -77,7 +77,7 @@ interface BuildCard {
       @if (selectedBuild()) {
         <app-build-details
           [build]="selectedBuild()!"
-          [onClose]="closeModal"
+          (close)="closeModal()"
         />
       }
     </div>
@@ -113,7 +113,7 @@ export class AppComponent {
     });
   }
 
-  closeModal = (): void => {
+  closeModal(): void {
     this.selectedBuild.set(null);
-  };
+  }
 }
