@@ -40,7 +40,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
           <button
             aria-label="Close modal"
             class="btn btn-sm btn-circle btn-ghost"
-            (click)="onClose()"
+            (click)="handleClose()"
           >
             ✕
           </button>
@@ -165,6 +165,12 @@ export class BuildDetailsComponent implements OnDestroy {
 
   @HostListener('keydown.escape')
   onEscapeKey(): void {
+    console.log('[BuildDetails] Escape key pressed, calling onClose()');
+    this.onClose();
+  }
+
+  handleClose(): void {
+    console.log('[BuildDetails] Close handler invoked, calling onClose callback');
     this.onClose();
   }
 
