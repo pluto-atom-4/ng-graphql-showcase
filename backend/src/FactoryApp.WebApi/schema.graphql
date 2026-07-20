@@ -234,8 +234,8 @@ type Mutation {
 
 type Subscription {
   """Subscribe to real-time build status updates for a specific build"""
-  buildStatusUpdated(buildId: ID!): BuildStatusUpdate!
+  buildStatusUpdated(buildId: UUID!): BuildStatusUpdate!
 
   """Subscribe to test run completion events for a specific build"""
-  testRunCompleted(buildId: ID!): TestRunUpdate!
+  testRunCompleted(buildId: UUID!): TestRunUpdate!
 }

@@ -98,9 +98,6 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // TODO: Fix buildId type mismatch in GraphQL subscription
-    // Temporarily disabled to unblock modal feature
-    /*
     try {
       this.buildStatusService.subscribeToBuildStatus(this.buildId);
 
@@ -120,7 +117,6 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.warn(`Failed to initialize subscription for ${this.buildId}:`, error);
     }
-    */
   }
 
   ngOnDestroy(): void {

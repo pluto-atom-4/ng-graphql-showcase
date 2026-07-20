@@ -193,14 +193,14 @@ public class BuildMutationType
 
             await dbContext.SaveChangesAsync();
 
-            await eventSender.SendAsync(nameof(BuildStatusChangedEvent), new BuildStatusChangedEvent
+            var evt = new BuildStatusChangedEvent
             {
                 BuildId = id,
                 OldStatus = oldStatus,
                 NewStatus = status,
                 Timestamp = DateTime.UtcNow
-            });
-
+            };
+            await eventSender.SendAsync("BuildStatusUpdated", evt);
             loggingService.LogMutationSuccess(nameof(UpdateBuildStatus), id);
             return MapperService.ToBuildPayload(build);
         }
@@ -352,7 +352,7 @@ public class BuildMutationType
 
                 await transaction.CommitAsync();
 
-                await eventSender.SendAsync(nameof(TestRunCompletedEvent), new TestRunCompletedEvent
+                await eventSender.SendAsync("TestRunCompleted", new TestRunCompletedEvent
                 {
                     TestRunId = testRun.Id,
                     BuildId = buildId,
