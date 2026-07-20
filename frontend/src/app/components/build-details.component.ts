@@ -5,6 +5,7 @@ import {
   signal,
   computed,
   OnDestroy,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GetBuildQuery } from '../api/generated/graphql';
@@ -29,7 +30,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
   imports: [CommonModule, WorkflowHistoryViewerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal modal-open">
+    <div class="modal modal-open z-50">
       <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
@@ -160,6 +161,11 @@ export class BuildDetailsComponent implements OnDestroy {
   readonly onClose = input.required<() => void>();
 
   readonly activeTab = signal<DetailTab>('workflow');
+
+  @HostListener('keydown.escape')
+  onEscapeKey(): void {
+    this.onClose();
+  }
 
   readonly statusBadgeClass = computed(() => {
     const status = this.build().status;
