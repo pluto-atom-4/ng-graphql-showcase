@@ -77,7 +77,7 @@ interface BuildCard {
       @if (selectedBuild()) {
         <app-build-details
           [build]="selectedBuild()!"
-          [onClose]="closeModal"
+          [onClose]="handleModalClose"
         />
       }
     </div>
@@ -113,13 +113,15 @@ export class AppComponent {
     });
   }
 
-  closeModal = (): void => {
-    console.log('[AppComponent.closeModal] *** ENTRY POINT ***');
-    console.log('[AppComponent.closeModal] this =', this);
-    console.log('[AppComponent.closeModal] this.selectedBuild =', this.selectedBuild);
-    console.log('[AppComponent.closeModal] Before: selectedBuild() =', this.selectedBuild());
-    this.selectedBuild.set(null);
-    console.log('[AppComponent.closeModal] After: selectedBuild() =', this.selectedBuild());
-    console.log('[AppComponent.closeModal] *** EXIT ***');
+  handleModalClose = (): void => {
+    console.log('[AppComponent.handleModalClose] Called from child component');
+    this.closeModal();
   };
+
+  private closeModal(): void {
+    console.log('[AppComponent.closeModal] Closing modal, setting selectedBuild to null');
+    console.log('[AppComponent.closeModal] Before: selectedBuild =', this.selectedBuild());
+    this.selectedBuild.set(null);
+    console.log('[AppComponent.closeModal] After: selectedBuild =', this.selectedBuild());
+  }
 }
