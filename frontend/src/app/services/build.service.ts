@@ -1,11 +1,18 @@
 import { Injectable } from '@angular/core';
-import { GetBuildGQL, GetBuildQuery } from '../api/generated/graphql';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApolloQueryResult } from '@apollo/client/core';
 import { Apollo, gql } from 'apollo-angular';
 
-type BuildDetail = NonNullable<GetBuildQuery['build']>;
+type BuildDetail = {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  parts: Array<{ id: string; name: string; sku: string; quantity: number }>;
+  testRuns: Array<{ id: string; status: string; result?: string; fileUrl?: string }>;
+};
 
 @Injectable({
   providedIn: 'root',
@@ -17,10 +24,36 @@ export class BuildService {
   ) {}
 
   getBuildById(id: string): Observable<BuildDetail | null> {
-    return this.getBuildGQL
-      .watch({ id }, { fetchPolicy: 'cache-first' })
+    return this.apollo
+      .watchQuery<{ build: BuildDetail }>({
+        query: gql`
+          query {
+            build(id: "${id}") {
+              id
+              name
+              description
+              status
+              createdAt
+              updatedAt
+              parts {
+                id
+                name
+                sku
+                quantity
+              }
+              testRuns {
+                id
+                status
+                result
+                fileUrl
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'cache-first',
+      })
       .valueChanges.pipe(
-        map((result: ApolloQueryResult<GetBuildQuery>) => result.data.build),
+        map((result) => result.data.build || null),
       );
   }
 
