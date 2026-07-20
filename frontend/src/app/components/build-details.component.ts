@@ -4,13 +4,15 @@ import {
   input,
   signal,
   computed,
+  output,
   OnDestroy,
-  HostListener,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GetBuildQuery } from '../api/generated/graphql';
 import { WorkflowHistoryViewerComponent } from './workflow-history-viewer.component';
-import { Subject } from 'rxjs';
 
 type BuildDetails = NonNullable<GetBuildQuery['build']>;
 
@@ -30,7 +32,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
   imports: [CommonModule, WorkflowHistoryViewerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal modal-open z-50">
+    <div #modalRef class="modal modal-open z-50" tabindex="0" (keydown.escape)="close.emit()">
       <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
@@ -40,7 +42,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
           <button
             aria-label="Close modal"
             class="btn btn-sm btn-circle btn-ghost"
-            (click)="handleClose()"
+            (click)="close.emit()"
           >
             ✕
           </button>
@@ -146,50 +148,27 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
 
         <!-- Footer -->
         <div class="modal-action mt-6">
-          <button class="btn" (click)="onClose()">Close</button>
+          <button class="btn" (click)="close.emit()">Close</button>
         </div>
       </div>
 
       <!-- Modal backdrop (pointer-events allows click-to-close) -->
-      <div class="modal-backdrop opacity-50" (click)="onClose()"></div>
+      <div class="modal-backdrop opacity-50" (click)="close.emit()"></div>
     </div>
   `,
 })
-export class BuildDetailsComponent implements OnDestroy {
-  private destroy$ = new Subject<void>();
+export class BuildDetailsComponent implements OnDestroy, AfterViewInit {
+  @ViewChild('modalRef') modalRef?: ElementRef<HTMLDivElement>;
 
   readonly build = input.required<BuildDetails>();
-  readonly onClose = input.required<() => void>();
+  readonly close = output<void>();
 
   readonly activeTab = signal<DetailTab>('workflow');
 
-  constructor() {
-    // Log that component initialized with callback
-    setTimeout(() => {
-      console.log('[BuildDetails] Component initialized');
-      console.log('[BuildDetails] onClose callback type:', typeof this.onClose);
-      console.log('[BuildDetails] onClose callback defined:', !!this.onClose);
-    }, 0);
-  }
+  constructor() {}
 
-  @HostListener('keydown.escape')
-  onEscapeKey(): void {
-    console.log('[BuildDetails] Escape key pressed, calling onClose()');
-    this.onClose();
-  }
-
-  handleClose(): void {
-    console.log('[BuildDetails.handleClose] invoked');
-    console.log('[BuildDetails.handleClose] onClose callback exists:', !!this.onClose);
-    console.log('[BuildDetails.handleClose] onClose callback type:', typeof this.onClose);
-    console.log('[BuildDetails.handleClose] onClose callback toString:', this.onClose?.toString().substring(0, 100));
-    try {
-      console.log('[BuildDetails.handleClose] BEFORE calling this.onClose()...');
-      const result = this.onClose();
-      console.log('[BuildDetails.handleClose] AFTER calling this.onClose(), result:', result);
-    } catch (error) {
-      console.error('[BuildDetails.handleClose] ERROR calling onClose():', error);
-    }
+  ngAfterViewInit(): void {
+    this.modalRef?.nativeElement.focus();
   }
 
   readonly statusBadgeClass = computed(() => {
@@ -221,8 +200,5 @@ export class BuildDetailsComponent implements OnDestroy {
     }
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }
