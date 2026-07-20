@@ -34,7 +34,7 @@ interface BuildCard {
         <!-- Feature showcase -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <!-- Build cards: use @for with track to avoid re-rendering unchanged items -->
-          @for (build of builds; track build.id) {
+          @for (build of builds(); track build.id) {
             <app-build-progress-card
               [buildName]="build.name"
               [buildId]="build.id"
@@ -87,16 +87,23 @@ interface BuildCard {
   `,
 })
 export class AppComponent {
-  builds: BuildCard[] = [
-    { id: 'build-prod-001', name: 'Production Build' },
-    { id: 'build-test-001', name: 'Test Suite' },
-    { id: 'build-stage-001', name: 'Staging Deploy' },
-  ];
-
+  builds = signal<BuildCard[]>([]);
   selectedBuild = signal<BuildDetail | null>(null);
   private injector = inject(Injector);
 
-  constructor(private buildService: BuildService) {}
+  constructor(private buildService: BuildService) {
+    this.loadBuilds();
+  }
+
+  private loadBuilds(): void {
+    runInInjectionContext(this.injector, () => {
+      this.buildService.getAllBuilds()
+        .pipe(takeUntilDestroyed())
+        .subscribe((buildList: BuildCard[]) => {
+          this.builds.set(buildList);
+        });
+    });
+  }
 
   onBuildClicked(buildId: string): void {
     runInInjectionContext(this.injector, () => {
