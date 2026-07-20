@@ -100,7 +100,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
         };
 
         var updates = new List<BuildStatusUpdate>();
-        await foreach (var update in _subscription.BuildStatusUpdated(buildId, statusChangedEvent))
+        await foreach (var update in _subscription.BuildStatusUpdated(buildId.ToString(), statusChangedEvent))
         {
             updates.Add(update);
         }
@@ -126,7 +126,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
         };
 
         var updates = new List<BuildStatusUpdate>();
-        await foreach (var update in _subscription.BuildStatusUpdated(buildId, statusChangedEvent))
+        await foreach (var update in _subscription.BuildStatusUpdated(buildId.ToString(), statusChangedEvent))
         {
             updates.Add(update);
         }
@@ -176,7 +176,7 @@ public class BuildSubscriptionTests : IAsyncLifetime
         };
 
         var updates = new List<TestRunUpdate>();
-        await foreach (var update in _subscription.TestRunCompleted(buildId, testRunEvent))
+        await foreach (var update in _subscription.TestRunCompleted(buildId.ToString(), testRunEvent))
         {
             updates.Add(update);
         }
