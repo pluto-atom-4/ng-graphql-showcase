@@ -2,7 +2,7 @@
 # build.graphql
 #
 # Queries
-query GetBuild($id: ID!) {
+query GetBuild($id: UUID!) {
     build(id: $id) {
         id
         name
@@ -26,7 +26,7 @@ query GetBuild($id: ID!) {
 }
 
 query ListBuilds($limit: Int!, $offset: Int!) {
-    builds(limit: $limit, offset: $offset) {
+    buildsPaginated(limit: $limit, offset: $offset) {
         items {
             id
             name

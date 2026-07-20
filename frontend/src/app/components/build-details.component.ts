@@ -5,14 +5,11 @@ import {
   signal,
   computed,
   OnDestroy,
-  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GetBuildQuery } from '../api/generated/graphql';
 import { WorkflowHistoryViewerComponent } from './workflow-history-viewer.component';
-import { WorkflowService } from '../api/workflow.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 type BuildDetails = NonNullable<GetBuildQuery['build']>;
 
@@ -96,13 +93,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         <div class="bg-base-100 rounded-lg p-4 min-h-96">
           @switch (activeTab()) {
             @case ('workflow') {
-              @if (workflowId()) {
-                <app-workflow-history-viewer [workflowId]="workflowId()!" />
-              } @else {
-                <div class="text-center text-gray-500 py-8">
-                  <p>No workflow associated with this build</p>
-                </div>
-              }
+              <app-workflow-history-viewer [buildId]="build().id" />
             }
             @case ('parts') {
               <div class="space-y-2">
@@ -169,27 +160,6 @@ export class BuildDetailsComponent implements OnDestroy {
   readonly onClose = input.required<() => void>();
 
   readonly activeTab = signal<DetailTab>('workflow');
-  readonly workflowId = signal<string | null>(null);
-
-  constructor(private workflowService: WorkflowService) {
-    effect(() => {
-      const buildId = this.build().id;
-      if (buildId) {
-        this.loadWorkflowForBuild(buildId);
-      }
-    });
-  }
-
-  private loadWorkflowForBuild(buildId: string): void {
-    this.workflowService
-      .getWorkflowsByBuild(buildId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((workflows) => {
-        if (workflows && workflows.length > 0) {
-          this.workflowId.set(workflows[0].id);
-        }
-      });
-  }
 
   readonly statusBadgeClass = computed(() => {
     const status = this.build().status;

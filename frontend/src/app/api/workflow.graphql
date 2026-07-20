@@ -1,58 +1,5 @@
-query GetWorkflow($id: ID!) {
-  workflow(id: $id) {
-    id
-    buildId
-    status
-    startedAt
-    completedAt
-    activities {
-      name
-      status
-      startTime
-      endTime
-      durationMs
-      errorMessage
-    }
-    history {
-      id
-      workflowInstanceId
-      buildId
-      eventType
-      activityName
-      oldStatus
-      newStatus
-      stateSnapshot
-      errorMessage
-      recordedAt
-      executionStarted
-      executionCompleted
-      elapsedMilliseconds
-    }
-  }
-}
-
-query GetWorkflowsByBuild($buildId: ID!) {
-  workflowsByBuild(buildId: $buildId) {
-    id
-    buildId
-    status
-    startedAt
-    completedAt
-    activities {
-      name
-      status
-      durationMs
-    }
-    history {
-      id
-      eventType
-      recordedAt
-    }
-  }
-}
-
-query GetWorkflowHistory($workflowId: ID!, $limit: Int = 100) {
-  workflowHistory(workflowId: $workflowId, limit: $limit) {
+query GetBuildWorkflowHistory($buildId: UUID!) {
+  buildWorkflowHistory(buildId: $buildId) {
     id
     workflowInstanceId
     buildId
@@ -69,26 +16,8 @@ query GetWorkflowHistory($workflowId: ID!, $limit: Int = 100) {
   }
 }
 
-subscription WorkflowUpdated($workflowId: ID!) {
-  workflowUpdated(workflowId: $workflowId) {
-    id
-    buildId
-    status
-    startedAt
-    completedAt
-    activities {
-      name
-      status
-      startTime
-      endTime
-      durationMs
-      errorMessage
-    }
-  }
-}
-
-subscription WorkflowHistoryAdded($workflowId: ID!) {
-  workflowHistoryAdded(workflowId: $workflowId) {
+query GetRecentWorkflowHistory($days: Int = 7) {
+  recentWorkflowHistory(days: $days) {
     id
     workflowInstanceId
     buildId
