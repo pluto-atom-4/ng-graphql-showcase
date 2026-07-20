@@ -2,11 +2,13 @@ using FactoryApp.Domain.Entities;
 using FactoryApp.Domain.Events;
 using HotChocolate;
 using HotChocolate.Subscriptions;
+using HotChocolate.Types;
 
 namespace FactoryApp.GraphQL;
 
 public class BuildSubscription
 {
+    [Subscribe]
     public async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
         string buildId,
         [EventMessage] BuildStatusChangedEvent message)
@@ -28,6 +30,7 @@ public class BuildSubscription
         }
     }
 
+    [Subscribe]
     public async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
         string buildId,
         [EventMessage] TestRunCompletedEvent message)

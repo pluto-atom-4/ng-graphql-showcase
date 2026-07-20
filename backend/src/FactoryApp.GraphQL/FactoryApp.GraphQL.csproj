@@ -7,8 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.1" />
-    <PackageReference Include="HotChocolate.Execution" Version="15.1.17" />
-    <PackageReference Include="HotChocolate.Types" Version="15.1.17" />
+    <PackageReference Include="HotChocolate.Types" Version="16.5.0" />
+    <PackageReference Include="HotChocolate.Subscriptions" Version="16.5.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
