@@ -193,7 +193,7 @@ public class BuildMutationType
 
             await dbContext.SaveChangesAsync();
 
-            await eventSender.SendAsync("buildStatusChanged", new BuildStatusChangedEvent
+            await eventSender.SendAsync(nameof(BuildStatusChangedEvent), new BuildStatusChangedEvent
             {
                 BuildId = id,
                 OldStatus = oldStatus,
@@ -352,7 +352,7 @@ public class BuildMutationType
 
                 await transaction.CommitAsync();
 
-                await eventSender.SendAsync("testRunCompleted", new TestRunCompletedEvent
+                await eventSender.SendAsync(nameof(TestRunCompletedEvent), new TestRunCompletedEvent
                 {
                     TestRunId = testRun.Id,
                     BuildId = buildId,

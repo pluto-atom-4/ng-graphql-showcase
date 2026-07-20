@@ -1,20 +1,28 @@
 using FactoryApp.Domain.Entities;
 using FactoryApp.Domain.Events;
 using HotChocolate;
+using HotChocolate.Subscriptions;
+using HotChocolate.Types;
 
 namespace FactoryApp.GraphQL;
 
 public class BuildSubscription
 {
+    [Subscribe]
     public async IAsyncEnumerable<BuildStatusUpdate> BuildStatusUpdated(
-        Guid buildId,
+        string buildId,
         [EventMessage] BuildStatusChangedEvent message)
     {
-        if (message.BuildId == buildId)
+        if (!Guid.TryParse(buildId, out var buildGuid))
+        {
+            yield break;
+        }
+
+        if (message.BuildId == buildGuid)
         {
             yield return new BuildStatusUpdate
             {
-                BuildId = buildId,
+                BuildId = buildGuid,
                 OldStatus = message.OldStatus,
                 NewStatus = message.NewStatus,
                 Timestamp = message.Timestamp
@@ -22,11 +30,17 @@ public class BuildSubscription
         }
     }
 
+    [Subscribe]
     public async IAsyncEnumerable<TestRunUpdate> TestRunCompleted(
-        Guid buildId,
+        string buildId,
         [EventMessage] TestRunCompletedEvent message)
     {
-        if (message.BuildId == buildId)
+        if (!Guid.TryParse(buildId, out var buildGuid))
+        {
+            yield break;
+        }
+
+        if (message.BuildId == buildGuid)
         {
             yield return new TestRunUpdate
             {
@@ -37,6 +51,7 @@ public class BuildSubscription
             };
         }
     }
+
 }
 
 public class BuildStatusUpdate
