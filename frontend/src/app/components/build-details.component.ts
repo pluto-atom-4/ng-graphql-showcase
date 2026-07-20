@@ -8,11 +8,13 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Build } from '../api/generated/graphql';
+import { GetBuildQuery } from '../api/generated/graphql';
 import { WorkflowHistoryViewerComponent } from './workflow-history-viewer.component';
 import { WorkflowService } from '../api/workflow.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+
+type BuildDetails = NonNullable<GetBuildQuery['build']>;
 
 type DetailTab = 'workflow' | 'parts' | 'testRuns';
 
@@ -163,7 +165,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
 export class BuildDetailsComponent implements OnDestroy {
   private destroy$ = new Subject<void>();
 
-  readonly build = input.required<Build>();
+  readonly build = input.required<BuildDetails>();
   readonly onClose = input.required<() => void>();
 
   readonly activeTab = signal<DetailTab>('workflow');

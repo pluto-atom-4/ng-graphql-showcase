@@ -2,9 +2,11 @@ import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
-import { Build } from './api/generated/graphql';
+import { GetBuildQuery } from './api/generated/graphql';
 import { BuildService } from './services/build.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+type BuildDetail = NonNullable<GetBuildQuery['build']>;
 
 interface BuildCard {
   id: string;
@@ -91,7 +93,7 @@ export class AppComponent {
     { id: 'build-stage-001', name: 'Staging Deploy' },
   ];
 
-  selectedBuild = signal<Build | null>(null);
+  selectedBuild = signal<BuildDetail | null>(null);
 
   constructor(private buildService: BuildService) {}
 
@@ -99,7 +101,7 @@ export class AppComponent {
     this.buildService
       .getBuildById(buildId)
       .pipe(takeUntilDestroyed())
-      .subscribe((build: Build | null) => {
+      .subscribe((build: BuildDetail | null) => {
         this.selectedBuild.set(build);
       });
   }
