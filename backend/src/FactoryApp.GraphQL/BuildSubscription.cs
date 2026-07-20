@@ -49,28 +49,6 @@ public class BuildSubscription
         }
     }
 
-    public static IAsyncEnumerable<string> TestSubscriptionSync()
-    {
-        return GetTestMessages();
-    }
-
-    private static async IAsyncEnumerable<string> GetTestMessages()
-    {
-        yield return "test1";
-        yield return "test2";
-    }
-
-    public static async IAsyncEnumerable<BuildStatusUpdate> AllBuildStatusUpdates(
-        [EventMessage] BuildStatusChangedEvent message)
-    {
-        yield return new BuildStatusUpdate
-        {
-            BuildId = message.BuildId,
-            OldStatus = message.OldStatus,
-            NewStatus = message.NewStatus,
-            Timestamp = message.Timestamp
-        };
-    }
 }
 
 public class BuildStatusUpdate
