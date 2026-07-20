@@ -2,11 +2,8 @@ import { Component, ChangeDetectionStrategy, signal, Injector, inject, runInInje
 import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
-import { GetBuildQuery } from './api/generated/graphql';
 import { BuildService } from './services/build.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-type BuildDetail = NonNullable<GetBuildQuery['build']>;
 
 interface BuildCard {
   id: string;
@@ -88,7 +85,7 @@ interface BuildCard {
 })
 export class AppComponent {
   builds = signal<BuildCard[]>([]);
-  selectedBuild = signal<BuildDetail | null>(null);
+  selectedBuild = signal<any>(null);
   private injector = inject(Injector);
 
   constructor(private buildService: BuildService) {
