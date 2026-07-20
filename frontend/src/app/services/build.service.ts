@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { GetBuildGQL, GetBuildQuery, GetBuildQueryVariables } from '../api/generated/graphql';
+import { GetBuildGQL, GetBuildQuery } from '../api/generated/graphql';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Build } from '../api/generated/graphql';

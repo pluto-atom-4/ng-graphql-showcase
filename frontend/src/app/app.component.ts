@@ -85,11 +85,6 @@ interface BuildCard {
   `,
 })
 export class AppComponent {
-  private buildService = new BuildService(
-    // This will be injected via dependency injection
-    undefined as any,
-  );
-
   builds: BuildCard[] = [
     { id: 'build-prod-001', name: 'Production Build' },
     { id: 'build-test-001', name: 'Test Suite' },
@@ -98,15 +93,13 @@ export class AppComponent {
 
   selectedBuild = signal<Build | null>(null);
 
-  constructor(buildService: BuildService) {
-    this.buildService = buildService;
-  }
+  constructor(private buildService: BuildService) {}
 
   onBuildClicked(buildId: string): void {
     this.buildService
       .getBuildById(buildId)
       .pipe(takeUntilDestroyed())
-      .subscribe((build) => {
+      .subscribe((build: Build | null) => {
         this.selectedBuild.set(build);
       });
   }
