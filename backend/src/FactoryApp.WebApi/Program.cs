@@ -208,6 +208,9 @@ app.Use(async (context, next) =>
 // 3.7b Add CORS middleware (issue #219) - MUST be before MapGraphQL
 app.UseCors("AllowFrontend");
 
+// 3.7c Enable WebSocket support for GraphQL subscriptions
+app.UseWebSockets();
+
 // 3.8 Add authentication & authorization middleware (issue #133)
 app.UseAuthentication();
 app.UseAuthorization();
