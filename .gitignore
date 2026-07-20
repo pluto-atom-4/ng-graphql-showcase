@@ -63,3 +63,4 @@ sub-issues-contents*.json
 gh-issue-draft*.md*
 feat-idea.md
 flaw-symptom.md
+/updates.json

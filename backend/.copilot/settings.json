@@ -1,0 +1,124 @@
+{
+  "$schema": "https://copilot.github.com/.copilot/settings.schema.json",
+  "description": "AI agentic coding configuration for ASP.NET Core backend",
+  "extends": "../CLAUDE.md",
+  "language": "C#",
+  "framework": "ASP.NET Core 10 + EF Core + Dapper + Hot Chocolate GraphQL",
+
+  "languageServer": {
+    "type": "OmniSharp (Roslyn-based)",
+    "enabled": true,
+    "settings": {
+      "omnisharp.enableEditorConfigSupport": true,
+      "omnisharp.enableRoslynAnalyzers": true,
+      "omnisharp.analyzeOpenDocumentsOnly": false
+    },
+    "diagnostics": {
+      "enabled": true,
+      "strictMode": true,
+      "nullableReferenceTypes": "enable"
+    }
+  },
+
+  "build": {
+    "command": "dotnet build ./FactoryApp.slnx",
+    "description": ".NET 10 build with schema auto-emission",
+    "schemaEmission": {
+      "enabled": true,
+      "outputFile": "src/FactoryApp.WebApi/schema.graphql",
+      "onComplete": "Commit schema.graphql; trigger pnpm codegen in frontend"
+    }
+  },
+
+  "test": {
+    "command": "dotnet test ./FactoryApp.Tests",
+    "framework": "xUnit",
+    "description": "Integration tests against real SQL Server (port 1433)",
+    "database": {
+      "type": "SQL Server 2022",
+      "connection": "Server=localhost,1433;Database=FactoryAppDb_Test;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=true;",
+      "prerequisite": "pnpm docker:up (SQL Server container must be running)"
+    }
+  },
+
+  "database": {
+    "migrations": {
+      "command": "pnpm db:migrate",
+      "description": "Apply pending EF Core migrations",
+      "addMigration": "cd src/FactoryApp.WebApi && dotnet ef migrations add <Name>",
+      "listMigrations": "dotnet ef migrations list"
+    }
+  },
+
+  "guardrails": {
+    "schema": {
+      "rule": "Never manually edit schema.graphql — auto-emitted on dotnet build",
+      "action": "Run dotnet build after schema changes; commit schema.graphql; trigger pnpm codegen",
+      "reference": "AGENTS.md, graphql-patterns.md"
+    },
+    "dtoMapping": {
+      "rule": "Return DTOs from GraphQL resolvers, never raw EF Core entities",
+      "pattern": ".Where(...).ProjectTo<DTO>(_mapper.ConfigurationProvider).FirstOrDefault()",
+      "action": "Decouples GraphQL from database schema; enables schema evolution",
+      "reference": "AGENTS.md, graphql-patterns.md"
+    },
+    "transactions": {
+      "rule": "EF Core + Dapper writes in same operation must share explicit DbTransaction",
+      "pattern": "using var txn = await context.Database.BeginTransactionAsync();",
+      "action": "Prevents factory-floor deadlocks (critical for manufacturing workflows)",
+      "reference": "AGENTS.md, database-rules.md"
+    },
+    "dataLoaders": {
+      "rule": "Use DataLoaders + [UseProjection] for child-entity queries",
+      "pattern": "[UseProjection] public Build GetBuild(int id) => ... // DataLoader prevents N+1",
+      "action": "Optimizes GraphQL queries; reduces database round-trips",
+      "reference": "backend-patterns.md, graphql-patterns.md"
+    },
+    "queryDepth": {
+      "rule": "GraphQL query depth: maximum 5 layers",
+      "action": "Split deeper queries into separate requests via DataLoaders",
+      "reference": "graphql-patterns.md"
+    },
+    "testing": {
+      "rule": "Never mock DbContext — test against real SQL Server",
+      "action": "Mocks diverge from production behavior; prior incident: mocked tests passed, prod migration failed",
+      "connection": "Server=localhost,1433;Database=FactoryAppDb_Test;...",
+      "reference": "AGENTS.md, database-rules.md, backend-patterns.md"
+    },
+    "workflows": {
+      "rule": "Store only primitives (Guid, string) in Elsa workflow variables",
+      "pattern": "workflowState.SetVariable('BuildId', buildId); // NOT the Build object",
+      "action": "Complex objects become stale in long-running workflows; fetch fresh on activity execution",
+      "reference": "AGENTS.md, workflow-integration.md"
+    }
+  },
+
+  "documentation": {
+    "rootClaude": "../CLAUDE.md",
+    "rootDesign": "../DESIGN.md",
+    "rules": {
+      "database": "../.claude/rules/database-rules.md",
+      "backend": "../.claude/rules/backend-patterns.md",
+      "graphql": "../.claude/rules/graphql-patterns.md",
+      "workflows": "../.claude/rules/workflow-integration.md"
+    },
+    "related": [
+      "../AGENTS.md (Agent guardrails & setup commands)",
+      "../docs/ARCHITECTURE.md (Type-safety pipeline, entity exposure)",
+      "../docs/DATABASE.md (Migrations, transaction patterns, testing strategy)",
+      "../docs/DEVELOPMENT.md (IDE setup, debugging, Hot Chocolate)"
+    ]
+  },
+
+  "commands": {
+    "setup": "pnpm install && pnpm setup",
+    "dev": "cd src/FactoryApp.WebApi && dotnet watch run",
+    "build": "dotnet build ./FactoryApp.slnx",
+    "test": "dotnet test ./FactoryApp.Tests",
+    "migrations:list": "dotnet ef migrations list",
+    "migrations:add": "cd src/FactoryApp.WebApi && dotnet ef migrations add <Name>",
+    "migrations:apply": "pnpm db:migrate",
+    "docker:up": "pnpm docker:up",
+    "docker:down": "pnpm docker:down"
+  }
+}
