@@ -1,7 +1,12 @@
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
-import { Build } from './api/generated/graphql';
+import { GetBuildQuery } from './api/generated/graphql';
+import { BuildService } from './services/build.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+type BuildDetail = NonNullable<GetBuildQuery['build']>;
 
 interface BuildCard {
   id: string;
@@ -11,7 +16,7 @@ interface BuildCard {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [BuildProgressCardComponent, BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent],
+  imports: [CommonModule, BuildProgressCardComponent, BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-gradient-to-br from-base-100 to-base-200 p-8">
@@ -88,11 +93,17 @@ export class AppComponent {
     { id: 'build-stage-001', name: 'Staging Deploy' },
   ];
 
-  selectedBuild = signal<Build | null>(null);
+  selectedBuild = signal<BuildDetail | null>(null);
+
+  constructor(private buildService: BuildService) {}
 
   onBuildClicked(buildId: string): void {
-    // buildClicked wired but Apollo not configured yet
-    console.log('Build clicked:', buildId);
+    this.buildService
+      .getBuildById(buildId)
+      .pipe(takeUntilDestroyed())
+      .subscribe((build: BuildDetail | null) => {
+        this.selectedBuild.set(build);
+      });
   }
 
   closeModal = (): void => {
