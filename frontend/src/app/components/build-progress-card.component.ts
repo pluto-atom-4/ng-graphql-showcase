@@ -93,6 +93,11 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.buildId) {
+      console.warn('BuildId not set, skipping subscription');
+      return;
+    }
+
     try {
       this.buildStatusService.subscribeToBuildStatus(this.buildId);
 
