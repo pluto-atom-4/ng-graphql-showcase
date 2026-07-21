@@ -5,6 +5,7 @@ import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent }
 import { BuildService } from './services/build.service';
 import { BuildStateWorkerService } from './services/build-state-worker.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 interface BuildCard {
   id: string;
@@ -108,22 +109,16 @@ export class AppComponent {
     // Subscribe via centralized state worker (combines query + real-time updates)
     this.stateWorker.subscribeToBuild(buildId);
 
-    // Get current build from state worker
-    const build = this.stateWorker.getBuild(buildId);
-    if (build) {
-      this.selectedBuild.set(build);
-    }
-
-    // Subscribe to changes
+    // Watch for updates to this build
     runInInjectionContext(this.injector, () => {
       this.stateWorker
         .getBuilds$()
-        .pipe(takeUntilDestroyed())
-        .subscribe((buildMap) => {
-          const updatedBuild = buildMap.get(buildId);
-          if (updatedBuild) {
-            this.selectedBuild.set(updatedBuild);
-          }
+        .pipe(
+          takeUntilDestroyed(),
+          map((buildMap) => buildMap.get(buildId) || null)
+        )
+        .subscribe((build) => {
+          this.selectedBuild.set(build);
         });
     });
   }

@@ -1,10 +1,12 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy, signal, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, signal, OnDestroy, Output, EventEmitter, inject, Injector, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { computed } from '@angular/core';
 import { map, startWith, Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CardComponent, BadgeComponent, ButtonComponent } from './index';
 import { BuildStatusService } from '../api/build-status.service';
+import { BuildStateWorkerService } from '../services/build-state-worker.service';
 import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 
 /**
@@ -74,6 +76,8 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   @Input() buildId = 'build-uuid-123';
   @Output() buildClicked = new EventEmitter<string>();
 
+  private stateWorker = inject(BuildStateWorkerService);
+  private injector = inject(Injector);
   private buildStatusService?: BuildStatusService;
   private subscription: Subscription | null = null;
 
@@ -88,34 +92,35 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (!this.buildStatusService) {
-      console.warn(`BuildStatusService not available for ${this.buildId}`);
-      return;
-    }
-
     if (!this.buildId) {
       console.warn('BuildId not set, skipping subscription');
       return;
     }
 
-    try {
-      this.buildStatusService.subscribeToBuildStatus(this.buildId);
+    // Subscribe via centralized state worker (unified data source)
+    this.stateWorker.subscribeToBuild(this.buildId);
 
-      const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
-        map(updates => this.getLatestUpdate(updates)),
-        startWith(this.getDefaultUpdate())
-      );
+    // Also maintain BuildStatusService subscription for real-time updates
+    if (this.buildStatusService) {
+      try {
+        this.buildStatusService.subscribeToBuildStatus(this.buildId);
 
-      this.subscription = buildStatusStream$.subscribe(
-        update => {
-          this.buildStatus.set(update);
-        },
-        error => {
-          console.warn(`Subscription error for build ${this.buildId}:`, error);
-        }
-      );
-    } catch (error) {
-      console.warn(`Failed to initialize subscription for ${this.buildId}:`, error);
+        const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
+          map((updates: any) => this.getLatestUpdate(updates)),
+          startWith(this.getDefaultUpdate())
+        );
+
+        this.subscription = buildStatusStream$.subscribe(
+          (update: any) => {
+            this.buildStatus.set(update);
+          },
+          (error: any) => {
+            console.warn(`Subscription error for build ${this.buildId}:`, error);
+          }
+        );
+      } catch (error) {
+        console.warn(`Failed to initialize subscription for ${this.buildId}:`, error);
+      }
     }
   }
 
