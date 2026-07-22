@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { BuildProgressCardComponent } from './components/build-progress-card.component';
 import { BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent } from './components';
 import { BuildService } from './services/build.service';
+import { BuildStateWorkerService } from './services/build-state-worker.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 interface BuildCard {
   id: string;
@@ -87,6 +89,7 @@ export class AppComponent {
   builds = signal<BuildCard[]>([]);
   selectedBuild = signal<any>(null);
   private injector = inject(Injector);
+  private stateWorker = inject(BuildStateWorkerService);
 
   constructor(private buildService: BuildService) {
     this.loadBuilds();
@@ -103,10 +106,17 @@ export class AppComponent {
   }
 
   onBuildClicked(buildId: string): void {
+    // Subscribe via centralized state worker (combines query + real-time updates)
+    this.stateWorker.subscribeToBuild(buildId);
+
+    // Watch for updates to this build
     runInInjectionContext(this.injector, () => {
-      this.buildService
-        .getBuildById(buildId)
-        .pipe(takeUntilDestroyed())
+      this.stateWorker
+        .getBuilds$()
+        .pipe(
+          takeUntilDestroyed(),
+          map((buildMap) => buildMap.get(buildId) || null)
+        )
         .subscribe((build) => {
           this.selectedBuild.set(build);
         });

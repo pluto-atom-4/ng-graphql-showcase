@@ -46,7 +46,7 @@ export class BuildService {
           }
         }`,
         variables: { id },
-        fetchPolicy: 'cache-first',
+        fetchPolicy: 'cache-and-network',
       })
       .valueChanges.pipe(
         map((result) => result.data?.build || null),
