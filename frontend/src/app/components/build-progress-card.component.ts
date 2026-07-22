@@ -1,13 +1,12 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy, signal, OnDestroy, Output, EventEmitter, inject, Injector, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { computed } from '@angular/core';
-import { map, startWith, Subscription } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { CardComponent, BadgeComponent, ButtonComponent } from './index';
-import { BuildStatusService } from '../api/build-status.service';
+import { CardComponent, ButtonComponent } from './index';
 import { BuildStateWorkerService } from '../services/build-state-worker.service';
-import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
+import { BuildStatusUpdate } from '../api/generated/graphql';
 
 /**
  * BuildProgressCard: Real-time manufacturing workflow status display
@@ -36,13 +35,13 @@ import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 @Component({
   selector: 'app-build-progress-card',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent],
+  imports: [CommonModule, CardComponent, ButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-card *ngIf="buildStatus()" [title]="buildName" [description]="buildId">
       <!-- Status badge -->
       <div class="mb-4 flex items-center gap-2">
-        <app-badge [label]="statusLabel()" [variant]="statusVariant()" />
+        <span [class]="statusBadgeClass()">{{ statusLabel() }}</span>
         <span class="text-sm text-gray-500">{{ buildStatus().timestamp | date:'HH:mm:ss' }}</span>
       </div>
 
@@ -53,7 +52,7 @@ import { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
           <div class="collapse-content">
             <div class="text-xs space-y-1">
               <p><strong>Current:</strong> {{ statusLabel() }}</p>
-              <p><strong>Previous:</strong> {{ mapStatus(buildStatus().oldStatus) }}</p>
+              <p><strong>Previous:</strong> {{ buildStatus().oldStatus }}</p>
               <p><strong>Updated:</strong> {{ buildStatus().timestamp | date:'medium' }}</p>
             </div>
           </div>
@@ -78,18 +77,11 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
 
   private stateWorker = inject(BuildStateWorkerService);
   private injector = inject(Injector);
-  private buildStatusService?: BuildStatusService;
   private subscription: Subscription | null = null;
 
   buildStatus = signal<BuildStatusUpdate>(this.getDefaultUpdate());
 
-  constructor() {
-    try {
-      this.buildStatusService = inject(BuildStatusService);
-    } catch (error) {
-      console.warn('BuildStatusService injection failed, continuing without subscriptions:', error);
-    }
-  }
+  constructor() {}
 
   ngOnInit(): void {
     if (!this.buildId) {
@@ -97,20 +89,30 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Subscribe via centralized state worker (unified data source)
+    // Subscribe via centralized state worker (unified data source for both Card + Modal)
     this.stateWorker.subscribeToBuild(this.buildId);
 
-    // Also maintain BuildStatusService subscription for real-time updates
-    if (this.buildStatusService) {
-      try {
-        this.buildStatusService.subscribeToBuildStatus(this.buildId);
-
-        const buildStatusStream$ = this.buildStatusService.getBufferedUpdates().pipe(
-          map((updates: any) => this.getLatestUpdate(updates)),
-          startWith(this.getDefaultUpdate())
-        );
-
-        this.subscription = buildStatusStream$.subscribe(
+    // Watch for Build updates from centralized state
+    runInInjectionContext(this.injector, () => {
+      this.subscription = this.stateWorker
+        .getBuilds$()
+        .pipe(
+          map((buildMap: any) => {
+            const build = buildMap.get(this.buildId);
+            if (build) {
+              // Convert Build to BuildStatusUpdate format for display
+              return {
+                buildId: build.id,
+                newStatus: build.status,
+                oldStatus: build.status,
+                timestamp: new Date(build.updatedAt),
+              } as BuildStatusUpdate;
+            }
+            return this.getDefaultUpdate();
+          }),
+          takeUntilDestroyed()
+        )
+        .subscribe(
           (update: any) => {
             this.buildStatus.set(update);
           },
@@ -118,19 +120,11 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
             console.warn(`Subscription error for build ${this.buildId}:`, error);
           }
         );
-      } catch (error) {
-        console.warn(`Failed to initialize subscription for ${this.buildId}:`, error);
-      }
-    }
+    });
   }
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
-    this.buildStatusService?.disconnect(this.buildId);
-  }
-
-  private getLatestUpdate(updates: BuildStatusUpdate[]): BuildStatusUpdate {
-    return updates[updates.length - 1] || this.getDefaultUpdate();
   }
 
   private getDefaultUpdate(): BuildStatusUpdate {
@@ -142,17 +136,22 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
     };
   }
 
-  mapStatus(gqlStatus: BuildStatus): string {
-    const statusMap: Record<BuildStatus, string> = {
-      PENDING: 'Pending',
-      RUNNING: 'Running',
-      COMPLETE: 'Complete',
-      FAILED: 'Failed'
-    };
-    return statusMap[gqlStatus] || 'Unknown';
-  }
+  statusLabel = computed(() => this.buildStatus().newStatus);
 
-  statusLabel = computed(() => this.mapStatus(this.buildStatus().newStatus));
+  statusBadgeClass = computed(() => {
+    const status = this.buildStatus().newStatus;
+    const baseClass = 'badge badge-lg';
+    switch (status) {
+      case 'RUNNING':
+        return `${baseClass} badge-info`;
+      case 'COMPLETE':
+        return `${baseClass} badge-success`;
+      case 'FAILED':
+        return `${baseClass} badge-error`;
+      default:
+        return `${baseClass} badge-warning`;
+    }
+  });
 
   statusVariant = computed(() => {
     const status = this.buildStatus().newStatus;
