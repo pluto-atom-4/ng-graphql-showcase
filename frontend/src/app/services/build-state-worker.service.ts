@@ -178,13 +178,61 @@ export class BuildStateWorkerService implements OnDestroy {
   }
 
   /**
-   * Persist build to localStorage
+   * Persist build to localStorage with quota management
    */
   private persistToLocalStorage(buildId: string, build: Build): void {
     try {
-      localStorage.setItem(`build-${buildId}`, JSON.stringify(build));
+      const json = JSON.stringify(build);
+      const size = new Blob([json]).size;
+
+      // Check quota before write
+      if (navigator.storage?.estimate) {
+        navigator.storage.estimate().then(({ quota = 0, usage = 0 }) => {
+          const available = quota - usage;
+          if (available < size * 2) {
+            // Threshold: need at least 2x the item size for safety
+            console.warn(
+              `[BuildStateWorkerService] localStorage quota critical (${(usage / 1024 / 1024).toFixed(2)}MB / ${(quota / 1024 / 1024).toFixed(2)}MB), evicting old builds`
+            );
+            this.evictOldestBuilds(5);
+          }
+        });
+      }
+
+      localStorage.setItem(`build-${buildId}`, json);
     } catch (e) {
-      console.warn(`Failed to persist build ${buildId} to localStorage`, e);
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        console.error(
+          `[BuildStateWorkerService] localStorage quota exceeded, evicting builds and retrying`
+        );
+        this.evictOldestBuilds(10);
+        try {
+          localStorage.setItem(`build-${buildId}`, JSON.stringify(build));
+        } catch (retryErr) {
+          console.error(`[BuildStateWorkerService] Failed to persist build ${buildId} after eviction:`, retryErr);
+        }
+      } else {
+        console.error(`[BuildStateWorkerService] Failed to persist build ${buildId}:`, e);
+      }
+    }
+  }
+
+  /**
+   * Evict oldest builds from localStorage when quota critical
+   */
+  private evictOldestBuilds(count: number): void {
+    try {
+      const builds = Array.from(this.buildMap().values()).sort(
+        (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+      );
+
+      const toEvict = builds.slice(0, Math.min(count, builds.length));
+      toEvict.forEach((build) => {
+        localStorage.removeItem(`build-${build.id}`);
+        console.log(`[BuildStateWorkerService] Evicted build ${build.id} from localStorage`);
+      });
+    } catch (e) {
+      console.error(`[BuildStateWorkerService] Failed to evict builds:`, e);
     }
   }
 
