@@ -12,6 +12,12 @@ export interface Build {
   updatedAt: Date;
   parts: Array<{ id: string; name: string; sku: string; quantity: number }>;
   testRuns: Array<{ id: string; status: string; result: string | null; fileUrl: string | null }>;
+  cachedAt?: number; // Timestamp when cached to localStorage
+}
+
+export interface BuildWithStaleness extends Build {
+  isStale: boolean;
+  staleMinutes?: number;
 }
 
 /**
@@ -178,11 +184,12 @@ export class BuildStateWorkerService implements OnDestroy {
   }
 
   /**
-   * Persist build to localStorage with quota management
+   * Persist build to localStorage with quota management and staleness tracking
    */
   private persistToLocalStorage(buildId: string, build: Build): void {
     try {
-      const json = JSON.stringify(build);
+      const buildWithCache = { ...build, cachedAt: Date.now() };
+      const json = JSON.stringify(buildWithCache);
       const size = new Blob([json]).size;
 
       // Check quota before write
@@ -234,6 +241,25 @@ export class BuildStateWorkerService implements OnDestroy {
     } catch (e) {
       console.error(`[BuildStateWorkerService] Failed to evict builds:`, e);
     }
+  }
+
+  /**
+   * Check if cached build data is stale (default: 1 hour)
+   */
+  isCacheStale(build: Build, maxAge: number = 3600000): boolean {
+    if (!build.cachedAt) return false;
+    return Date.now() - build.cachedAt > maxAge;
+  }
+
+  /**
+   * Get staleness info for a build (minutes old, is stale)
+   */
+  getStaleInfo(build: Build, maxAge: number = 3600000): { isStale: boolean; minutes: number } {
+    if (!build.cachedAt) {
+      return { isStale: false, minutes: 0 };
+    }
+    const minutes = Math.floor((Date.now() - build.cachedAt) / 60000);
+    return { isStale: minutes * 60000 > maxAge, minutes };
   }
 
   /**
