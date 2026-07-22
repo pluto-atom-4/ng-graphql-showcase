@@ -1,5 +1,5 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
-import { Observable, Subject, map, filter, takeUntil, BehaviorSubject } from 'rxjs';
+import { Injectable, signal, effect, OnDestroy } from '@angular/core';
+import { Observable, Subject, map, filter, takeUntil, BehaviorSubject, finalize } from 'rxjs';
 import { BuildService } from './build.service';
 import { BuildStatusService } from '../api/build-status.service';
 
@@ -35,13 +35,17 @@ export interface Build {
  * - On reconnect: Merges updates, reconciles conflicts
  */
 @Injectable({ providedIn: 'root' })
-export class BuildStateWorkerService {
+export class BuildStateWorkerService implements OnDestroy {
   private buildMap = signal<Map<string, Build>>(this.loadFromLocalStorage());
-  buildMap$ = computed(() => this.buildMap());
   private buildMap$$ = new BehaviorSubject<Map<string, Build>>(this.buildMap());
 
   private destroy$ = new Subject<void>();
   private activeSubscriptions = new Set<string>();
+  private refetchInProgress = new Set<string>();
+
+  // Bound event handlers for proper cleanup
+  private onOnline = () => this.onConnectionRestored();
+  private onOffline = () => this.onConnectionLost();
 
   constructor(
     private buildService: BuildService,
@@ -56,9 +60,9 @@ export class BuildStateWorkerService {
       });
     });
 
-    // Listen for connection changes
-    window.addEventListener('online', () => this.onConnectionRestored());
-    window.addEventListener('offline', () => this.onConnectionLost());
+    // Listen for connection changes (with bound handlers for proper cleanup)
+    window.addEventListener('online', this.onOnline);
+    window.addEventListener('offline', this.onOffline);
   }
 
   /**
@@ -76,9 +80,14 @@ export class BuildStateWorkerService {
     this.buildService
       .getBuildById(buildId)
       .pipe(takeUntil(this.destroy$))
-      .subscribe((build) => {
-        if (build) {
-          this.updateBuild(buildId, build);
+      .subscribe({
+        next: (build) => {
+          if (build) {
+            this.updateBuild(buildId, build);
+          }
+        },
+        error: (err) => {
+          console.error(`[BuildStateWorkerService] Failed to fetch build ${buildId}:`, err);
         }
       });
 
@@ -91,11 +100,23 @@ export class BuildStateWorkerService {
         filter((update: any) => update?.buildId === buildId),
         takeUntil(this.destroy$)
       )
-      .subscribe((update: any) => {
-        if (update) {
-          this.updateBuildStatus(buildId, update.newStatus);
+      .subscribe({
+        next: (update: any) => {
+          if (update) {
+            this.updateBuildStatus(buildId, update.newStatus);
+          }
+        },
+        error: (err) => {
+          console.error(`[BuildStateWorkerService] Failed to receive status update for build ${buildId}:`, err);
         }
       });
+  }
+
+  /**
+   * Unsubscribe from a build: cleanup when component unmounts
+   */
+  unsubscribeBuild(buildId: string): void {
+    this.activeSubscriptions.delete(buildId);
   }
 
   /**
@@ -175,18 +196,31 @@ export class BuildStateWorkerService {
   }
 
   /**
-   * Handle connection restored
+   * Handle connection restored: refetch with deduplication
    */
   private onConnectionRestored(): void {
     console.log('[BuildStateWorkerService] Connection restored, syncing state');
-    // Refetch all active subscriptions
+    // Refetch all active subscriptions (deduplicated)
     Array.from(this.activeSubscriptions).forEach((buildId) => {
+      if (this.refetchInProgress.has(buildId)) {
+        return; // Skip if already refetching
+      }
+
+      this.refetchInProgress.add(buildId);
       this.buildService
         .getBuildById(buildId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe((build) => {
-          if (build) {
-            this.updateBuild(buildId, build);
+        .pipe(
+          takeUntil(this.destroy$),
+          finalize(() => this.refetchInProgress.delete(buildId))
+        )
+        .subscribe({
+          next: (build) => {
+            if (build) {
+              this.updateBuild(buildId, build);
+            }
+          },
+          error: (err) => {
+            console.error(`[BuildStateWorkerService] Reconnect refetch failed for build ${buildId}:`, err);
           }
         });
     });
@@ -195,7 +229,8 @@ export class BuildStateWorkerService {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    window.removeEventListener('online', () => this.onConnectionRestored());
-    window.removeEventListener('offline', () => this.onConnectionLost());
+    this.buildMap$$.complete();
+    window.removeEventListener('online', this.onOnline);
+    window.removeEventListener('offline', this.onOffline);
   }
 }

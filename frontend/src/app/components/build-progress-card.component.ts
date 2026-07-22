@@ -125,6 +125,7 @@ export class BuildProgressCardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
+    this.stateWorker.unsubscribeBuild(this.buildId);
   }
 
   private getDefaultUpdate(): BuildStatusUpdate {
