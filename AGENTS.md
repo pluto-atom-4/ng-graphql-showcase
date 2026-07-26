@@ -157,16 +157,27 @@ Agents enforce constraints via `.claude/settings.json` configuration (model over
 
 ## Related Documentation
 
-- **[CLAUDE.md](./CLAUDE.md)** — Extended AI agent guidance + rules router
+### AI Agent Guidance
+
+- **[CLAUDE.md](./CLAUDE.md)** — AI execution framework + rules router
+- **[.claude/CONTEXT-MANAGEMENT.md](./.claude/CONTEXT-MANAGEMENT.md)** — Token management, gates, recovery
+- **[.claude/hooks/README.md](./.claude/hooks/README.md)** — Hook system (PreToolUse, PostToolUse)
+- **[.claude/skills/INDEX.md](./.claude/skills/INDEX.md)** — Skill discovery + loader
+- **[.claude/MULTI_AGENT_GOVERNANCE.md](./.claude/MULTI_AGENT_GOVERNANCE.md)** — Multi-agent orchestration
+
+### Project Documentation
+
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Type-safety pipeline detail
 - **[docs/DATABASE.md](./docs/DATABASE.md)** — Transaction + testing patterns
 - **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — IDE setup + debugging
-- **[.claude/rules/](./.claude/rules/)** — Domain-specific architectural patterns
-  - `database-rules.md` — Transactions, testing strategy
-  - `backend-patterns.md` — EF Core, Dapper, DataLoaders
-  - `frontend-patterns.md` — Angular, OnPush, trackBy, codegen
-  - `graphql-patterns.md` — Query depth, entity exposure, type-safety pipeline
-  - `workflow-integration.md` — Elsa primitives, activity patterns
+
+### Architectural Rules (Domain-Specific)
+
+- **[.claude/rules/database-rules.md](./.claude/rules/database-rules.md)** — Transactions, testing strategy
+- **[.claude/rules/backend-patterns.md](./.claude/rules/backend-patterns.md)** — EF Core, Dapper, DataLoaders
+- **[.claude/rules/frontend-patterns.md](./.claude/rules/frontend-patterns.md)** — Angular, OnPush, trackBy, codegen
+- **[.claude/rules/graphql-patterns.md](./.claude/rules/graphql-patterns.md)** — Query depth, entity exposure, type-safety
+- **[.claude/rules/workflow-integration.md](./.claude/rules/workflow-integration.md)** — Elsa primitives, activity patterns
 
 ---
 

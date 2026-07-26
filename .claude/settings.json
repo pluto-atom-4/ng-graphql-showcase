@@ -78,8 +78,30 @@
       ]
     },
     "postToolUse": {
-      "enabled": false,
-      "description": "Phase 2: Will auto-lint/format on file save. Currently disabled pending hook system availability."
+      "enabled": true,
+      "rules": [
+        {
+          "tool": "Write|Edit",
+          "patterns": ["**/*.ts", "**/*.tsx"],
+          "action": "format",
+          "command": "pnpm --filter frontend run lint -- --fix",
+          "description": "Auto-lint TypeScript files on save"
+        },
+        {
+          "tool": "Write|Edit",
+          "patterns": ["**/*.md"],
+          "action": "format",
+          "command": "prettier --write",
+          "description": "Auto-format Markdown on save"
+        },
+        {
+          "tool": "Write|Edit",
+          "patterns": [".claude/**", ".github/**"],
+          "action": "log",
+          "logFile": ".claude/friction-log.md",
+          "description": "Log config file changes to friction-log"
+        }
+      ]
     }
   },
   "copilotCompatibility": {
