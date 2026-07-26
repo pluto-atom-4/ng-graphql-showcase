@@ -1,1 +1,30 @@
+# Step 1: Enforce feature branch workflow (pre-commit-enforce skill)
+SKILL_ROOT="$(git rev-parse --show-toplevel)/.claude/skills/pre-commit-enforce"
+if [ -f "$SKILL_ROOT/src/helpers.sh" ]; then
+  source "$SKILL_ROOT/src/helpers.sh"
+  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  PROTECTED=$(get_protected_branches)
+
+  is_protected() {
+    local branch="$1"
+    local protected_list="$PROTECTED"
+    for protected in $protected_list; do
+      if [ "$branch" = "$protected" ]; then
+        return 0
+      fi
+    done
+    return 1
+  }
+
+  if is_protected "$BRANCH"; then
+    log_error "$(get_message)"
+    echo ""
+    echo "Current branch: $BRANCH"
+    echo "Proper workflow: Create feature branch, commit, push, create PR"
+    echo ""
+    exit 1
+  fi
+fi
+
+# Step 2: Run linting (lint-staged)
 pnpm lint-staged

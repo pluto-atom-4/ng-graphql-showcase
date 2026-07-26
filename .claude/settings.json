@@ -54,5 +54,65 @@
       }
     }
   },
+  "hooks": {
+    "preToolUse": {
+      "enabled": true,
+      "rules": [
+        {
+          "tool": "Bash",
+          "patterns": [
+            "rm -rf",
+            "git reset --hard",
+            "git push --force",
+            "git clean -fd"
+          ],
+          "action": "block",
+          "message": "Destructive command blocked. This requires explicit user confirmation. Run with explicit confirmation: '! <command>'"
+        },
+        {
+          "tool": "Edit",
+          "patterns": ["schema.graphql", "graphql.ts"],
+          "action": "block",
+          "message": "Auto-generated file detected. Edit forbidden. Regenerate via: dotnet build (backend) or pnpm codegen (frontend)"
+        }
+      ]
+    },
+    "postToolUse": {
+      "enabled": true,
+      "rules": [
+        {
+          "tool": "Write|Edit",
+          "patterns": ["**/*.ts", "**/*.tsx"],
+          "action": "format",
+          "command": "pnpm --filter frontend run lint -- --fix",
+          "description": "Auto-lint TypeScript files on save"
+        },
+        {
+          "tool": "Write|Edit",
+          "patterns": ["**/*.md"],
+          "action": "format",
+          "command": "prettier --write",
+          "description": "Auto-format Markdown on save"
+        },
+        {
+          "tool": "Write|Edit",
+          "patterns": [".claude/**", ".github/**"],
+          "action": "log",
+          "logFile": ".claude/friction-log.md",
+          "description": "Log config file changes to friction-log"
+        }
+      ]
+    }
+  },
+  "copilotCompatibility": {
+    "compatible": true,
+    "notes": "Settings tested with GitHub Copilot CLI. Some Claude-specific features (agent orchestration, friction-log) may not apply.",
+    "claudeSpecific": [
+      "instructionBudget",
+      "agentOrchestration",
+      "modelOverride"
+    ],
+    "universal": ["permissions", "respectGitignore", "skillOverrides"]
+  },
   "modelOverride": "haiku"
 }

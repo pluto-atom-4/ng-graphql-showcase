@@ -46,6 +46,44 @@ pnpm docker:clean               # Remove volumes
 
 ---
 
+## Skill Discovery & Directory
+
+**Location**: `.claude/skills/` | **Load Method**: Lazy via YAML frontmatter metadata
+
+### Discoverable Skills (Alphabetical)
+
+| Skill                   | YAML Trigger                                         | When to Use                                   | Scope                                     | Path                                          |
+| ----------------------- | ---------------------------------------------------- | --------------------------------------------- | ----------------------------------------- | --------------------------------------------- |
+| **codegen-sync**        | `trigger: ["codegen", "schema change"]`              | After `dotnet build` emits new schema.graphql | Regenerate graphql.ts types (type-safety) | `.claude/skills/codegen-sync/SKILL.md`        |
+| **lsp-setup**           | `trigger: ["LSP", "IDE setup", "language server"]`   | First-time IDE config or debugger issues      | Code intelligence setup (Go-to-def, refs) | `.claude/skills/lsp-setup/SKILL.md`           |
+| **migration-generator** | `trigger: ["migration", "DB change", "EF Core"]`     | Backend schema/entity model changes           | Auto-create + validate EF Core migrations | `.claude/skills/migration-generator/SKILL.md` |
+| **pr-review-workflow**  | `trigger: ["review PR", "PR review", "code review"]` | Before merging to main                        | Quality + security + test verification    | `.claude/skills/pr-review-workflow/SKILL.md`  |
+
+### Adding New Skills
+
+1. Create `.claude/skills/<name>/SKILL.md` with YAML frontmatter:
+   ```yaml
+   ---
+   name: my-skill
+   description: What this skill does
+   trigger: ["keyword1", "keyword2"]
+   scope: "which agents can invoke"
+   ---
+   [Skill body]
+   ```
+2. Keywords in `trigger:` are auto-discovered
+3. Link from `.claude/skills/INDEX.md` (cross-reference)
+4. Test via skill picker when triggered
+
+### Discovery Flow
+
+```
+User mentions keyword → Harness checks trigger: list → Auto-invoke matching skill
+(Example: user says "codegen" → triggers codegen-sync automatically)
+```
+
+---
+
 ## Coding & Style Guidelines
 
 ### Frontend (Angular)
@@ -119,16 +157,27 @@ Agents enforce constraints via `.claude/settings.json` configuration (model over
 
 ## Related Documentation
 
-- **[CLAUDE.md](./CLAUDE.md)** — Extended AI agent guidance + rules router
+### AI Agent Guidance
+
+- **[CLAUDE.md](./CLAUDE.md)** — AI execution framework + rules router
+- **[.claude/CONTEXT-MANAGEMENT.md](./.claude/CONTEXT-MANAGEMENT.md)** — Token management, gates, recovery
+- **[.claude/hooks/README.md](./.claude/hooks/README.md)** — Hook system (PreToolUse, PostToolUse)
+- **[.claude/skills/INDEX.md](./.claude/skills/INDEX.md)** — Skill discovery + loader
+- **[.claude/MULTI_AGENT_GOVERNANCE.md](./.claude/MULTI_AGENT_GOVERNANCE.md)** — Multi-agent orchestration
+
+### Project Documentation
+
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Type-safety pipeline detail
 - **[docs/DATABASE.md](./docs/DATABASE.md)** — Transaction + testing patterns
 - **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — IDE setup + debugging
-- **[.claude/rules/](./.claude/rules/)** — Domain-specific architectural patterns
-  - `database-rules.md` — Transactions, testing strategy
-  - `backend-patterns.md` — EF Core, Dapper, DataLoaders
-  - `frontend-patterns.md` — Angular, OnPush, trackBy, codegen
-  - `graphql-patterns.md` — Query depth, entity exposure, type-safety pipeline
-  - `workflow-integration.md` — Elsa primitives, activity patterns
+
+### Architectural Rules (Domain-Specific)
+
+- **[.claude/rules/database-rules.md](./.claude/rules/database-rules.md)** — Transactions, testing strategy
+- **[.claude/rules/backend-patterns.md](./.claude/rules/backend-patterns.md)** — EF Core, Dapper, DataLoaders
+- **[.claude/rules/frontend-patterns.md](./.claude/rules/frontend-patterns.md)** — Angular, OnPush, trackBy, codegen
+- **[.claude/rules/graphql-patterns.md](./.claude/rules/graphql-patterns.md)** — Query depth, entity exposure, type-safety
+- **[.claude/rules/workflow-integration.md](./.claude/rules/workflow-integration.md)** — Elsa primitives, activity patterns
 
 ---
 

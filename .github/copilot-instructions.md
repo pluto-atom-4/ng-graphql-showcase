@@ -1,8 +1,38 @@
+---
+name: copilot-instructions
+description: Cross-AI guide for GitHub Copilot and Claude Code CLI in full-stack monorepo
+version: 1.1.0
+last_updated: 2026-07-25
+applies_to:
+  - "**/*.ts"
+  - "**/*.cs"
+  - "**/*.graphql"
+  - "backend/**"
+  - "frontend/**"
+  - ".claude/**"
+compatibility:
+  - github-copilot-cli
+  - claude-code
+related_rules:
+  - .claude/rules/database-rules.md
+  - .claude/rules/backend-patterns.md
+  - .claude/rules/frontend-patterns.md
+  - .claude/rules/graphql-patterns.md
+  - .claude/rules/workflow-integration.md
+categories:
+  - architecture
+  - type-safety
+  - performance
+  - database
+---
+
 # Copilot Instructions for ng-graphql-playground
 
-**Version:** 1.0.2 | **Last Updated:** 2026-07-19
+**Version:** 1.1.0 | **Last Updated:** 2026-07-25  
+**Applies to**: TypeScript, C#, GraphQL files in backend/ and frontend/  
+**Compatibility**: GitHub Copilot CLI, Claude Code
 
-This guide helps Copilot work effectively in this full-stack monorepo for managing long-running manufacturing workflows.
+This guide helps AI agents work effectively in this full-stack monorepo for managing long-running manufacturing workflows.
 
 ## Project Overview
 
