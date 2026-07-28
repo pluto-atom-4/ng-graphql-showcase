@@ -1,0 +1,71 @@
+/* Focus Ring Accessibility Styles */
+/* WCAG AA compliance: 2px outline, 4.5:1 contrast, visible on all interactive elements */
+
+:root {
+  --focus-ring-width: 2px;
+  --focus-ring-color: #2563eb; /* blue-600 */
+  --focus-ring-offset: 2px;
+}
+
+/* Apply to all interactive elements */
+button,
+a[href],
+input,
+select,
+textarea,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[tabindex]:not([tabindex="-1"]) {
+  outline: var(--focus-ring-width) solid transparent;
+  outline-offset: var(--focus-ring-offset);
+  transition: outline-color 150ms ease-in-out;
+}
+
+/* Visible focus state */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline-color: var(--focus-ring-color);
+  box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--focus-ring-color);
+}
+
+/* Dark mode: lighter focus ring for visibility */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --focus-ring-color: #60a5fa; /* blue-400 */
+  }
+}
+
+/* Reduced motion support: disable transitions for vestibular disorder users */
+@media (prefers-reduced-motion: reduce) {
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [tabindex]:not([tabindex="-1"]) {
+    transition: none;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [role="tab"]:focus-visible,
+  [role="menuitem"]:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
+    animation: none;
+  }
+}
