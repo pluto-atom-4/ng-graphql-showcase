@@ -1,0 +1,85 @@
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { BadgeComponent } from '../../shared/badge/badge.component';
+
+export interface Activity {
+  id: string;
+  timestamp: string;
+  description: string;
+  status: 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED';
+}
+
+@Component({
+  selector: 'app-activity-timeline',
+  standalone: true,
+  imports: [CommonModule, BadgeComponent],
+  template: `
+    <div class="space-y-4">
+      <div *ngIf="activities.length === 0" class="text-center py-8 text-gray-500">
+        No activities yet
+      </div>
+
+      <div *ngIf="activities.length > 0" class="space-y-4">
+        <div
+          *ngFor="let activity of activities; trackBy: trackByActivityId"
+          class="flex gap-4"
+        >
+          <!-- Timeline line -->
+          <div class="flex flex-col items-center">
+            <div class="w-3 h-3 rounded-full bg-blue-600 mt-1.5"></div>
+            <div
+              class="w-0.5 bg-gray-200 flex-1"
+              [style.height.rem]="3.5"
+            ></div>
+          </div>
+
+          <!-- Content -->
+          <div class="pb-4">
+            <div class="flex items-center gap-3">
+              <p class="text-sm font-medium text-gray-900">
+                {{ activity.description }}
+              </p>
+              <app-badge [status]="activity.status"></app-badge>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+              {{ formatTimestamp(activity.timestamp) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    :host {
+      display: block;
+    }
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class ActivityTimelineComponent {
+  @Input() activities: Activity[] = [];
+
+  formatTimestamp(timestamp: string): string {
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSecs < 60) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString();
+    } catch {
+      return timestamp;
+    }
+  }
+
+  trackByActivityId(index: number, activity: Activity): string {
+    return activity.id;
+  }
+}
