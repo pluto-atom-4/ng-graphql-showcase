@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { map, shareReplay, bufferTime, filter } from 'rxjs/operators';
 
 export interface Build {
   id: string;
@@ -14,6 +14,20 @@ export interface Build {
 export interface BuildsResult {
   builds: Build[];
   total: number;
+}
+
+export interface Metrics {
+  total: number;
+  inProgress: number;
+  completed: number;
+  failed: number;
+}
+
+export interface Activity {
+  id: string;
+  timestamp: string;
+  description: string;
+  status: 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED';
 }
 
 const GET_BUILDS = gql`
@@ -38,6 +52,35 @@ const BUILDS_SUBSCRIPTION = gql`
       name
       status
       updatedAt
+    }
+  }
+`;
+
+const GET_BUILDS_METRICS = gql`
+  query GetBuildsMetrics {
+    builds {
+      id
+      status
+    }
+  }
+`;
+
+const BUILDS_METRICS_SUBSCRIPTION = gql`
+  subscription BuildsMetricsChanged {
+    buildStatusChanged {
+      id
+      status
+    }
+  }
+`;
+
+const GET_BUILD_ACTIVITIES = gql`
+  query GetBuildActivities($buildId: String!, $limit: Int!) {
+    buildActivities(buildId: $buildId, limit: $limit) {
+      id
+      timestamp
+      description
+      status
     }
   }
 `;
@@ -80,6 +123,52 @@ export class BuildService {
         variables: { buildId }
       })
       .pipe(map((result) => result.data.buildStatusChanged));
+  }
+
+  getBuildsMetrics(): Observable<Metrics> {
+    return this.apollo
+      .query<{ builds: Array<{ id: string; status: string }> }>({
+        query: GET_BUILDS_METRICS
+      })
+      .pipe(
+        map((result) => this.calculateMetrics(result.data.builds)),
+        shareReplay(1)
+      );
+  }
+
+  subscribeToMetrics(): Observable<Metrics> {
+    return this.apollo
+      .subscribe<{ buildStatusChanged: { id: string; status: string } }>({
+        query: BUILDS_METRICS_SUBSCRIPTION
+      })
+      .pipe(
+        bufferTime(250),
+        filter((updates) => updates.length > 0),
+        map(() => {
+          throw new Error('Implement metrics calculation from subscription');
+        })
+      );
+  }
+
+  getBuildActivities(buildId: string, limit = 10): Observable<Activity[]> {
+    return this.apollo
+      .query<{ buildActivities: Activity[] }>({
+        query: GET_BUILD_ACTIVITIES,
+        variables: { buildId, limit }
+      })
+      .pipe(
+        map((result) => result.data.buildActivities),
+        shareReplay(1)
+      );
+  }
+
+  private calculateMetrics(builds: Array<{ id: string; status: string }>): Metrics {
+    return {
+      total: builds.length,
+      inProgress: builds.filter((b) => b.status === 'RUNNING').length,
+      completed: builds.filter((b) => b.status === 'COMPLETE').length,
+      failed: builds.filter((b) => b.status === 'FAILED').length
+    };
   }
 
   clearCache(): void {
