@@ -55,7 +55,7 @@
     }
   },
   "hooks": {
-    "preToolUse": {
+    "PreToolUse": {
       "enabled": true,
       "rules": [
         {
@@ -77,7 +77,7 @@
         }
       ]
     },
-    "postToolUse": {
+    "PostToolUse": {
       "enabled": true,
       "rules": [
         {
