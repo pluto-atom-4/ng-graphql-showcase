@@ -1,5 +1,6 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { BadgeComponent } from '../../shared/badge/badge.component';
 
 export interface Activity {
@@ -12,14 +13,15 @@ export interface Activity {
 @Component({
   selector: 'app-activity-timeline',
   standalone: true,
-  imports: [CommonModule, BadgeComponent],
+  imports: [CommonModule, ScrollingModule, BadgeComponent],
   template: `
     <div class="space-y-4">
       <div *ngIf="activities.length === 0" class="text-center py-8 text-gray-500">
         No activities yet
       </div>
 
-      <div *ngIf="activities.length > 0" class="space-y-4">
+      <div *ngIf="activities.length > 0 && activities.length <= 100" class="space-y-4">
+        <!-- Non-virtualized rendering for ≤100 items -->
         <div
           *ngFor="let activity of activities; trackBy: trackByActivityId"
           class="flex gap-4"
@@ -46,6 +48,38 @@ export interface Activity {
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- Virtual scroll for >100 items -->
+      <div *ngIf="activities.length > 100">
+        <cdk-virtual-scroll-viewport itemSize="56" class="h-[600px] overflow-y-auto">
+          <div
+            *cdkVirtualFor="let activity of activities; trackBy: trackByActivityId"
+            class="flex gap-4 py-2"
+          >
+            <!-- Timeline line -->
+            <div class="flex flex-col items-center">
+              <div class="w-3 h-3 rounded-full bg-blue-600 mt-1.5"></div>
+              <div
+                class="w-0.5 bg-gray-200 flex-1"
+                [style.height.rem]="3.5"
+              ></div>
+            </div>
+
+            <!-- Content -->
+            <div class="pb-4">
+              <div class="flex items-center gap-3">
+                <p class="text-sm font-medium text-gray-900">
+                  {{ activity.description }}
+                </p>
+                <app-badge [status]="activity.status"></app-badge>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                {{ formatTimestamp(activity.timestamp) }}
+              </p>
+            </div>
+          </div>
+        </cdk-virtual-scroll-viewport>
       </div>
     </div>
   `,

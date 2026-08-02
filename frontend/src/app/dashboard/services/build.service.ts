@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { Observable } from 'rxjs';
-import { map, shareReplay, bufferTime, filter } from 'rxjs/operators';
+import { map, shareReplay, bufferTime, filter, mergeMap } from 'rxjs/operators';
 
 export interface Build {
   id: string;
@@ -122,7 +122,11 @@ export class BuildService {
         query: BUILDS_SUBSCRIPTION,
         variables: { buildId }
       })
-      .pipe(map((result) => result.data.buildStatusChanged));
+      .pipe(
+        bufferTime(250),
+        filter((updates) => updates.length > 0),
+        mergeMap((updates) => updates.map((u) => u.data.buildStatusChanged))
+      );
   }
 
   getBuildsMetrics(): Observable<Metrics> {
