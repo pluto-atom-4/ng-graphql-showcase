@@ -23,7 +23,7 @@ import { CommonModule } from '@angular/common';
             (change)="onPageSizeChange($event)"
             class="px-2 py-1 border border-gray-300 rounded text-sm"
           >
-            <option *ngFor="let size of pageSizeOptions" [value]="size">
+            <option *ngFor="let size of pageSizeOptions; trackBy: trackByPageSize" [value]="size">
               {{ size }}
             </option>
           </select>
@@ -131,5 +131,9 @@ export class PaginationComponent {
     if (newSize !== this.pageSize) {
       this.pageSizeChange.emit(newSize);
     }
+  }
+
+  trackByPageSize(index: number, size: number): number {
+    return size;
   }
 }
