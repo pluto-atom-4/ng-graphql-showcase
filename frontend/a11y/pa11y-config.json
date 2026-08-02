@@ -1,0 +1,27 @@
+{
+  "runners": ["axe", "htmlcs"],
+  "standard": "WCAG2AA",
+  "timeout": 10000,
+  "wait": 1000,
+  "chromeLaunchConfig": {
+    "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+  },
+  "urls": [
+    "http://localhost:4200/",
+    "http://localhost:4200/dashboard",
+    "http://localhost:4200/builds",
+    "http://localhost:4200/workflows"
+  ],
+  "allowedStandards": ["WCAG2AA", "WCAG2AAA"],
+  "ignore": [
+    "WCAG2AA.Principle3.Guideline3_1_1.H57.2"
+  ],
+  "output": "json",
+  "reporters": ["cli", "json"],
+  "log": {
+    "begin": true,
+    "end": true,
+    "error": true,
+    "pass": true
+  }
+}

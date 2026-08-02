@@ -8,13 +8,17 @@
     "build": "ng build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:a11y": "vitest run --include='**/__tests__/accessibility/**/*.spec.ts' --include='**/__tests__/keyboard-navigation.spec.ts' --include='**/__tests__/aria-compliance.spec.ts'",
+    "test:keyboard": "vitest run --include='**/__tests__/keyboard-navigation.spec.ts'",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
     "lint": "ng lint",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json,md}\"",
-    "codegen": "pnpm graphql-code-generator --config codegen.ts"
+    "codegen": "pnpm graphql-code-generator --config codegen.ts",
+    "audit:lighthouse": "lighthouse http://localhost:4200 --config-path=a11y/lighthouse.config.js --output=json --output-path=a11y/reports/baseline-lighthouse.json",
+    "audit:pa11y": "pa11y-ci --config=a11y/pa11y-config.json"
   },
   "private": true,
   "dependencies": {
@@ -62,6 +66,16 @@
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.61.0",
     "vite": "^6.4.3",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "axe-core": "^4.9.0",
+    "axe-playwright": "^1.2.3",
+    "@axe-core/playwright": "^4.9.0",
+    "pa11y": "^9.0.0",
+    "pa11y-ci": "^3.1.0",
+    "lighthouse": "^11.5.0",
+    "playwright": "^1.48.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/user-event": "^14.5.2",
+    "color-contrast-checker": "^2.0.1"
   }
 }
