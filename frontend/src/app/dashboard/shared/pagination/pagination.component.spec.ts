@@ -137,6 +137,68 @@ describe('PaginationComponent', () => {
     expect(called).toBe(true);
   });
 
+  it('should emit new page size when changed', () => {
+    let emittedSize: number | undefined;
+    component.pageSizeChange.subscribe((size) => {
+      emittedSize = size;
+    });
+    component.pageSize = 10;
+    component.onPageSizeChange({
+      target: { value: '25' } as any
+    } as Event);
+    expect(emittedSize).toBe(25);
+  });
+
+  it('should not emit pageSizeChange if size is the same', () => {
+    let called = false;
+    component.pageSizeChange.subscribe(() => {
+      called = true;
+    });
+    component.pageSize = 10;
+    component.onPageSizeChange({
+      target: { value: '10' } as any
+    } as Event);
+    expect(called).toBe(false);
+  });
+
+  it('should display page size options', () => {
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('option');
+    expect(options.length).toBeGreaterThan(0);
+  });
+
+  it('should render page size options correctly', () => {
+    component.pageSizeOptions = [10, 25, 50];
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('option');
+    const values = Array.from(options).map((opt: any) => opt.value);
+    expect(values).toContain('10');
+    expect(values).toContain('25');
+    expect(values).toContain('50');
+  });
+
+  it('should display showing X-Y of Z format', () => {
+    const newComponent = TestBed.createComponent(PaginationComponent);
+    const newFixture = newComponent;
+    newFixture.componentInstance.total = 100;
+    newFixture.componentInstance.pageSize = 10;
+    newFixture.componentInstance.currentPage = 1;
+    newFixture.detectChanges();
+    const text = newFixture.nativeElement.textContent;
+    expect(text).toContain('Showing 1-10 of 100');
+  });
+
+  it('should update showing format on page change', () => {
+    const newComponent = TestBed.createComponent(PaginationComponent);
+    const newFixture = newComponent;
+    newFixture.componentInstance.total = 100;
+    newFixture.componentInstance.pageSize = 10;
+    newFixture.componentInstance.currentPage = 2;
+    newFixture.detectChanges();
+    const text = newFixture.nativeElement.textContent;
+    expect(text).toContain('Showing 11-20 of 100');
+  });
+
   it('should use OnPush change detection', () => {
     expect(component).toBeTruthy();
   });
