@@ -41,8 +41,8 @@ export class Apollo {
 
     return {
       valueChanges: valueChanges$,
-      pipe: (...operators: any[]) => {
-        return valueChanges$.pipe(...operators);
+      pipe: (...operators: any) => {
+        return valueChanges$.pipe(...(operators as any));
       }
     };
   }
