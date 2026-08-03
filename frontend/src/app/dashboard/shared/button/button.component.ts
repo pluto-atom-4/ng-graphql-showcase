@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger';
@@ -47,10 +47,11 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
       [attr.aria-busy]="loading"
       type="button"
     >
-      <span *ngIf="loading" class="mr-2">
-        <span class="inline-block animate-spin">⟳</span>
-      </span>
-      <ng-content></ng-content>
+      @if (loading) {
+        <span class="loading loading-spinner loading-sm mr-2"></span>
+      } @else {
+        <ng-content></ng-content>
+      }
     </button>
   `,
   styles: [`

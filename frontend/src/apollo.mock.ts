@@ -1,6 +1,9 @@
 // Mock apollo-angular for vitest to avoid ESM resolution issues
 // This file is used via vitest.config.ts alias when running tests
 
+// Import RxJS for real observables
+import { of } from 'rxjs';
+
 export class Query<T = any, V = any> {
   document: any;
   constructor(apollo?: any) {}
@@ -22,6 +25,25 @@ export class Apollo {
       pipe: () => ({
         subscribe: () => ({ unsubscribe: () => {} })
       })
+    };
+  }
+
+  watchQuery<T = any, V = any>(options: any) {
+    // Return object with valueChanges observable property
+    const mockResult = {
+      data: {
+        builds: [],
+        // Default empty data - tests can extend this
+      }
+    } as T;
+
+    const valueChanges$ = of(mockResult);
+
+    return {
+      valueChanges: valueChanges$,
+      pipe: (...operators: any) => {
+        return valueChanges$.pipe(...(operators as any));
+      }
     };
   }
 

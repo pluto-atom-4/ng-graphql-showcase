@@ -68,9 +68,9 @@ describe('ButtonComponent', () => {
   it('should show spinner when loading is true', () => {
     component.loading = true;
     fixture.detectChanges();
-    const spinner = fixture.nativeElement.querySelector('.animate-spin');
+    const spinner = fixture.nativeElement.querySelector('.loading');
     expect(spinner).toBeTruthy();
-    expect(spinner.textContent).toContain('⟳');
+    expect(spinner.classList).toContain('loading-spinner');
   });
 
   it('should emit clicked event when button is clicked', () => {
