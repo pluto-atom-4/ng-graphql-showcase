@@ -8,8 +8,7 @@
   "model": "claude-haiku-4-5-20251001",
   "skillOverrides": {
     "fix-github-issues": "on",
-    "example-skills:session-blog-to-gist": "on",
-    "example-skills:push-feature-branch": "on",
+    "session-blog-to-gist": "on",
     "example-skills:doc-coauthoring": "on",
     "update-config": "on",
     "secure-github-repo": "on"
@@ -21,92 +20,55 @@
     "**/node_modules/**/CLAUDE.md",
     "**/vendor/**/CLAUDE.md"
   ],
-  "instructionBudget": {
-    "maxLines": 200,
-    "frictionLogFile": ".claude/friction-log.md",
-    "auditSchedule": "monthly"
-  },
-  "agentOrchestration": {
-    "maxConsecutiveErrors": 3,
-    "stateFile": ".claude/agent_state.json",
-    "errorLog": ".claude/errors.log",
-    "roleDefinitions": {
-      "architect": {
-        "tools": ["Read", "Plan"],
-        "writeScope": ["tasks.md", ".claude/agent_state.json"],
-        "networkAccess": true,
-        "canExecuteBash": false,
-        "description": "Planning & design (NEVER write production code)"
-      },
-      "coder": {
-        "tools": ["Read", "Edit", "Write", "Bash"],
-        "writeScope": ["src/", "backend/", "frontend/"],
-        "networkAccess": false,
-        "bashRestrictions": ["git push", "git rebase --force"],
-        "description": "Implementation (NEVER modify plan without approval)"
-      },
-      "reviewer": {
-        "tools": ["Read", "Bash"],
-        "writeScope": [".test.ts", ".spec.ts"],
-        "networkAccess": false,
-        "bashRestrictions": ["git push", "git reset --hard"],
-        "description": "Testing & validation (write-only test files)"
-      }
-    }
-  },
   "hooks": {
     "PreToolUse": [
       {
-        "tool": "Bash",
-        "patterns": [
-          "rm -rf",
-          "git reset --hard",
-          "git push --force",
-          "git clean -fd"
-        ],
-        "action": "block",
-        "message": "Destructive command blocked. This requires explicit user confirmation. Run with explicit confirmation: '! <command>'"
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE 'rm -rf|git reset --hard|git push --force|git clean -fd'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Destructive command blocked. Requires explicit user confirmation. Run with: ! <command>\"}}'; fi"
+          }
+        ]
       },
       {
-        "tool": "Edit",
-        "patterns": ["schema.graphql", "graphql.ts"],
-        "action": "block",
-        "message": "Auto-generated file detected. Edit forbidden. Regenerate via: dotnet build (backend) or pnpm codegen (frontend)"
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fp=$(jq -r '.tool_input.file_path'); case \"$fp\" in *schema.graphql|*graphql.ts) echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Auto-generated file. Regenerate via: dotnet build (backend) or pnpm codegen (frontend)\"}}';; esac"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "tool": "Write|Edit",
-        "patterns": ["**/*.ts", "**/*.tsx"],
-        "action": "format",
-        "command": "pnpm --filter frontend run lint -- --fix",
-        "description": "Auto-lint TypeScript files on save"
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fp=$(jq -r '.tool_response.filePath // .tool_input.file_path'); case \"$fp\" in *.ts|*.tsx) pnpm --filter frontend run lint -- --fix 2>/dev/null || true;; esac"
+          }
+        ]
       },
       {
-        "tool": "Write|Edit",
-        "patterns": ["**/*.md"],
-        "action": "format",
-        "command": "prettier --write",
-        "description": "Auto-format Markdown on save"
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fp=$(jq -r '.tool_response.filePath // .tool_input.file_path'); case \"$fp\" in *.md) prettier --write \"$fp\" 2>/dev/null || true;; esac"
+          }
+        ]
       },
       {
-        "tool": "Write|Edit",
-        "patterns": [".claude/**", ".github/**"],
-        "action": "log",
-        "logFile": ".claude/friction-log.md",
-        "description": "Log config file changes to friction-log"
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fp=$(jq -r '.tool_response.filePath // .tool_input.file_path'); case \"$fp\" in .claude/*|.github/*) echo \"$(date -Iseconds) Changed: $fp\" >> .claude/friction-log.md;; esac"
+          }
+        ]
       }
     ]
-  },
-  "copilotCompatibility": {
-    "compatible": true,
-    "notes": "Settings tested with GitHub Copilot CLI. Some Claude-specific features (agent orchestration, friction-log) may not apply.",
-    "claudeSpecific": [
-      "instructionBudget",
-      "agentOrchestration",
-      "modelOverride"
-    ],
-    "universal": ["permissions", "respectGitignore", "skillOverrides"]
-  },
-  "modelOverride": "haiku"
+  }
 }

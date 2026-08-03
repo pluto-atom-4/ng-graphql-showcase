@@ -1,0 +1,27 @@
+# Enforce consistent line endings regardless of local core.autocrlf.
+#
+# Root cause of issue #258: husky/claude hook shell scripts broke on
+# Linux/macOS when checked out with core.autocrlf=true, because git's
+# smudge filter injected CRLF into them (the committed blobs were, and
+# remain, clean LF). .gitattributes makes this repo-enforced instead of
+# depending on each contributor's local git config.
+
+# Default: treat everything git considers text as LF, let git auto-detect binaries.
+* text=auto eol=lf
+
+# Explicitly pin all shell scripts to LF; these are executed directly by
+# bash and break with "bad interpreter"/syntax errors under CRLF.
+*.sh text eol=lf
+.husky/* text eol=lf
+.claude/hooks/* text eol=lf
+
+# Known binary types: never touch, no diff noise.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
