@@ -1,18 +1,29 @@
 import { Injectable } from '@angular/core';
 
 /**
- * FocusRestoreService
+ * FocusRestoreService - Restores focus to trigger element after modal closes.
  *
- * Manages focus restoration for modal/overlay interactions.
- * Stores the element that triggered opening a modal/overlay,
- * then restores focus to that element when the overlay closes.
+ * Handles focus management lifecycle for modals/overlays:
+ * 1. When modal opens: Save the button/link that triggered it
+ * 2. When modal closes: Restore focus to that element
+ * 3. Optionally smooth-scroll element into view
  *
- * Usage:
- *   // When opening a modal:
- *   this.focusRestore.saveTrigger(triggerElement);
+ * @example
+ * // In ModalContainerComponent.ngAfterViewInit
+ * if (this.triggerElement && this.config.restoreFocus !== false) {
+ *   this.focusRestore.saveTrigger(this.triggerElement);
+ * }
  *
- *   // When closing:
+ * // In ModalContainerComponent.ngOnDestroy
+ * if (this.config.restoreFocus !== false) {
  *   this.focusRestore.restore();
+ * }
+ *
+ * @a11y
+ * - Fulfills WCAG 2.1 focus management requirement (Level AA)
+ * - Helps keyboard users return to logical position after modal close
+ * - Smooth scroll prevents jarring page jumps
+ * - Returns focus to interactive element, not generic container
  */
 @Injectable({
   providedIn: 'root'

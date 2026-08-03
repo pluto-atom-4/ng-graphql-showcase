@@ -9,6 +9,24 @@ export interface Metrics {
   failed: number;
 }
 
+/**
+ * MetricsGridComponent - Displays build metrics in a responsive grid.
+ *
+ * @selector app-metrics-grid
+ *
+ * @input metrics - Metrics object with counts for total, inProgress, completed, failed.
+ *   Default: { total: 0, inProgress: 0, completed: 0, failed: 0 }
+ *
+ * @example
+ * // Display build metrics
+ * <app-metrics-grid
+ *   [metrics]="{ total: 100, inProgress: 12, completed: 75, failed: 13 }"
+ * ></app-metrics-grid>
+ *
+ * @a11y
+ * - Grid layout with responsive columns (1 on mobile, 2 on tablet, 4 on desktop)
+ * - Each MetricCard has proper ARIA labels (via child component)
+ */
 @Component({
   selector: 'app-metrics-grid',
   standalone: true,

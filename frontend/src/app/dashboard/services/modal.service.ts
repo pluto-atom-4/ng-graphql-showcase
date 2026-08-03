@@ -18,16 +18,30 @@ export interface ModalRef<T = any> {
 }
 
 /**
- * ModalService
+ * ModalService - Manages modal lifecycle and stacking.
  *
- * Provides a service to open and manage modal dialogs.
- * Handles stacking of modals, closing, and event management.
+ * Provides centralized modal management:
+ * - open(component, config): Open modal and get ModalRef
+ * - close(id, result): Close specific modal with optional result
+ * - closeAll(): Close all open modals
+ * - hasOpenModals(): Check if any modals are open
  *
- * Usage:
- *   const ref = this.modal.open(MyModalComponent, { size: 'md' });
- *   ref.result$.subscribe(result => {
- *     console.log('Modal closed with result:', result);
- *   });
+ * Supports stacking: Multiple modals can be open simultaneously (LIFO)
+ *
+ * @example
+ * // Open modal and subscribe to result
+ * const ref = this.modal.open(BuildDetailsModalComponent, { size: 'md' });
+ * ref.result$.subscribe(result => {
+ *   console.log('Modal closed with result:', result);
+ * });
+ *
+ * // Close modal from within component
+ * ref.close({ saved: true });
+ *
+ * // Check if modals are open
+ * if (this.modal.hasOpenModals()) {
+ *   // Prevent navigation/close
+ * }
  */
 @Injectable({
   providedIn: 'root'

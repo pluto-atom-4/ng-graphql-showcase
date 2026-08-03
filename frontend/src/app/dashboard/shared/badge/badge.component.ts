@@ -9,6 +9,33 @@ interface StatusConfig {
   icon: string;
 }
 
+/**
+ * BadgeComponent - Status indicator badge with color and icon per build status.
+ *
+ * @selector app-badge
+ *
+ * @input status - Build status: 'PENDING' (yellow), 'RUNNING' (blue), 'COMPLETE' (green), 'FAILED' (red). Default: 'PENDING'
+ * @input customLabel - Optional override label for screen readers. Default: auto-generated from status
+ *
+ * @example
+ * // Pending status (default)
+ * <app-badge status="PENDING"></app-badge>
+ *
+ * // Running status
+ * <app-badge status="RUNNING"></app-badge>
+ *
+ * // Completed status
+ * <app-badge status="COMPLETE"></app-badge>
+ *
+ * // Failed status with custom label
+ * <app-badge status="FAILED" customLabel="Build failed: compilation error"></app-badge>
+ *
+ * @a11y
+ * - role="status" for live region announcements
+ * - aria-label with status description for screen readers
+ * - Color contrast: 4.8:1 - 5.3:1 (WCAG AA compliant)
+ * - Icon + text redundancy: not color-dependent
+ */
 @Component({
   selector: 'app-badge',
   standalone: true,

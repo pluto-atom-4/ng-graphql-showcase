@@ -19,23 +19,45 @@ export interface InlineEditorConfig {
 }
 
 /**
- * InlineEditorComponent
+ * InlineEditorComponent - Inline text editor with validation and edit/view toggle.
  *
- * Provides inline editing functionality for text fields.
- * Supports edit/view toggle, validation, and escape key to cancel.
+ * @selector app-inline-editor
  *
- * Emits:
- * - save: Emitted with the edited value on save
- * - cancel: Emitted when editing is cancelled
+ * @input value - Initial text value to display and edit. Default: ''
+ * @input label - Field label for accessibility and error messages. Default: 'Field'
+ * @input config - InlineEditorConfig with validation rules (required, minLength, maxLength, pattern, customValidator). Default: {}
  *
- * Usage:
- *   <app-inline-editor
- *     [value]="'Current Value'"
- *     [label]="'Field Label'"
- *     [config]="{ required: true, minLength: 3 }"
- *     (save)="onSave($event)"
- *     (cancel)="onCancel()"
- *   ></app-inline-editor>
+ * @output save - Emitted with validated edited value on Save button click
+ * @output cancel - Emitted when Cancel or Escape key pressed
+ *
+ * @example
+ * // Basic inline editor
+ * <app-inline-editor
+ *   [value]="buildName"
+ *   label="Build Name"
+ *   [config]="{ required: true, minLength: 3, maxLength: 50 }"
+ *   (save)="onNameSave($event)"
+ *   (cancel)="onCancel()"
+ * ></app-inline-editor>
+ *
+ * // With custom validator
+ * <app-inline-editor
+ *   [value]="email"
+ *   label="Email"
+ *   [config]="{ required: true, customValidator: validateEmail }"
+ *   (save)="onEmailSave($event)"
+ * ></app-inline-editor>
+ *
+ * @a11y
+ * - Toggles between view and edit mode
+ * - View mode: Read-only display with Edit button
+ * - Edit mode: Input field with Save/Cancel buttons
+ * - aria-label on Edit button and input field
+ * - aria-describedby links input to error message when validation fails
+ * - role="alert" on error message for screen reader announcement
+ * - Escape key cancels editing
+ * - Enter/Blur submits (with validation)
+ * - Error message with role="alert" for assistive technology
  */
 @Component({
   selector: 'app-inline-editor',

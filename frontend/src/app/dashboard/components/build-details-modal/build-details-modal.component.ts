@@ -11,23 +11,36 @@ import { Build } from '../../services/build.service';
 import { BadgeComponent } from '../../shared/badge/badge.component';
 
 /**
- * BuildDetailsModalComponent
+ * BuildDetailsModalComponent - Modal form for viewing and editing build properties.
  *
- * Displays detailed information about a build in a modal.
- * Allows editing of build properties (name, description).
- * Handles focus trap, Escape key, and focus restore automatically
- * via ModalContainerComponent.
+ * @selector app-build-details-modal
  *
- * Emits:
- * - save: Emitted with updated build data on save
- * - cancel: Emitted on cancel
+ * @input build - Build object to display and edit
  *
- * Usage:
+ * @output save - Emitted with updated Build object when Save button clicked
+ * @output cancel - Emitted when Cancel button clicked
+ *
+ * @example
+ * // Usage within ModalContainerComponent
+ * <app-modal-container
+ *   [config]="{ size: 'md', focusTrap: true, restoreFocus: true, ariaLabelledBy: 'modal-title', ariaDescribedBy: 'modal-description' }"
+ *   (close)="isModalOpen = false"
+ * >
  *   <app-build-details-modal
  *     [build]="selectedBuild"
- *     (save)="onSave($event)"
- *     (cancel)="onCancel()"
+ *     (save)="onBuildSave($event)"
+ *     (cancel)="isModalOpen = false"
  *   ></app-build-details-modal>
+ * </app-modal-container>
+ *
+ * @a11y
+ * - Semantic form elements with associated labels
+ * - id="modal-title" on h2 for aria-labelledby association
+ * - id="modal-description" on p for aria-describedby association
+ * - input with aria-label for screen readers
+ * - Buttons with aria-label for clarity
+ * - Focus order: Name input → Status → Save button → Cancel button
+ * - Focus-visible outlines on interactive elements
  */
 @Component({
   selector: 'app-build-details-modal',

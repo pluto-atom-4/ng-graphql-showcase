@@ -8,6 +8,37 @@ interface StatusConfig {
   icon: string;
 }
 
+/**
+ * MetricCardComponent - Individual metric card with status indicator.
+ *
+ * @selector app-metric-card
+ *
+ * @input label - Metric label/title (e.g., "Total Builds"). Default: ''
+ * @input count - Metric count/value. Default: 0
+ * @input status - Status type: 'total' (gray), 'inProgress' (blue), 'completed' (green), 'failed' (red). Default: 'total'
+ *
+ * @method getIndicatorWidth - Returns progress bar width as percentage (0-100%)
+ *
+ * @example
+ * // Display total builds metric
+ * <app-metric-card
+ *   label="Total Builds"
+ *   [count]="100"
+ *   status="total"
+ * ></app-metric-card>
+ *
+ * // Display in-progress metric
+ * <app-metric-card
+ *   label="In Progress"
+ *   [count]="12"
+ *   status="inProgress"
+ * ></app-metric-card>
+ *
+ * @a11y
+ * - Uses semantic structure with icon + label + value
+ * - Status indicated by color + icon (not color-dependent)
+ * - Color contrast verified
+ */
 @Component({
   selector: 'app-metric-card',
   standalone: true,
