@@ -60,3 +60,5 @@ Track AI agent issues, hallucinations, and outdated patterns. Updates inform CLA
 - Keep this file lean (<200 lines)
 - Archive resolved entries to `/docs/friction-history.md` annually
 - Use to inform skill creation (see SKILLS.md)
+  2026-08-02T17:09:25-07:00 config file changed: /home/pluto-atom-4/Documents/stoke-full-stack/react-graphql-playground/.claude/settings.json
+  2026-08-02T17:10:13-07:00 config file changed: /home/pluto-atom-4/Documents/stoke-full-stack/react-graphql-playground/.claude/settings.json

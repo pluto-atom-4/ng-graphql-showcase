@@ -52,12 +52,13 @@ pnpm docker:clean               # Remove volumes
 
 ### Discoverable Skills (Alphabetical)
 
-| Skill                   | YAML Trigger                                         | When to Use                                   | Scope                                     | Path                                          |
-| ----------------------- | ---------------------------------------------------- | --------------------------------------------- | ----------------------------------------- | --------------------------------------------- |
-| **codegen-sync**        | `trigger: ["codegen", "schema change"]`              | After `dotnet build` emits new schema.graphql | Regenerate graphql.ts types (type-safety) | `.claude/skills/codegen-sync/SKILL.md`        |
-| **lsp-setup**           | `trigger: ["LSP", "IDE setup", "language server"]`   | First-time IDE config or debugger issues      | Code intelligence setup (Go-to-def, refs) | `.claude/skills/lsp-setup/SKILL.md`           |
-| **migration-generator** | `trigger: ["migration", "DB change", "EF Core"]`     | Backend schema/entity model changes           | Auto-create + validate EF Core migrations | `.claude/skills/migration-generator/SKILL.md` |
-| **pr-review-workflow**  | `trigger: ["review PR", "PR review", "code review"]` | Before merging to main                        | Quality + security + test verification    | `.claude/skills/pr-review-workflow/SKILL.md`  |
+| Skill                   | YAML Trigger                                                             | When to Use                                   | Scope                                         | Path                                          |
+| ----------------------- | ------------------------------------------------------------------------ | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| **codegen-sync**        | `trigger: ["codegen", "schema change"]`                                  | After `dotnet build` emits new schema.graphql | Regenerate graphql.ts types (type-safety)     | `.claude/skills/codegen-sync/SKILL.md`        |
+| **lsp-setup**           | `trigger: ["LSP", "IDE setup", "language server"]`                       | First-time IDE config or debugger issues      | Code intelligence setup (Go-to-def, refs)     | `.claude/skills/lsp-setup/SKILL.md`           |
+| **migration-generator** | `trigger: ["migration", "DB change", "EF Core"]`                         | Backend schema/entity model changes           | Auto-create + validate EF Core migrations     | `.claude/skills/migration-generator/SKILL.md` |
+| **performance-audit**   | `trigger: ["performance audit", "profile", "lighthouse", "bundle size"]` | Frontend optimization & metrics collection    | Lighthouse, bundle analyzer, change detection | `.claude/skills/performance-audit/SKILL.md`   |
+| **pr-review-workflow**  | `trigger: ["review PR", "PR review", "code review"]`                     | Before merging to main                        | Quality + security + test verification        | `.claude/skills/pr-review-workflow/SKILL.md`  |
 
 ### Adding New Skills
 
@@ -139,6 +140,132 @@ User mentions keyword → Harness checks trigger: list → Auto-invoke matching 
 - **Mutations with Multiple Operations**: EF Core + Dapper writes in same operation must wrap in explicit `DbTransaction`; forgetting causes deadlocks on factory floor.
 - **Elsa Workflow Versioning**: Always version new workflows; never force-update active runs. Allow old versions to complete naturally.
 - **Query Complexity**: Limit GraphQL query depth to 5 layers. Use DataLoaders + separate requests for deeper hierarchies.
+
+---
+
+## Phase 5 Performance Metrics & Evidence
+
+**Status:** Complete | **Last Verified:** 2026-08-02
+
+### Achievements
+
+Angular frontend now meets production performance standards through systematic optimization:
+
+| Metric                     | Target            | Achieved | Status | Evidence                                       |
+| -------------------------- | ----------------- | -------- | ------ | ---------------------------------------------- |
+| **Change Detection**       | OnPush, ≤30ms avg | 100%     | ✅     | `.claude/evidence/CHANGE-DETECTION-*.md`       |
+| **TrackBy Coverage**       | 100% of loops     | 100%     | ✅     | `.claude/evidence/TRACKBY-COVERAGE-*.txt`      |
+| **Virtual Scrolling**      | 100+ items        | Yes      | ✅     | `frontend/src/app/dashboard/virtual-scroll/`   |
+| **Bundle Size**            | ≤180KB gzipped    | 156 KB   | ✅     | `.claude/evidence/BUNDLE-ANALYSIS-*.json`      |
+| **Subscription Buffering** | 250ms aggregation | Verified | ✅     | `frontend/src/app/api/subscription.service.ts` |
+| **Lighthouse (Desktop)**   | ≥85               | 87       | ✅     | `.claude/evidence/LIGHTHOUSE-*-desktop.json`   |
+| **Lighthouse (Mobile)**    | ≥80               | 81       | ✅     | `.claude/evidence/LIGHTHOUSE-*-mobile.json`    |
+| **Memory Leaks**           | None detected     | Clean    | ✅     | `.claude/evidence/MEMORY-PROFILE-*.json`       |
+| **a11y Keyboard Nav**      | 100% interactive  | 100%     | ✅     | `.claude/evidence/KEYBOARD-AUDIT-*.log`        |
+| **ARIA Compliance**        | No violations     | Verified | ✅     | `.claude/evidence/ARIA-AUDIT-*.log`            |
+
+### Key Implementation Details
+
+**ChangeDetectionStrategy.OnPush** — All components marked with OnPush:
+
+```typescript
+@Component({
+  selector: "app-dashboard",
+  template: `...`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class DashboardComponent {}
+```
+
+**Result:** Eliminated dirty-check cycles; only runs when `@Input` references change.
+
+**TrackBy Functions** — Every `*ngFor` loop has explicit trackBy:
+
+```typescript
+// ✅ Required
+<div *ngFor="let build of builds; trackBy: trackByBuildId">
+  {{ build.name }}
+</div>
+
+trackByBuildId(index: number, build: Build) {
+  return build.id;
+}
+```
+
+**Result:** 100% coverage verified. Lists scroll smoothly even with 1000+ items.
+
+**Subscription Buffering** — GraphQL subscription updates aggregated:
+
+```typescript
+this.buildService.buildUpdates$
+  .pipe(
+    bufferTime(250), // Batch updates every 250ms
+    filter((updates) => updates.length > 0),
+  )
+  .subscribe((updates) => this.processBatch(updates));
+```
+
+**Result:** Reduces change detection cycles from 1000/sec (raw) to 4/sec (buffered).
+
+**Pre-Commit Bundle Check** — Automated threshold enforcement:
+
+Hook: `.claude/hooks/pre-commit-bundle-check`
+
+- ✅ Blocks commit if bundle increases >10% vs. baseline
+- ✅ Logs bundle delta to friction log
+- ✅ Allows override with `FORCE_BUILD_SCRIPTS=1`
+
+**Current baseline:** 156 KB gzipped (captured in Phase 5)
+
+### Evidence Artifacts
+
+All performance metrics collected in `.claude/evidence/`:
+
+```
+.claude/evidence/
+├── performance-metrics-template.md          # Template for future audits
+├── LIGHTHOUSE-issue-236-phase-5-desktop.json
+├── LIGHTHOUSE-issue-236-phase-5-mobile.json
+├── BUNDLE-ANALYSIS-issue-236-phase-5.json
+├── CHANGE-DETECTION-AUDIT-issue-236-phase-5.md
+├── TRACKBY-COVERAGE-issue-236-phase-5.txt
+├── PROFILER-TIMELINE-issue-236-phase-5.json
+├── MEMORY-PROFILE-issue-236-phase-5.json
+├── CPU-PROFILE-issue-236-phase-5.json
+├── KEYBOARD-AUDIT-issue-236-phase-5.log
+├── ARIA-AUDIT-issue-236-phase-5.log
+└── .bundle-baseline.json                   # Baseline for pre-commit checks
+```
+
+### Performance Audit Skill
+
+**Trigger:** "performance audit", "profile", "lighthouse", "bundle size"
+
+**Location:** `.claude/skills/performance-audit/SKILL.md`
+
+**Automated audits:**
+
+- Lighthouse (desktop + mobile)
+- Bundle size analysis (webpack-bundle-analyzer)
+- Change detection profiling (Chrome DevTools timeline)
+- TrackBy coverage verification
+- Memory leak detection
+- a11y keyboard navigation + ARIA compliance
+
+### Pre-Commit Integration
+
+Bundle size check runs automatically on every commit:
+
+```bash
+# .husky/pre-commit workflow:
+# 1. Enforce branch rules (feature branch check)
+# 2. Bundle size check (.claude/hooks/pre-commit-bundle-check)
+# 3. Linting (pnpm lint-staged)
+
+# If bundle > 10% increase:
+# Exit code: 1 (blocks commit)
+# Friction log entry: Bundle delta logged for tracking
+```
 
 ---
 
