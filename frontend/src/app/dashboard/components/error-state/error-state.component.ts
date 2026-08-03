@@ -2,21 +2,41 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 import { CommonModule } from '@angular/common';
 
 /**
- * ErrorStateComponent
+ * ErrorStateComponent - Error state display with retry capability.
  *
- * Displays an error state with icon, message, and retry button.
- * Used when data loading fails or an error occurs.
+ * @selector app-error-state
  *
- * Emits:
- * - retry: Emitted when the Retry button is clicked
+ * @input icon - Emoji or icon to display (e.g., '⚠️'). Default: '⚠️'
+ * @input title - Error title/heading. Default: 'Something went wrong'
+ * @input message - Error description/message. Default: 'An unexpected error occurred'
+ * @input errorDetails - Optional detailed error information or stack trace. Optional.
  *
- * Usage:
- *   <app-error-state
- *     [icon]="'⚠️'"
- *     [title]="'Failed to load'"
- *     [message]="'Unable to fetch builds'"
- *     (retry)="onRetry()"
- *   ></app-error-state>
+ * @output retry - Emitted when "Try Again" button is clicked
+ *
+ * @example
+ * // Basic error state
+ * <app-error-state
+ *   [icon]="'⚠️'"
+ *   [title]="'Failed to load builds'"
+ *   [message]="'Unable to fetch build data from server'"
+ *   (retry)="onRetry()"
+ * ></app-error-state>
+ *
+ * // With error details
+ * <app-error-state
+ *   [icon]="'🔴'"
+ *   [title]="'Build failed'"
+ *   [message]="'Build compilation encountered an error'"
+ *   [errorDetails]="error.message"
+ *   (retry)="onRetry()"
+ * ></app-error-state>
+ *
+ * @a11y
+ * - h2 for title (semantic heading hierarchy)
+ * - role="region" aria-label="Error details" on details div
+ * - aria-label on retry button with contextual information
+ * - Focus-visible styles for keyboard navigation
+ * - Semantic button element
  */
 @Component({
   selector: 'app-error-state',

@@ -10,12 +10,42 @@ export interface Activity {
   status: 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED';
 }
 
+/**
+ * ActivityTimelineComponent - Vertical timeline of activities with performance optimization.
+ *
+ * @selector app-activity-timeline
+ *
+ * @input activities - Array of Activity objects. Virtual scrolling used for >100 items. Default: []
+ *
+ * @method trackByActivityId - TrackBy function for *ngFor loop optimization using activity.id
+ *
+ * @example
+ * // Display activity timeline
+ * <app-activity-timeline
+ *   [activities]="[
+ *     { id: '1', timestamp: '2024-01-01T10:00:00Z', description: 'Build started', status: 'RUNNING' },
+ *     { id: '2', timestamp: '2024-01-01T10:30:00Z', description: 'Build completed', status: 'COMPLETE' }
+ *   ]"
+ * ></app-activity-timeline>
+ *
+ * @performance
+ * - trackBy function on all *ngFor loops
+ * - Virtual scrolling (CDK) for lists >100 items
+ * - Non-virtualized for ≤100 items (reduced memory overhead)
+ * - Timestamp formatting with relative time (e.g., "5m ago")
+ *
+ * @a11y
+ * - role="list" on container
+ * - Each activity item is a list item
+ * - Badge component provides status accessibility
+ * - Semantic HTML structure
+ */
 @Component({
   selector: 'app-activity-timeline',
   standalone: true,
   imports: [CommonModule, ScrollingModule, BadgeComponent],
   template: `
-    <div class="space-y-4">
+    <div class="space-y-4" role="list">
       <div *ngIf="activities.length === 0" class="text-center py-8 text-gray-500">
         No activities yet
       </div>
@@ -25,6 +55,7 @@ export interface Activity {
         <div
           *ngFor="let activity of activities; trackBy: trackByActivityId"
           class="flex gap-4"
+          role="listitem"
         >
           <!-- Timeline line -->
           <div class="flex flex-col items-center">
@@ -56,6 +87,7 @@ export interface Activity {
           <div
             *cdkVirtualFor="let activity of activities; trackBy: trackByActivityId"
             class="flex gap-4 py-2"
+            role="listitem"
           >
             <!-- Timeline line -->
             <div class="flex flex-col items-center">

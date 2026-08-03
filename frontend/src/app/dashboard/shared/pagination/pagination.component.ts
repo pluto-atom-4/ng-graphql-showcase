@@ -1,6 +1,46 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+/**
+ * PaginationComponent - Pagination controls with page size selector and navigation.
+ *
+ * @selector app-pagination
+ *
+ * @input total - Total number of items. Default: 0
+ * @input pageSize - Items per page. Default: 10
+ * @input currentPage - Currently active page (1-indexed). Default: 1
+ * @input pageSizeOptions - Available page size options. Default: [10, 25, 50]
+ *
+ * @output pageChange - Emitted when previous/next button clicked. Value: new page number
+ * @output pageSizeChange - Emitted when page size selector changes. Value: new page size
+ *
+ * @example
+ * // Basic usage
+ * <app-pagination
+ *   [total]="100"
+ *   [pageSize]="10"
+ *   [currentPage]="currentPage"
+ *   (pageChange)="onPageChange($event)"
+ *   (pageSizeChange)="onPageSizeChange($event)"
+ * ></app-pagination>
+ *
+ * // Custom page size options
+ * <app-pagination
+ *   [total]="500"
+ *   [pageSize]="pageSize"
+ *   [currentPage]="currentPage"
+ *   [pageSizeOptions]="[15, 30, 60]"
+ *   (pageChange)="onPageChange($event)"
+ *   (pageSizeChange)="onPageSizeChange($event)"
+ * ></app-pagination>
+ *
+ * @a11y
+ * - Keyboard navigation: Tab through select/buttons, Arrow keys in select
+ * - Buttons disabled when at first/last page (aria-disabled inferred)
+ * - aria-label on Previous/Next buttons
+ * - Associated label on page size select
+ * - Focus-visible styles for keyboard navigation
+ */
 @Component({
   selector: 'app-pagination',
   standalone: true,

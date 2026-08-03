@@ -7,6 +7,43 @@ export interface Tab {
   index: number;
 }
 
+/**
+ * TabsComponent - Accessible tab container with keyboard navigation.
+ *
+ * @selector app-tabs
+ *
+ * @input tabs - Array of Tab objects with id, label, and index. Default: []
+ * @input activeIndex - Currently active tab index. Default: 0
+ *
+ * @output activeIndexChange - Emitted when tab selection changes. Value: new index
+ *
+ * @method onKeydown - Handles keyboard navigation:
+ *   - Arrow Right/Down: Next tab (wraps to first if at end)
+ *   - Arrow Left/Up: Previous tab (wraps to last if at start)
+ *   - Home: Jump to first tab
+ *   - End: Jump to last tab
+ *
+ * @example
+ * // Basic tab usage
+ * <app-tabs
+ *   [tabs]="[
+ *     { id: 'overview', label: 'Overview', index: 0 },
+ *     { id: 'details', label: 'Details', index: 1 }
+ *   ]"
+ *   [activeIndex]="activeTabIndex"
+ *   (activeIndexChange)="activeTabIndex = $event"
+ * >
+ *   <div tab-overview>Overview content</div>
+ *   <div tab-details>Details content</div>
+ * </app-tabs>
+ *
+ * @a11y
+ * - role="tablist" on container, role="tab" on buttons, role="tabpanel" on content
+ * - aria-selected, aria-controls, aria-labelledby for associations
+ * - Tab focus automatically moves to selected tab
+ * - Focus-visible styles for keyboard users
+ * - Keyboard navigation: Arrow keys + Home/End with wrapping
+ */
 @Component({
   selector: 'app-tabs',
   standalone: true,

@@ -1,16 +1,28 @@
 import { Injectable } from '@angular/core';
 
 /**
- * FocusTrapService
+ * FocusTrapService - Confines keyboard focus within a container.
  *
- * Manages focus trapping within a container element. When activated,
- * ensures Tab/Shift+Tab navigation is confined within the focusable
- * elements of the container.
+ * Prevents Tab/Shift+Tab from escaping a modal or overlay element.
+ * Automatically cycles focus from last focusable element back to first (and vice versa).
  *
- * Usage:
- *   const unsubscribe = this.focusTrap.trap(containerElement);
- *   // On close:
- *   unsubscribe();
+ * Supports focus cycling:
+ * - Tab on last focusable element: Focus wraps to first element
+ * - Shift+Tab on first focusable element: Focus wraps to last element
+ *
+ * @example
+ * // In ModalContainerComponent.ngAfterViewInit
+ * const container = this.modalContent.nativeElement;
+ * const unsubscribe = this.focusTrap.trap(container);
+ *
+ * // In ModalContainerComponent.ngOnDestroy
+ * unsubscribe();
+ *
+ * @a11y
+ * - Prevents focus from escaping modals (WCAG 2.1 Level AA)
+ * - Maintains logical tab order within container
+ * - Works with keyboard-only users
+ * - Filters out hidden/disabled elements
  */
 @Injectable({
   providedIn: 'root'

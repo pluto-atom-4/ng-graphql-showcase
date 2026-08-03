@@ -16,24 +16,37 @@ import { FocusTrapService } from '../../services/focus-trap.service';
 import { FocusRestoreService } from '../../services/focus-restore.service';
 
 /**
- * ModalContainerComponent
+ * ModalContainerComponent - Accessible modal wrapper with backdrop, focus management, and animations.
  *
- * Wraps modal content with backdrop, animations, and focus management.
- * Handles:
- * - Backdrop click to close
- * - Escape key to close (if enabled)
- * - Focus trap (if enabled)
- * - Focus restore on close (if enabled)
- * - Animations (fade-in)
+ * @selector app-modal-container
  *
- * Usage:
- *   <app-modal-container
- *     [config]="modalConfig"
- *     (close)="onModalClose()"
- *   >
- *     <h2>Modal Title</h2>
- *     <p>Modal content goes here</p>
- *   </app-modal-container>
+ * @input config - ModalConfig object with backdrop, closeOnEscape, focusTrap, restoreFocus, size, ariaLabelledBy, ariaDescribedBy
+ * @input triggerElement - HTMLElement that triggered the modal (used for focus restoration). Optional.
+ *
+ * @output close - Emitted when modal should close (backdrop click, Escape key)
+ *
+ * @example
+ * // Basic modal
+ * <app-modal-container
+ *   [config]="{ size: 'md', focusTrap: true, restoreFocus: true }"
+ *   (close)="isModalOpen = false"
+ * >
+ *   <h2>Delete Build?</h2>
+ *   <p>This action cannot be undone.</p>
+ *   <button (click)="onDelete()">Delete</button>
+ *   <button (click)="isModalOpen = false">Cancel</button>
+ * </app-modal-container>
+ *
+ * @a11y
+ * - role="dialog" on modal container
+ * - aria-modal="true" to indicate modal
+ * - aria-labelledby for modal title (from config)
+ * - aria-describedby for modal description (from config)
+ * - Focus trap: Tab/Shift+Tab cycles within modal
+ * - Escape key closes modal (if closeOnEscape enabled)
+ * - Focus automatically moves to first focusable element
+ * - Focus restored to trigger element on close
+ * - Backdrop has aria-hidden="true"
  */
 @Component({
   selector: 'app-modal-container',

@@ -1,6 +1,37 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+/**
+ * EmptyStateComponent - Displays empty state message with optional call-to-action button.
+ *
+ * @selector app-empty-state
+ *
+ * @input icon - Emoji or symbol to display. Default: '📭'
+ * @input title - Main heading text. Default: 'No data found'
+ * @input description - Secondary description text. Default: 'Try adjusting your filters or search criteria'
+ * @input ctaLabel - Button label; if empty, button is hidden. Optional.
+ *
+ * @output cta - Emitted when CTA button is clicked.
+ *
+ * @example
+ * // Default empty state
+ * <app-empty-state></app-empty-state>
+ *
+ * // With custom message and CTA
+ * <app-empty-state
+ *   icon="🔍"
+ *   title="No builds found"
+ *   description="Create your first build to get started"
+ *   ctaLabel="Create Build"
+ *   (cta)="navigateToCreateBuild()"
+ * ></app-empty-state>
+ *
+ * @a11y
+ * - h2 for main title (semantic hierarchy)
+ * - Button has aria-label for accessibility
+ * - Focus-visible styles for keyboard navigation
+ * - Semantic button element
+ */
 @Component({
   selector: 'app-empty-state',
   standalone: true,

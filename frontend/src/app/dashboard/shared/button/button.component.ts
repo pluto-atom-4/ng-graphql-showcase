@@ -4,6 +4,36 @@ import { CommonModule } from '@angular/common';
 export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
+/**
+ * ButtonComponent - Reusable button with variant and size options.
+ *
+ * @selector app-button
+ *
+ * @input variant - Button style variant: 'primary' (blue), 'secondary' (gray), 'danger' (red). Default: 'primary'
+ * @input size - Button size: 'sm' (small), 'md' (medium), 'lg' (large). Default: 'md'
+ * @input disabled - Disables button interaction. Default: false
+ * @input loading - Shows loading spinner and disables button. Default: false
+ * @input ariaLabel - Accessibility label for screen readers. Optional.
+ *
+ * @output clicked - Emitted when button is clicked.
+ *
+ * @example
+ * // Primary button (default)
+ * <app-button (clicked)="onSubmit()">Submit</app-button>
+ *
+ * // Secondary button with size
+ * <app-button variant="secondary" size="lg" (clicked)="onCancel()">Cancel</app-button>
+ *
+ * // Danger button with loading state
+ * <app-button variant="danger" [loading]="isDeleting" (clicked)="onDelete()">Delete</app-button>
+ *
+ * @a11y
+ * - Uses semantic `<button>` element
+ * - aria-label for screen reader context
+ * - aria-busy="true" during loading state
+ * - Disabled state properly communicated to assistive technology
+ * - Minimum touch target: 44x44px
+ */
 @Component({
   selector: 'app-button',
   standalone: true,
