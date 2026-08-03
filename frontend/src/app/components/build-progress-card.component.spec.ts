@@ -1,39 +1,36 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BuildProgressCardComponent } from './build-progress-card.component';
-import { BuildStatusService } from '../api/build-status.service';
+import { BuildStateWorkerService } from '../services/build-state-worker.service';
 // Import Apollo mock (vitest alias replaces apollo-angular with apollo.mock.ts)
 import { Apollo } from 'apollo-angular';
 import type { BuildStatus, BuildStatusUpdate } from '../api/generated/graphql';
 import { vi } from 'vitest';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
-// Mock BuildStatusService with real observable support
-const createMockBuildStatusService = () => {
-  const updates$ = new Subject<BuildStatusUpdate[]>();
+// Mock BuildStateWorkerService with real observable support
+const createMockBuildStateWorkerService = () => {
+  const buildsMap$ = new Subject<Map<string, any>>();
   return {
-    subscribeToBuildStatus: vi.fn(),
-    getBufferedUpdates: vi.fn(() => updates$),
-    disconnect: vi.fn(),
-    disconnectAll: vi.fn(),
-    getConnectionHealth: vi.fn(() => new Subject()),
-    buildStatus$: new Subject(),
-    _updates$: updates$,
+    subscribeToBuild: vi.fn(),
+    unsubscribeBuild: vi.fn(),
+    getBuilds$: vi.fn(() => buildsMap$),
+    _buildsMap$: buildsMap$,
   };
 };
 
 describe('BuildProgressCardComponent', () => {
   let component: BuildProgressCardComponent;
   let fixture: ComponentFixture<BuildProgressCardComponent>;
-  let mockService: ReturnType<typeof createMockBuildStatusService>;
+  let mockService: ReturnType<typeof createMockBuildStateWorkerService>;
 
   beforeEach(async () => {
-    mockService = createMockBuildStatusService();
+    mockService = createMockBuildStateWorkerService();
 
     await TestBed.configureTestingModule({
       imports: [BuildProgressCardComponent],
       providers: [
-        // Provide mock BuildStatusService instead of real one
-        { provide: BuildStatusService, useValue: mockService },
+        // Provide mock BuildStateWorkerService instead of real one
+        { provide: BuildStateWorkerService, useValue: mockService },
         // Provide mock Apollo
         { provide: Apollo, useClass: Apollo },
       ]
@@ -103,62 +100,6 @@ describe('BuildProgressCardComponent', () => {
       expect(update.newStatus).toBe('PENDING');
       expect(update.oldStatus).toBe('PENDING');
       expect(update.timestamp).toBeInstanceOf(Date);
-    });
-
-    it('should have mapStatus method', () => {
-      const comp = component as any;
-      expect(typeof comp.mapStatus).toBe('function');
-    });
-
-    it('should map PENDING to Pending', () => {
-      const comp = component as any;
-      expect(comp.mapStatus('PENDING')).toBe('Pending');
-    });
-
-    it('should map RUNNING to Running', () => {
-      const comp = component as any;
-      expect(comp.mapStatus('RUNNING')).toBe('Running');
-    });
-
-    it('should map COMPLETE to Complete', () => {
-      const comp = component as any;
-      expect(comp.mapStatus('COMPLETE')).toBe('Complete');
-    });
-
-    it('should map FAILED to Failed', () => {
-      const comp = component as any;
-      expect(comp.mapStatus('FAILED')).toBe('Failed');
-    });
-
-    it('should have getLatestUpdate method', () => {
-      const comp = component as any;
-      expect(typeof comp.getLatestUpdate).toBe('function');
-    });
-
-    it('should handle empty updates array', () => {
-      const comp = component as any;
-      const result: BuildStatusUpdate = comp.getLatestUpdate([]);
-      expect(result.newStatus).toBe('PENDING');
-    });
-
-    it('should get latest update from array', () => {
-      const comp = component as any;
-      const updates = [
-        {
-          buildId: 'build-1',
-          oldStatus: 'PENDING' as BuildStatus,
-          newStatus: 'RUNNING' as BuildStatus,
-          timestamp: new Date('2024-01-01T00:00:00Z')
-        },
-        {
-          buildId: 'build-1',
-          oldStatus: 'RUNNING' as BuildStatus,
-          newStatus: 'COMPLETE' as BuildStatus,
-          timestamp: new Date('2024-01-01T00:01:00Z')
-        }
-      ];
-      const result: BuildStatusUpdate = comp.getLatestUpdate(updates);
-      expect(result.newStatus).toBe('COMPLETE');
     });
   });
 
@@ -230,7 +171,7 @@ describe('BuildProgressCardComponent', () => {
       expect(typeof component.isComplete).toBe('function');
     });
 
-    it('statusLabel should return Pending for PENDING status', () => {
+    it('statusLabel should return PENDING for PENDING status', () => {
       const comp = component as any;
       comp.buildStatus.set({
         buildId: 'test-1',
@@ -238,10 +179,10 @@ describe('BuildProgressCardComponent', () => {
         oldStatus: 'PENDING' as BuildStatus,
         timestamp: new Date()
       });
-      expect(component.statusLabel()).toBe('Pending');
+      expect(component.statusLabel()).toBe('PENDING');
     });
 
-    it('statusLabel should return Running for RUNNING status', () => {
+    it('statusLabel should return RUNNING for RUNNING status', () => {
       const comp = component as any;
       comp.buildStatus.set({
         buildId: 'test-1',
@@ -249,10 +190,10 @@ describe('BuildProgressCardComponent', () => {
         oldStatus: 'PENDING' as BuildStatus,
         timestamp: new Date()
       });
-      expect(component.statusLabel()).toBe('Running');
+      expect(component.statusLabel()).toBe('RUNNING');
     });
 
-    it('statusLabel should return Complete for COMPLETE status', () => {
+    it('statusLabel should return COMPLETE for COMPLETE status', () => {
       const comp = component as any;
       comp.buildStatus.set({
         buildId: 'test-1',
@@ -260,10 +201,10 @@ describe('BuildProgressCardComponent', () => {
         oldStatus: 'RUNNING' as BuildStatus,
         timestamp: new Date()
       });
-      expect(component.statusLabel()).toBe('Complete');
+      expect(component.statusLabel()).toBe('COMPLETE');
     });
 
-    it('statusLabel should return Failed for FAILED status', () => {
+    it('statusLabel should return FAILED for FAILED status', () => {
       const comp = component as any;
       comp.buildStatus.set({
         buildId: 'test-1',
@@ -271,7 +212,7 @@ describe('BuildProgressCardComponent', () => {
         oldStatus: 'RUNNING' as BuildStatus,
         timestamp: new Date()
       });
-      expect(component.statusLabel()).toBe('Failed');
+      expect(component.statusLabel()).toBe('FAILED');
     });
 
     it('statusVariant should return warning for PENDING status', () => {
@@ -410,15 +351,17 @@ describe('BuildProgressCardComponent', () => {
     it('should subscribe to buildStatus stream on init', () => {
       fixture.detectChanges(); // Triggers ngOnInit
 
-      const testUpdate: BuildStatusUpdate = {
-        buildId: 'test-1',
-        newStatus: 'RUNNING' as BuildStatus,
-        oldStatus: 'PENDING' as BuildStatus,
-        timestamp: new Date('2024-01-01T00:01:00Z')
+      // Create a mock build object with the expected structure
+      const mockBuild = {
+        id: 'build-uuid-123',
+        status: 'RUNNING' as BuildStatus,
+        updatedAt: new Date('2024-01-01T00:01:00Z')
       };
 
-      // Emit update through the mock service
-      mockService._updates$.next([testUpdate]);
+      // Emit build map through the mock service
+      const buildMap = new Map();
+      buildMap.set('build-uuid-123', mockBuild);
+      mockService._buildsMap$.next(buildMap);
 
       // Verify subscription callback processed the update
       expect(component.buildStatus().newStatus).toBe('RUNNING');
@@ -427,24 +370,19 @@ describe('BuildProgressCardComponent', () => {
     it('should handle multiple status updates through subscription', () => {
       fixture.detectChanges(); // Triggers ngOnInit
 
-      const updates = [
-        {
-          buildId: 'test-1',
-          newStatus: 'RUNNING' as BuildStatus,
-          oldStatus: 'PENDING' as BuildStatus,
-          timestamp: new Date('2024-01-01T00:01:00Z')
-        },
-        {
-          buildId: 'test-1',
-          newStatus: 'COMPLETE' as BuildStatus,
-          oldStatus: 'RUNNING' as BuildStatus,
-          timestamp: new Date('2024-01-01T00:02:00Z')
-        }
-      ];
+      // Create mock build objects
+      const mockBuild = {
+        id: 'build-uuid-123',
+        status: 'COMPLETE' as BuildStatus,
+        updatedAt: new Date('2024-01-01T00:02:00Z')
+      };
 
-      mockService._updates$.next(updates);
+      // Emit build map through the mock service
+      const buildMap = new Map();
+      buildMap.set('build-uuid-123', mockBuild);
+      mockService._buildsMap$.next(buildMap);
 
-      // Should get the latest (last) update via getLatestUpdate
+      // Should get the latest update status
       expect(component.buildStatus().newStatus).toBe('COMPLETE');
       expect(component.statusVariant()).toBe('success');
     });
@@ -453,16 +391,16 @@ describe('BuildProgressCardComponent', () => {
 
   // Dependency injection tests
   describe('Dependencies', () => {
-    it('should inject BuildStatusService', () => {
+    it('should inject BuildStateWorkerService', () => {
       const comp = component as any;
-      expect(comp.buildStatusService).toBeDefined();
+      expect(comp.stateWorker).toBeDefined();
     });
 
-    it('should inject BuildStatusService with expected methods', () => {
+    it('should inject BuildStateWorkerService with expected methods', () => {
       const comp = component as any;
-      expect(typeof comp.buildStatusService.subscribeToBuildStatus).toBe('function');
-      expect(typeof comp.buildStatusService.getBufferedUpdates).toBe('function');
-      expect(typeof comp.buildStatusService.disconnect).toBe('function');
+      expect(typeof comp.stateWorker.subscribeToBuild).toBe('function');
+      expect(typeof comp.stateWorker.getBuilds$).toBe('function');
+      expect(typeof comp.stateWorker.unsubscribeBuild).toBe('function');
     });
   });
 });

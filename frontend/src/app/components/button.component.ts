@@ -50,7 +50,11 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
       [ngClass]="classes()"
       (click)="onClickHandler()"
     >
-      <span>{{ label() }}</span>
+      @if (loading()) {
+        <span class="loading loading-spinner loading-sm"></span>
+      } @else {
+        <span>{{ label() }}</span>
+      }
     </button>
   `,
 })
