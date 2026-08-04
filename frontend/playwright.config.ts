@@ -3,11 +3,12 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   testMatch: 'e2e/**/*.spec.ts',
-  fullyParallel: true,
+  fullyParallel: process.env['LIVE_BACKEND'] ? false : true,
   forbidOnly: !!process.env['CI'],
-  retries: process.env['CI'] ? 2 : 0,
-  workers: process.env['CI'] ? 1 : undefined,
+  retries: process.env['LIVE_BACKEND'] ? 1 : (process.env['CI'] ? 2 : 0),
+  workers: process.env['LIVE_BACKEND'] ? 1 : (process.env['CI'] ? 1 : undefined),
   reporter: 'html',
+  timeout: process.env['LIVE_BACKEND'] ? 60000 : 30000,
 
   use: {
     baseURL: 'http://localhost:4200',
@@ -18,8 +19,8 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
     },
   ],
 

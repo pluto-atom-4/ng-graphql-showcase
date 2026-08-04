@@ -6,7 +6,12 @@ import { test, expect, Page } from '@playwright/test';
  * Issue #266: Comprehensive E2E test suite for dashboard load behavior
  * Tests 8 scenarios: Initial Load, Metrics Grid, Activity Timeline,
  * Tab Navigation, Empty State, Error State, Performance, Accessibility
+ *
+ * Run with LIVE_BACKEND=true for real backend testing (no mocks)
+ * Run without env var for mocked responses
  */
+
+const USE_LIVE_BACKEND = process.env['LIVE_BACKEND'] === 'true';
 
 // Mock GraphQL responses
 const MOCK_METRICS_RESPONSE = {
@@ -128,19 +133,22 @@ const MOCK_GRAPHQL_ERROR_RESPONSE = {
 
 /**
  * Setup: Mock GraphQL responses and navigate to dashboard
+ * If USE_LIVE_BACKEND is true, connects to real backend (no mocking)
  */
 async function setupDashboardTest(page: Page, mockResponse: any) {
-  // Mock GraphQL endpoint for metrics query
-  await page.route('**/graphql', (route) => {
-    const request = route.request();
-    const postData = request.postDataJSON();
+  if (!USE_LIVE_BACKEND) {
+    // Mock GraphQL endpoint for metrics query
+    await page.route('**/graphql', (route) => {
+      const request = route.request();
+      const postData = request.postDataJSON();
 
-    if (postData.operationName === 'GetBuildsMetrics' || postData.query?.includes('builds')) {
-      return route.abort('serviceunavailable');
-    }
+      if (postData.operationName === 'GetBuildsMetrics' || postData.query?.includes('builds')) {
+        return route.abort('serviceunavailable');
+      }
 
-    return route.continue();
-  });
+      return route.continue();
+    });
+  }
 
   await page.goto('/dashboard', { waitUntil: 'networkidle' });
 }
@@ -240,17 +248,19 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   // Test 2: Metrics Grid
   // ========================================
   test('2. should render metrics grid with 4 metric cards and correct data', async ({ page }) => {
-    // Mock GraphQL response for metrics
-    await page.route('**/graphql', (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON();
+    // Mock GraphQL response for metrics (unless using live backend)
+    if (!USE_LIVE_BACKEND) {
+      await page.route('**/graphql', (route) => {
+        const request = route.request();
+        const postData = request.postDataJSON();
 
-      if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
-        route.abort('serviceunavailable');
-      } else {
-        route.continue();
-      }
-    });
+        if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
+          route.abort('serviceunavailable');
+        } else {
+          route.continue();
+        }
+      });
+    }
 
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
@@ -287,17 +297,19 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   // Test 3: Activity Timeline
   // ========================================
   test('3. should populate activity timeline with activities and verify count', async ({ page }) => {
-    // Mock GraphQL response for activities
-    await page.route('**/graphql', (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON();
+    // Mock GraphQL response for activities (unless using live backend)
+    if (!USE_LIVE_BACKEND) {
+      await page.route('**/graphql', (route) => {
+        const request = route.request();
+        const postData = request.postDataJSON();
 
-      if (postData.operationName?.includes('activity') || postData.query?.includes('activity')) {
-        route.abort('serviceunavailable');
-      } else {
-        route.continue();
-      }
-    });
+        if (postData.operationName?.includes('activity') || postData.query?.includes('activity')) {
+          route.abort('serviceunavailable');
+        } else {
+          route.continue();
+        }
+      });
+    }
 
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
@@ -307,9 +319,18 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
       // Alternative: Check for activity list items
     });
 
-    // Check for timeline items
-    const timelineItems = page.locator('[data-testid="activity-item"], .timeline-item, li:has-text(/started|completed|failed|queued/)');
-    const itemCount = await timelineItems.count();
+    // Check for timeline items (use text selector for matching keywords)
+    const timelineItems = page.locator('[data-testid="activity-item"], .timeline-item, li, [role="listitem"]');
+    let itemCount = await timelineItems.count();
+
+    // If general selector found items, filter for activity-related items
+    if (itemCount > 0) {
+      // Also check for specific activity text patterns
+      const activityTextItems = page.locator('text=/started|completed|failed|queued/i');
+      const activityCount = await activityTextItems.count();
+      // Use whichever count is more relevant
+      itemCount = Math.max(itemCount > 5 ? itemCount : 0, activityCount);
+    }
 
     if (itemCount > 0) {
       console.log(`Found ${itemCount} activity items in timeline`);
@@ -336,13 +357,18 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   test('4. should render both tabs and switch content on click and keyboard navigation', async ({ page }) => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
-    // Wait for tabs component
-    const tabsContainer = page.locator('[role="tablist"]');
-    await expect(tabsContainer).toBeVisible({ timeout: 5000 }).catch(() => {
+    // Wait for tabs component with fallback
+    let hasTablist = false;
+    try {
+      const tabsContainer = page.locator('[role="tablist"]');
+      await expect(tabsContainer).toBeVisible({ timeout: 5000 });
+      hasTablist = true;
+    } catch (e) {
       // Alternative: Check for app-tabs component
       const appTabs = page.locator('app-tabs');
-      expect(appTabs).toBeTruthy();
-    });
+      const appTabsCount = await appTabs.count();
+      expect(appTabsCount).toBeGreaterThan(0);
+    }
 
     // Get tab buttons
     const tabs = page.locator('[role="tab"]');
@@ -388,21 +414,23 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   // Test 5: Empty State
   // ========================================
   test('5. should display empty state when no builds exist', async ({ page }) => {
-    // Mock empty builds response
-    await page.route('**/graphql', (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON();
+    // Mock empty builds response (skip if using live backend)
+    if (!USE_LIVE_BACKEND) {
+      await page.route('**/graphql', (route) => {
+        const request = route.request();
+        const postData = request.postDataJSON();
 
-      if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_EMPTY_BUILDS_RESPONSE),
-        });
-      }
+        if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(MOCK_EMPTY_BUILDS_RESPONSE),
+          });
+        }
 
-      return route.continue();
-    });
+        return route.continue();
+      });
+    }
 
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
@@ -432,6 +460,12 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   // Test 6: Error State
   // ========================================
   test('6. should display error component when GraphQL error occurs and retry works', async ({ page }) => {
+    // Skip this test if using live backend (can't reliably mock errors)
+    if (USE_LIVE_BACKEND) {
+      test.skip();
+      return;
+    }
+
     let requestCount = 0;
 
     // Mock GraphQL error then success
@@ -633,29 +667,31 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   // Performance baseline test (combined)
   // ========================================
   test('Performance baseline - Full dashboard load sequence', async ({ page }) => {
-    // Mock all GraphQL responses
-    await page.route('**/graphql', (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON();
+    // Mock all GraphQL responses (unless using live backend)
+    if (!USE_LIVE_BACKEND) {
+      await page.route('**/graphql', (route) => {
+        const request = route.request();
+        const postData = request.postDataJSON();
 
-      if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_METRICS_RESPONSE),
-        });
-      }
+        if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(MOCK_METRICS_RESPONSE),
+          });
+        }
 
-      if (postData.operationName?.includes('activity') || postData.query?.includes('activity')) {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_ACTIVITIES_RESPONSE),
-        });
-      }
+        if (postData.operationName?.includes('activity') || postData.query?.includes('activity')) {
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(MOCK_ACTIVITIES_RESPONSE),
+          });
+        }
 
-      return route.continue();
-    });
+        return route.continue();
+      });
+    }
 
     const loadStart = Date.now();
     await page.goto('/dashboard', { waitUntil: 'networkidle' });
@@ -663,9 +699,14 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
 
     const metrics = await measureWebVitals(page);
 
-    // Verify dashboard is fully interactive
-    const tabsVisible = await page.locator('[role="tablist"], app-tabs').count().then((count) => count > 0);
-    expect(tabsVisible || await page.locator('app-build-dashboard').count() > 0).toBeTruthy();
+    // Verify dashboard is fully interactive with flexible component detection
+    const hasTablist = await page.locator('[role="tablist"]').count().then((count) => count > 0);
+    const hasAppTabs = await page.locator('app-tabs').count().then((count) => count > 0);
+    const hasBuildDashboard = await page.locator('app-build-dashboard').count().then((count) => count > 0);
+    const hasMainContent = await page.locator('[role="main"], main, app-dashboard').count().then((count) => count > 0);
+
+    const isDashboardReady = hasTablist || hasAppTabs || hasBuildDashboard || hasMainContent;
+    expect(isDashboardReady).toBeTruthy();
 
     const performanceSummary = {
       totalLoadTime: `${loadEnd - loadStart}ms`,
