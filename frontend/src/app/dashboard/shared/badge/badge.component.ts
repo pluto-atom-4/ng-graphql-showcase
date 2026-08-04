@@ -7,6 +7,7 @@ interface StatusConfig {
   bgColor: string;
   textColor: string;
   icon: string;
+  classes: string;
 }
 
 /**
@@ -41,7 +42,9 @@ interface StatusConfig {
   standalone: true,
   template: `
     <span
-      [class]="badgeClasses"
+      [class]="statusConfig.classes"
+      [style.backgroundColor]="statusConfig.bgColor"
+      [style.color]="statusConfig.textColor"
       [attr.aria-label]="ariaLabel"
       role="status"
     >
@@ -49,17 +52,6 @@ interface StatusConfig {
       {{ statusConfig.label }}
     </span>
   `,
-  styles: [`
-    span {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.375rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BadgeComponent {
@@ -71,35 +63,34 @@ export class BadgeComponent {
       label: 'Pending',
       bgColor: '#fef3c7',
       textColor: '#92400e',
-      icon: '⏳'
+      icon: '⏳',
+      classes: 'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap'
     },
     RUNNING: {
       label: 'Running',
       bgColor: '#dbeafe',
       textColor: '#1e40af',
-      icon: '⟳'
+      icon: '⟳',
+      classes: 'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap'
     },
     COMPLETE: {
       label: 'Completed',
       bgColor: '#dcfce7',
       textColor: '#166534',
-      icon: '✓'
+      icon: '✓',
+      classes: 'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap'
     },
     FAILED: {
       label: 'Failed',
       bgColor: '#fee2e2',
       textColor: '#991b1b',
-      icon: '✕'
+      icon: '✕',
+      classes: 'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap'
     }
   };
 
   get statusConfig(): StatusConfig {
     return this.statusMap[this.status];
-  }
-
-  get badgeClasses(): string {
-    const config = this.statusConfig;
-    return `bg-[${config.bgColor}] text-[${config.textColor}]`;
   }
 
   get ariaLabel(): string {
