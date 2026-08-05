@@ -16,7 +16,7 @@
     "lint": "ng lint",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json,md}\"",
-    "codegen": "pnpm graphql-code-generator --config codegen.ts",
+    "codegen": "pnpm graphql-code-generator --config codegen.ts && node scripts/dedupe-graphql-types.js",
     "audit:lighthouse": "lighthouse http://localhost:4200 --config-path=a11y/lighthouse.config.js --output=json --output-path=a11y/reports/baseline-lighthouse.json",
     "audit:pa11y": "pa11y-ci --config=a11y/pa11y-config.json"
   },
