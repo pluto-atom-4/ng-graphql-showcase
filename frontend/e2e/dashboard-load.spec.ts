@@ -364,11 +364,9 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
     // Wait for tabs component with fallback
-    let hasTablist = false;
     try {
       const tabsContainer = page.locator('[role="tablist"]');
       await expect(tabsContainer).toBeVisible({ timeout: 5000 });
-      hasTablist = true;
     } catch (e) {
       // Alternative: Check for app-tabs component
       const appTabs = page.locator('app-tabs');
@@ -522,9 +520,7 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
         await retryButton.first().click();
         await page.waitForTimeout(1000);
 
-        // Verify data is now displayed
-        const errorAfterRetry = await errorMessage.count();
-        // Error should be gone or data should be displayed
+        // Verify data is now displayed (error should be gone or data should be displayed)
         console.log('Retry button clicked successfully');
       }
     } else {
@@ -617,7 +613,6 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
       for (let i = 0; i < tabCount; i++) {
         const tab = tabs.nth(i);
         const ariaSelected = await tab.getAttribute('aria-selected');
-        const tabIndex = await tab.getAttribute('tabindex');
 
         // Tab should have aria-selected
         expect(ariaSelected).toBeTruthy();
