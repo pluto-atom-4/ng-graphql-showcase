@@ -132,28 +132,6 @@ const MOCK_GRAPHQL_ERROR_RESPONSE = {
 };
 
 /**
- * Setup: Mock GraphQL responses and navigate to dashboard
- * If USE_LIVE_BACKEND is true, connects to real backend (no mocking)
- */
-async function setupDashboardTest(page: Page, mockResponse: any) {
-  if (!USE_LIVE_BACKEND) {
-    // Mock GraphQL endpoint for metrics query
-    await page.route('**/graphql', (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON();
-
-      if (postData.operationName === 'GetBuildsMetrics' || postData.query?.includes('builds')) {
-        return route.abort('serviceunavailable');
-      }
-
-      return route.continue();
-    });
-  }
-
-  await page.goto('/dashboard', { waitUntil: 'networkidle' });
-}
-
-/**
  * Helper: Measure Web Vitals (FCP, LCP, CLS, TTI)
  */
 async function measureWebVitals(page: Page) {
@@ -209,6 +187,25 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
   // Test 1: Initial Load
   // ========================================
   test('1. should load dashboard and verify page title and TTI', async ({ page }) => {
+    // Mock GraphQL subscriptions (unless using live backend)
+    if (!USE_LIVE_BACKEND) {
+      await page.route('**/graphql', (route) => {
+        const request = route.request();
+        const postData = request.postDataJSON();
+
+        if (postData.operationName?.includes('buildStatusChanged') || postData.query?.includes('buildStatusChanged')) {
+          // Mock subscription response with initial builds
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(MOCK_METRICS_RESPONSE),
+          });
+        }
+
+        return route.continue();
+      });
+    }
+
     // Navigate to dashboard
     const navigationStart = Date.now();
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
@@ -240,6 +237,9 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
       fcp: `${metrics.fcp}ms`,
     });
 
+    // Verify no critical console errors occurred
+    expect(errors).toHaveLength(0);
+
     // Verify TTI (Time to Interactive) is reasonable
     expect(navigationTime).toBeLessThan(5000); // Should load within 5 seconds
   });
@@ -255,7 +255,11 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
         const postData = request.postDataJSON();
 
         if (postData.operationName?.includes('builds') || postData.query?.includes('builds')) {
-          route.abort('serviceunavailable');
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(MOCK_METRICS_RESPONSE),
+          });
         } else {
           route.continue();
         }
@@ -266,9 +270,8 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
 
     // Wait for metrics grid to be visible
     const metricsGrid = page.locator('app-metrics-grid');
-    await expect(metricsGrid).toBeVisible({ timeout: 5000 }).catch(() => {
-      // If component doesn't exist, check for alternative structure
-    });
+    const visible = await metricsGrid.isVisible({ timeout: 5000 }).catch(() => false);
+    expect(visible).toBe(true);
 
     // Check for metric cards (app-card elements with metric data)
     const metricCards = page.locator('[data-testid="metric-card"], app-card');
@@ -304,7 +307,11 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
         const postData = request.postDataJSON();
 
         if (postData.operationName?.includes('activity') || postData.query?.includes('activity')) {
-          route.abort('serviceunavailable');
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(MOCK_ACTIVITIES_RESPONSE),
+          });
         } else {
           route.continue();
         }
@@ -315,9 +322,8 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
 
     // Wait for activity timeline component
     const activityTimeline = page.locator('app-activity-timeline');
-    await expect(activityTimeline).toBeVisible({ timeout: 5000 }).catch(() => {
-      // Alternative: Check for activity list items
-    });
+    const visible = await activityTimeline.isVisible({ timeout: 5000 }).catch(() => false);
+    expect(visible).toBe(true);
 
     // Check for timeline items (use text selector for matching keywords)
     const timelineItems = page.locator('[data-testid="activity-item"], .timeline-item, li, [role="listitem"]');
