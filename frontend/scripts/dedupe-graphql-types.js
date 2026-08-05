@@ -8,9 +8,7 @@ const graphqlFile = path.join(__dirname, '../src/app/api/generated/graphql.ts');
 let content = fs.readFileSync(graphqlFile, 'utf-8');
 
 // Remove duplicate type definitions by keeping only the first occurrence
-const typePattern = /export type (\w+) =/g;
 const seenTypes = new Set();
-let lastPos = 0;
 const replacements = [];
 
 // Find all type definitions
