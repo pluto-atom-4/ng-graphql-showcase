@@ -169,7 +169,7 @@ export class BuildService {
       .pipe(
         bufferTime(250),
         filter((updates) => updates.length > 0),
-        mergeMap((updates) => updates.map((u) => u.data.buildStatusChanged))
+        mergeMap((updates) => updates.filter((u) => u.data).map((u) => u.data!.buildStatusChanged))
       );
   }
 
