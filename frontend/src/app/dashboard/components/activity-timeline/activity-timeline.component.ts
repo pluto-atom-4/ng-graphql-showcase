@@ -146,7 +146,7 @@ export class ActivityTimelineComponent {
     }
   }
 
-  trackByActivityId(index: number, activity: Activity): string {
+  trackByActivityId(_index: number, activity: Activity): string {
     return activity.id;
   }
 }

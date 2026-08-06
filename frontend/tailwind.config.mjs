@@ -101,7 +101,7 @@ export default {
   plugins: [
     daisyui,
     // Custom component utilities
-    function ({ addComponents, theme }) {
+    function ({ addComponents }) {
       addComponents({
         // Card base styles
         '.card': {
