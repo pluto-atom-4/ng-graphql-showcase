@@ -101,6 +101,7 @@ test.describe('Dashboard Integration E2E', () => {
       // Get initial builds on page 1
       const page1Builds = await page.locator('table tbody tr td:first-child').allTextContents();
       const page1FirstBuild = page1Builds[0];
+      let page2FirstBuild: string | undefined;
 
       // Act: Go to page 2
       const nextPageButton = page.locator('button:has-text("Next")').first();
@@ -110,13 +111,13 @@ test.describe('Dashboard Integration E2E', () => {
 
         // Assert: Page 2 builds should be different
         const page2Builds = await page.locator('table tbody tr td:first-child').allTextContents();
-        const page2FirstBuild = page2Builds[0];
+        page2FirstBuild = page2Builds[0];
         expect(page2FirstBuild).not.toBe(page1FirstBuild);
       }
 
       // Act: Go to page 3 (if exists)
       const nextPageButton2 = page.locator('button:has-text("Next")').first();
-      if (await nextPageButton2.isEnabled()) {
+      if (await nextPageButton2.isEnabled() && page2FirstBuild) {
         await nextPageButton2.click();
         await page.waitForTimeout(500);
 

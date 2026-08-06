@@ -10,7 +10,7 @@
  * - Observable caching behavior
  */
 
-import { of, throwError, Observable } from 'rxjs';
+import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { BuildService, Build, BuildsResult, Metrics, Activity } from '../services/build.service';
@@ -61,10 +61,10 @@ describe('Dashboard Integration Tests', () => {
     // Mock Apollo
     const mockApollo = {
       query: vi.fn(() => ({
-        pipe: (...operators: any) => of({})
+        pipe: (..._operators: any) => of({})
       })),
       subscribe: vi.fn(() => ({
-        pipe: (...operators: any) => of({})
+        pipe: (..._operators: any) => of({})
       }))
     };
 
@@ -193,34 +193,32 @@ describe('Dashboard Integration Tests', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle getBuilds error', (done) => {
+    it('should handle getBuilds error', async () => {
       // Arrange
       const error = new Error('Network error');
       vi.spyOn(buildService, 'getBuilds').mockReturnValue(throwError(() => error));
 
       // Act & Assert
-      buildService.getBuilds(0, 10).subscribe({
-        next: () => expect(false).toBe(true),
-        error: (err) => {
-          expect(err.message).toBe('Network error');
-          done();
-        }
-      });
+      try {
+        await firstValueFrom(buildService.getBuilds(0, 10));
+        expect(false).toBe(true);
+      } catch (err: any) {
+        expect(err.message).toBe('Network error');
+      }
     });
 
-    it('should handle getBuildsMetrics error', (done) => {
+    it('should handle getBuildsMetrics error', async () => {
       // Arrange
       const error = new Error('Metrics error');
       vi.spyOn(buildService, 'getBuildsMetrics').mockReturnValue(throwError(() => error));
 
       // Act & Assert
-      buildService.getBuildsMetrics().subscribe({
-        next: () => expect(false).toBe(true),
-        error: (err) => {
-          expect(err.message).toBe('Metrics error');
-          done();
-        }
-      });
+      try {
+        await firstValueFrom(buildService.getBuildsMetrics());
+        expect(false).toBe(true);
+      } catch (err: any) {
+        expect(err.message).toBe('Metrics error');
+      }
     });
   });
 

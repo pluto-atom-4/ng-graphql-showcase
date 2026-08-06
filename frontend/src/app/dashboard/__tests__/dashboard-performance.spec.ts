@@ -9,10 +9,10 @@
  * - Bundle size metrics (gzipped < 150KB estimated)
  */
 
-import { of, Observable, BehaviorSubject } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { BuildService, Build, BuildsResult, Metrics } from '../services/build.service';
+import { BuildService, Build, BuildsResult, Metrics, Activity } from '../services/build.service';
 
 describe('Dashboard Performance Tests', () => {
   let buildService: BuildService;
@@ -20,10 +20,10 @@ describe('Dashboard Performance Tests', () => {
   beforeEach(() => {
     const mockApollo = {
       query: vi.fn(() => ({
-        pipe: (...operators: any) => of({})
+        pipe: (..._operators: any) => of({})
       })),
       subscribe: vi.fn(() => ({
-        pipe: (...operators: any) => of({})
+        pipe: (..._operators: any) => of({})
       }))
     };
 
@@ -37,8 +37,8 @@ describe('Dashboard Performance Tests', () => {
       vi.spyOn(buildService, 'getBuilds').mockReturnValue(of(mockResult));
 
       // Act: Call getBuilds multiple times
-      const call1 = buildService.getBuilds(0, 10);
-      const call2 = buildService.getBuilds(0, 10);
+      buildService.getBuilds(0, 10);
+      buildService.getBuilds(0, 10);
 
       // Assert: Should return cached observable
       expect(buildService.getBuilds).toHaveBeenCalledTimes(2);
@@ -50,8 +50,8 @@ describe('Dashboard Performance Tests', () => {
       vi.spyOn(buildService, 'getBuildsMetrics').mockReturnValue(of(mockMetrics));
 
       // Act: Call getBuildsMetrics multiple times
-      const call1 = buildService.getBuildsMetrics();
-      const call2 = buildService.getBuildsMetrics();
+      buildService.getBuildsMetrics();
+      buildService.getBuildsMetrics();
 
       // Assert: Should cache the result
       expect(buildService.getBuildsMetrics).toHaveBeenCalledTimes(2);
@@ -59,12 +59,12 @@ describe('Dashboard Performance Tests', () => {
 
     it('should cache activities observable with shareReplay', () => {
       // Arrange
-      const mockActivities = [];
+      const mockActivities: Activity[] = [];
       vi.spyOn(buildService, 'getBuildActivities').mockReturnValue(of(mockActivities));
 
       // Act: Call getBuildActivities twice with same params
-      const call1 = buildService.getBuildActivities('build-1', 10);
-      const call2 = buildService.getBuildActivities('build-1', 10);
+      buildService.getBuildActivities('build-1', 10);
+      buildService.getBuildActivities('build-1', 10);
 
       // Assert: Should cache with same parameters
       expect(buildService.getBuildActivities).toHaveBeenCalledTimes(2);
@@ -139,13 +139,13 @@ describe('Dashboard Performance Tests', () => {
       vi.spyOn(buildService, 'getBuilds').mockReturnValue(of(mockResult));
 
       // Act & Assert
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolve, _reject) => {
         buildService.getBuilds(0, 10).subscribe({
           next: (result) => {
             expect(result).toEqual(mockResult);
             resolve();
           },
-          error: (err) => reject(err)
+          error: (err) => _reject(err)
         });
       });
     });
@@ -158,7 +158,7 @@ describe('Dashboard Performance Tests', () => {
       );
 
       // Act & Assert
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolve, _reject) => {
         buildService.getBuilds(0, 10).subscribe({
           error: (err) => {
             expect(err.message).toBe('Test error');
