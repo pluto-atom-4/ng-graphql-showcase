@@ -75,19 +75,19 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
     MetricsGridComponent,
   ],
   template: `
-    <main role="main" id="dashboard" class="min-h-screen bg-gray-50 p-6 md:p-8">
-      <div class="max-w-7xl mx-auto">
+    <main role="main" id="dashboard" class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+      <div class="max-w-screen px-4 md:px-8 lg:max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="mb-8">
-          <h1 class="text-4xl font-bold text-gray-900 mb-2">Build Dashboard</h1>
-          <p class="text-gray-600">
+        <div class="mb-8 animate-slide-in">
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Build Dashboard</h1>
+          <p class="text-sm md:text-base text-gray-600">
             Monitor builds and activities in real-time
           </p>
         </div>
 
         <!-- Metrics Grid Section -->
-        <section aria-labelledby="metrics-heading" class="mb-8">
-          <h2 id="metrics-heading" class="text-2xl font-semibold text-gray-900 mb-6">
+        <section aria-labelledby="metrics-heading" class="mb-8 md:mb-12">
+          <h2 id="metrics-heading" class="text-xl md:text-2xl font-semibold text-gray-900 mb-4 md:mb-6">
             Key Metrics
           </h2>
           <div *ngIf="metrics$ | async as metrics">
@@ -96,16 +96,16 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
         </section>
 
         <!-- Builds Table Section -->
-        <section aria-labelledby="builds-heading" class="mb-8">
-          <h2 id="builds-heading" class="text-2xl font-semibold text-gray-900 mb-6">
+        <section aria-labelledby="builds-heading" class="mb-8 md:mb-12">
+          <h2 id="builds-heading" class="text-xl md:text-2xl font-semibold text-gray-900 mb-4 md:mb-6">
             Recent Builds
           </h2>
 
           <!-- Loading state -->
           <div *ngIf="isLoading$ | async" class="space-y-3">
-            <div class="h-12 bg-gray-200 rounded animate-pulse"></div>
-            <div class="h-12 bg-gray-200 rounded animate-pulse"></div>
-            <div class="h-12 bg-gray-200 rounded animate-pulse"></div>
+            <div class="h-12 bg-gray-200 rounded skeleton"></div>
+            <div class="h-12 bg-gray-200 rounded skeleton"></div>
+            <div class="h-12 bg-gray-200 rounded skeleton"></div>
           </div>
 
           <!-- Builds table -->
@@ -118,28 +118,28 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
                     <th
                       role="columnheader"
                       scope="col"
-                      class="px-6 py-4 text-left text-sm font-semibold text-gray-900"
+                      class="px-4 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-gray-900"
                     >
                       Build Name
                     </th>
                     <th
                       role="columnheader"
                       scope="col"
-                      class="px-6 py-4 text-left text-sm font-semibold text-gray-900"
+                      class="px-4 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-gray-900"
                     >
                       Status
                     </th>
                     <th
                       role="columnheader"
                       scope="col"
-                      class="px-6 py-4 text-left text-sm font-semibold text-gray-900"
+                      class="px-4 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-gray-900 hidden sm:table-cell"
                     >
                       Created
                     </th>
                     <th
                       role="columnheader"
                       scope="col"
-                      class="px-6 py-4 text-left text-sm font-semibold text-gray-900"
+                      class="px-4 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold text-gray-900 hidden sm:table-cell"
                     >
                       Updated
                     </th>
@@ -150,20 +150,20 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
                     *ngFor="let build of (builds$ | async); trackBy: trackByBuildId; let i = index"
                     role="row"
                     tabindex="0"
-                    class="hover:bg-gray-50 cursor-pointer divide-x divide-gray-200 transition-colors focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
+                    class="hover:bg-blue-50 cursor-pointer divide-x divide-gray-200 transition-colors duration-150 focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
                     (click)="onBuildRowClick(build)"
                     (keydown)="onTableRowKeydown($event, i)"
                   >
-                    <td role="cell" class="px-6 py-4 text-sm text-gray-900">
+                    <td role="cell" class="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-900 font-medium">
                       {{ build.name }}
                     </td>
-                    <td role="cell" class="px-6 py-4 text-sm">
+                    <td role="cell" class="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
                       <app-status-badge [status]="build.status"></app-status-badge>
                     </td>
-                    <td role="cell" class="px-6 py-4 text-sm text-gray-600">
+                    <td role="cell" class="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-600 hidden sm:table-cell">
                       {{ build.createdAt | date: 'short' }}
                     </td>
-                    <td role="cell" class="px-6 py-4 text-sm text-gray-600">
+                    <td role="cell" class="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-600 hidden sm:table-cell">
                       {{ build.updatedAt | date: 'short' }}
                     </td>
                   </tr>
@@ -174,15 +174,17 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
             <!-- Empty state -->
             <div
               *ngIf="(builds$ | async)?.length === 0"
-              class="text-center py-12 bg-white rounded-lg border border-gray-200"
+              class="empty-state bg-white rounded-lg border border-gray-200 py-12 md:py-16"
             >
-              <p class="text-gray-500 text-base">No builds found</p>
+              <div class="empty-state-icon">📋</div>
+              <p class="empty-state-text">No builds found</p>
+              <p class="empty-state-description">Start creating builds to see them here</p>
             </div>
 
             <!-- Error state -->
-            <div *ngIf="error$ | async as error" class="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p class="text-red-800 text-sm font-medium">Error loading builds:</p>
-              <p class="text-red-700 text-sm">{{ error }}</p>
+            <div *ngIf="error$ | async as error" class="error-banner" role="alert">
+              <p class="error-banner-title">⚠️ Error loading builds:</p>
+              <p class="error-banner-message">{{ error }}</p>
             </div>
           </div>
 
@@ -199,9 +201,9 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
         <section
           *ngIf="buildId"
           aria-labelledby="activities-heading"
-          class="bg-white rounded-lg border border-gray-200 shadow-sm p-6"
+          class="card"
         >
-          <h2 id="activities-heading" class="text-2xl font-semibold text-gray-900 mb-6">
+          <h2 id="activities-heading" class="text-xl md:text-2xl font-semibold text-gray-900 mb-6">
             Recent Activities
           </h2>
           <app-activity-timeline

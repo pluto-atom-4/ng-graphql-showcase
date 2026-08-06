@@ -44,7 +44,7 @@ interface StatusConfig {
   imports: [CommonModule],
   template: `
     <span
-      class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap"
+      class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200"
       [style.backgroundColor]="statusConfig.backgroundColor"
       [style.color]="statusConfig.textColor"
       [style.borderColor]="statusConfig.borderColor"

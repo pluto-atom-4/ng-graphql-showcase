@@ -42,17 +42,17 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex items-center justify-between gap-4 p-4 bg-white rounded-lg border border-gray-200">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-white rounded-lg border border-gray-200">
       <!-- Page information -->
-      <div class="text-sm text-gray-600">
-        <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <span class="ml-4">
+      <div class="text-xs md:text-sm text-gray-600 order-2 md:order-1 w-full md:w-auto text-center md:text-left">
+        <span class="block md:inline">Page {{ currentPage }} of {{ totalPages }}</span>
+        <span class="block md:inline md:ml-4">
           Showing {{ startItem }} - {{ endItem }} of {{ totalItems }}
         </span>
       </div>
 
       <!-- Controls -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4 order-1 md:order-2 w-full md:w-auto">
         <!-- Previous button -->
         <button
           type="button"
@@ -60,9 +60,10 @@ import { CommonModule } from '@angular/common';
           [disabled]="isFirstPage"
           [attr.aria-label]="'Go to previous page, currently on page ' + currentPage"
           [attr.aria-disabled]="isFirstPage"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
+          class="flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors duration-150"
         >
-          ← Previous
+          <span class="hidden sm:inline">← Previous</span>
+          <span class="sm:hidden">← Prev</span>
         </button>
 
         <!-- Next button -->
@@ -72,9 +73,10 @@ import { CommonModule } from '@angular/common';
           [disabled]="isLastPage"
           [attr.aria-label]="'Go to next page, currently on page ' + currentPage"
           [attr.aria-disabled]="isLastPage"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
+          class="flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors duration-150"
         >
-          Next →
+          <span class="hidden sm:inline">Next →</span>
+          <span class="sm:hidden">Next</span>
         </button>
       </div>
     </div>
