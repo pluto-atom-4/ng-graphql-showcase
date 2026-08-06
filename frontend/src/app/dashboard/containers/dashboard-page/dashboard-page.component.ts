@@ -147,10 +147,12 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                   <tr
-                    *ngFor="let build of (builds$ | async); trackBy: trackByBuildId"
+                    *ngFor="let build of (builds$ | async); trackBy: trackByBuildId; let i = index"
                     role="row"
-                    class="hover:bg-gray-50 cursor-pointer divide-x divide-gray-200 transition-colors"
+                    tabindex="0"
+                    class="hover:bg-gray-50 cursor-pointer divide-x divide-gray-200 transition-colors focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
                     (click)="onBuildRowClick(build)"
+                    (keydown)="onTableRowKeydown($event, i)"
                   >
                     <td role="cell" class="px-6 py-4 text-sm text-gray-900">
                       {{ build.name }}
@@ -303,6 +305,33 @@ export class DashboardPageComponent implements OnInit {
   }
 
   /**
+   * Handle keyboard navigation on table rows (ArrowUp/Down).
+   * Allows users to navigate between builds using arrow keys.
+   *
+   * @param event - Keyboard event
+   * @param index - Index of current row in the table
+   */
+  onTableRowKeydown(event: KeyboardEvent, index: number): void {
+    const table = (event.target as HTMLElement).closest('table');
+    if (!table) return;
+
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+    if (event.key === 'ArrowDown' && index < rows.length - 1) {
+      event.preventDefault();
+      (rows[index + 1] as HTMLElement)?.focus();
+    } else if (event.key === 'ArrowUp' && index > 0) {
+      event.preventDefault();
+      (rows[index - 1] as HTMLElement)?.focus();
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      // Trigger the row click handler
+      const row = rows[index] as HTMLElement;
+      row?.click();
+    }
+  }
+
+  /**
    * TrackBy function for *ngFor on builds array.
    * Essential for performance optimization per CLAUDE.md.
    *
@@ -352,15 +381,19 @@ export class DashboardPageComponent implements OnInit {
       shareReplay(1)
     );
 
-    // Loading state (true while builds$ is fetching)
+    // Loading state: true while fetching, false when data arrives or error occurs
     this.isLoading$ = combineLatest([
       this.currentPage$,
       this.pageSize$,
     ]).pipe(
-      switchMap(() => of(true).pipe(
-        // Simulate loading state; replace with actual loading indicator if needed
-        startWith(true)
-      )),
+      switchMap(([page, size]) => {
+        const skip = (page - 1) * size;
+        return this.buildService.getBuilds(skip, size).pipe(
+          map(() => false), // Transition to false once data arrives
+          startWith(true),  // Start with true (loading)
+          catchError(() => of(false)) // False on error (show error state)
+        );
+      }),
       shareReplay(1)
     );
 
