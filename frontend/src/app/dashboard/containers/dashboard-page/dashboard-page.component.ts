@@ -310,7 +310,7 @@ export class DashboardPageComponent implements OnInit {
    * @param build - Build object
    * @returns Unique identifier for build
    */
-  trackByBuildId(index: number, build: Build): string {
+  trackByBuildId(_index: number, build: Build): string {
     return build.id;
   }
 

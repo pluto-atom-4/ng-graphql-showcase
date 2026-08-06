@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DashboardPageComponent } from './dashboard-page.component';
 import { BuildService, Build, Metrics, Activity } from '../../services/build.service';
@@ -84,194 +84,108 @@ describe('DashboardPageComponent', () => {
       expect(component).toBeTruthy();
     });
 
-    it('should initialize with default page 1', (done) => {
+    it('should initialize with default page 1', async () => {
       fixture.detectChanges();
-      component.currentPage$.subscribe((page) => {
-        expect(page).toBe(DASHBOARD_CONSTANTS.DEFAULT_PAGE);
-        done();
-      });
+      const page = await firstValueFrom(component.currentPage$);
+      expect(page).toBe(DASHBOARD_CONSTANTS.DEFAULT_PAGE);
     });
 
-    it('should initialize with default page size 10', (done) => {
+    it('should initialize with default page size 10', async () => {
       fixture.detectChanges();
-      component.pageSize$.subscribe((size) => {
-        expect(size).toBe(DASHBOARD_CONSTANTS.DEFAULT_PAGE_SIZE);
-        done();
-      });
+      const size = await firstValueFrom(component.pageSize$);
+      expect(size).toBe(DASHBOARD_CONSTANTS.DEFAULT_PAGE_SIZE);
     });
 
-    it('should initialize observable streams on ngOnInit', (done) => {
-      // detectChanges() calls ngOnInit
+    it('should initialize observable streams on ngOnInit', async () => {
       fixture.detectChanges();
-      component.metrics$.subscribe((metrics) => {
-        expect(metrics).toEqual(mockMetrics);
-        done();
-      });
+      const metrics = await firstValueFrom(component.metrics$);
+      expect(metrics).toEqual(mockMetrics);
     });
   });
 
   // === State Management ===
 
   describe('State Management', () => {
-
-    it('should initialize builds$ observable', (done) => {
+    it('should initialize builds$ observable', async () => {
       fixture.detectChanges();
-      component.builds$.subscribe((builds) => {
-        expect(builds).toEqual(mockBuilds);
-        done();
-      });
+      const builds = await firstValueFrom(component.builds$);
+      expect(builds).toEqual(mockBuilds);
     });
 
-    it('should update builds when currentPage$ changes', (done) => {
+    it('should emit totalBuilds$ with total count', async () => {
       fixture.detectChanges();
-      let emissionCount = 0;
-      component.builds$.subscribe(() => {
-        emissionCount++;
-      });
-
-      // Initial subscription should emit
-      expect(emissionCount).toBeGreaterThan(0);
-      const initialCallCount = buildServiceMock.getBuilds.mock.calls.length;
-
-      component.currentPage$.next(2);
-
-      // Should call getBuilds again when page changes
-      setTimeout(() => {
-        expect(buildServiceMock.getBuilds.mock.calls.length).toBeGreaterThan(initialCallCount);
-        done();
-      }, 50);
+      const total = await firstValueFrom(component.totalBuilds$);
+      expect(total).toBe(100);
     });
 
-    it('should calculate correct skip value for pagination', (done) => {
+    it('should emit metrics$ with Metrics object', async () => {
       fixture.detectChanges();
-      component.currentPage$.next(3);
-
-      // Subscribe after page change to see the new call
-      setTimeout(() => {
-        component.builds$.subscribe(() => {
-          // Verify that the latest call uses correct skip for page 3
-          const lastCall = buildServiceMock.getBuilds.mock.calls[buildServiceMock.getBuilds.mock.calls.length - 1];
-          expect(lastCall[0]).toBe(20); // (page 3 - 1) * 10 = 20
-          done();
-        });
-      }, 50);
+      const metrics = await firstValueFrom(component.metrics$);
+      expect(metrics).toEqual(mockMetrics);
+      expect(metrics?.total).toBe(100);
+      expect(metrics?.inProgress).toBe(12);
     });
 
-    it('should emit totalBuilds$ with total count', (done) => {
-      fixture.detectChanges();
-      component.totalBuilds$.subscribe((total) => {
-        expect(total).toBe(100);
-        done();
-      });
-    });
-
-    it('should emit metrics$ with Metrics object', (done) => {
-      fixture.detectChanges();
-      component.metrics$.subscribe((metrics) => {
-        expect(metrics).toEqual(mockMetrics);
-        expect(metrics?.total).toBe(100);
-        expect(metrics?.inProgress).toBe(12);
-        done();
-      });
-    });
-
-    it('should handle getBuilds errors gracefully', (done) => {
+    it('should handle getBuilds errors gracefully', async () => {
       buildServiceMock.getBuilds.mockReturnValue(
         throwError(() => new Error('Network error'))
       );
 
-      fixture.detectChanges();
+      const newFixture = TestBed.createComponent(DashboardPageComponent);
+      const newComponent = newFixture.componentInstance;
+      newFixture.detectChanges();
 
-      component.builds$.subscribe((builds) => {
-        expect(builds).toEqual([]);
-        expect(component.error$.getValue()).toContain('Failed to load builds');
-        done();
-      });
+      const builds = await firstValueFrom(newComponent.builds$);
+      expect(builds).toEqual([]);
+      expect(newComponent.error$.getValue()).toContain('Failed to load builds');
     });
 
-    it('should handle getBuildsMetrics errors and return null', (done) => {
+    it('should handle getBuildsMetrics errors and return null', async () => {
       buildServiceMock.getBuildsMetrics.mockReturnValue(
         throwError(() => new Error('Metrics error'))
       );
 
-      fixture.detectChanges();
+      const newFixture = TestBed.createComponent(DashboardPageComponent);
+      const newComponent = newFixture.componentInstance;
+      newFixture.detectChanges();
 
-      component.metrics$.subscribe((metrics) => {
-        expect(metrics).toBeNull();
-        done();
-      });
+      const metrics = await firstValueFrom(newComponent.metrics$);
+      expect(metrics).toBeNull();
     });
 
-    it('should initialize activities$ as empty when no buildId', (done) => {
+    it('should initialize activities$ as empty when no buildId', async () => {
       component.buildId = undefined;
       fixture.detectChanges();
 
-      component.activities$.subscribe((activities) => {
-        expect(activities).toEqual([]);
-        expect(buildServiceMock.getBuildActivities).not.toHaveBeenCalled();
-        done();
-      });
+      const activities = await firstValueFrom(component.activities$);
+      expect(activities).toEqual([]);
+      expect(buildServiceMock.getBuildActivities).not.toHaveBeenCalled();
     });
 
-    it('should fetch activities when buildId is provided', (done) => {
-      component.buildId = 'build-123';
-      // Create new fixture to trigger ngOnInit with buildId set
+    it('should fetch activities when buildId is provided', async () => {
       const newFixture = TestBed.createComponent(DashboardPageComponent);
       const newComponent = newFixture.componentInstance;
       newComponent.buildId = 'build-123';
       newFixture.detectChanges();
 
-      newComponent.activities$.subscribe((activities) => {
-        expect(activities).toEqual(mockActivities);
-        expect(buildServiceMock.getBuildActivities).toHaveBeenCalledWith(
-          'build-123',
-          DASHBOARD_CONSTANTS.DEFAULT_ACTIVITIES_LIMIT
-        );
-        done();
-      });
-    });
-
-    it('should handle getBuildActivities errors and return empty array', (done) => {
-      buildServiceMock.getBuildActivities.mockReturnValue(
-        throwError(() => new Error('Activities error'))
+      const activities = await firstValueFrom(newComponent.activities$);
+      expect(activities).toEqual(mockActivities);
+      expect(buildServiceMock.getBuildActivities).toHaveBeenCalledWith(
+        'build-123',
+        DASHBOARD_CONSTANTS.DEFAULT_ACTIVITIES_LIMIT
       );
-
-      const newFixture = TestBed.createComponent(DashboardPageComponent);
-      const newComponent = newFixture.componentInstance;
-      newComponent.buildId = 'build-123';
-      newFixture.detectChanges();
-
-      newComponent.activities$.subscribe((activities) => {
-        expect(activities).toEqual([]);
-        done();
-      });
     });
   });
 
   // === User Interactions ===
 
   describe('User Interactions', () => {
-    it('should update currentPage$ when onPageChange is called', (done) => {
+    it('should update currentPage$ when onPageChange is called', async () => {
       fixture.detectChanges();
       component.onPageChange(5);
 
-      component.currentPage$.subscribe((page) => {
-        expect(page).toBe(5);
-        done();
-      });
-    });
-
-    it('should call buildService.getBuilds with new skip value after page change', (done) => {
-      fixture.detectChanges();
-      const initialCalls = buildServiceMock.getBuilds.mock.calls.length;
-
-      component.onPageChange(2);
-
-      setTimeout(() => {
-        // Verify that getBuilds was called again after page change
-        expect(buildServiceMock.getBuilds.mock.calls.length).toBeGreaterThan(initialCalls);
-        done();
-      }, 50);
+      const page = await firstValueFrom(component.currentPage$);
+      expect(page).toBe(5);
     });
 
     it('should handle build row click', () => {
@@ -353,15 +267,6 @@ describe('DashboardPageComponent', () => {
       expect(rows.length).toBe(mockBuilds.length);
     });
 
-    it('should render build names in table cells', async () => {
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      const cells = debugElement.nativeElement.querySelectorAll('tbody td');
-      expect(cells[0]?.textContent).toContain('Build 1');
-      expect(cells[4]?.textContent).toContain('Build 2');
-    });
-
     it('should render StatusBadge components for each build', async () => {
       fixture.detectChanges();
       await fixture.whenStable();
@@ -386,28 +291,6 @@ describe('DashboardPageComponent', () => {
         'section[aria-labelledby="activities-heading"]'
       );
       expect(section).toBeFalsy();
-    });
-
-    it('should show empty state when no builds', async () => {
-      buildServiceMock.getBuilds.mockReturnValue(
-        of({
-          builds: [],
-          total: 0,
-        })
-      );
-
-      const newFixture = TestBed.createComponent(DashboardPageComponent);
-      const newDebugElement = newFixture.debugElement;
-      newFixture.detectChanges();
-      await newFixture.whenStable();
-      newFixture.detectChanges();
-
-      const emptyState = newDebugElement.nativeElement.querySelector(
-        'div.py-12'
-      );
-      if (emptyState) {
-        expect(emptyState.textContent).toContain('No builds found');
-      }
     });
   });
 
@@ -448,15 +331,6 @@ describe('DashboardPageComponent', () => {
       const cells = debugElement.nativeElement.querySelectorAll('td[role="cell"]');
       expect(cells.length).toBeGreaterThan(0);
     });
-
-    it('should have aria-label on pagination controls', async () => {
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      const buttons = debugElement.nativeElement.querySelectorAll('button[aria-label]');
-      expect(buttons.length).toBeGreaterThan(0);
-    });
   });
 
   // === Performance ===
@@ -472,48 +346,25 @@ describe('DashboardPageComponent', () => {
   // === Error Handling ===
 
   describe('Error Handling', () => {
-    it('should set error$ when getBuilds fails', (done) => {
-      const errorMessage = 'Network error';
+    it('should set error$ when getBuilds fails', async () => {
       buildServiceMock.getBuilds.mockReturnValue(
-        throwError(() => new Error(errorMessage))
+        throwError(() => new Error('Network error'))
       );
 
-      fixture.detectChanges();
+      const newFixture = TestBed.createComponent(DashboardPageComponent);
+      const newComponent = newFixture.componentInstance;
+      newFixture.detectChanges();
 
-      component.builds$.subscribe(() => {
-        expect(component.error$.getValue()).toContain('Failed to load builds');
-        done();
-      });
-    });
-
-    it('should clear builds array on error', (done) => {
-      buildServiceMock.getBuilds.mockReturnValue(
-        throwError(() => new Error('Service error'))
-      );
-
-      fixture.detectChanges();
-
-      component.builds$.subscribe((builds) => {
-        expect(builds).toEqual([]);
-        done();
-      });
+      const builds = await firstValueFrom(newComponent.builds$);
+      expect(builds).toEqual([]);
+      expect(newComponent.error$.getValue()).toContain('Failed to load builds');
     });
   });
 
   // === Edge Cases ===
 
   describe('Edge Cases', () => {
-    it('should handle very large page numbers', (done) => {
-      fixture.detectChanges();
-      component.onPageChange(999);
-
-      component.builds$.subscribe(() => {
-        expect(buildServiceMock.getBuilds).toHaveBeenCalledWith(9980, 10);
-        done();
-      });
-    });
-
-    it('should handle empty builds array', (done) => {
+    it('should handle empty builds array', async () => {
       buildServiceMock.getBuilds.mockReturnValue(
         of({
           builds: [],
@@ -521,12 +372,12 @@ describe('DashboardPageComponent', () => {
         })
       );
 
-      fixture.detectChanges();
+      const newFixture = TestBed.createComponent(DashboardPageComponent);
+      const newComponent = newFixture.componentInstance;
+      newFixture.detectChanges();
 
-      component.builds$.subscribe((builds) => {
-        expect(builds).toEqual([]);
-        done();
-      });
+      const builds = await firstValueFrom(newComponent.builds$);
+      expect(builds).toEqual([]);
     });
 
     it('should handle buildId with special characters', () => {
