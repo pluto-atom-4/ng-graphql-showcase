@@ -90,8 +90,11 @@ export class FocusTrapService {
   /**
    * Gets all focusable elements within the container
    *
+   * Filters out hidden, disabled, and off-screen elements to ensure
+   * only actually visible and interactive elements are returned.
+   *
    * @param container - The container element to search
-   * @returns Array of focusable elements
+   * @returns Array of focusable elements that are visible
    */
   private getFocusableElements(container: HTMLElement): HTMLElement[] {
     const elements = Array.from(
@@ -99,7 +102,7 @@ export class FocusTrapService {
     ) as HTMLElement[];
 
     return elements.filter((el) => {
-      // Check if element is visible
+      // Check if element is visible using offsetParent
       if (el.offsetParent === null) {
         return false;
       }
@@ -108,6 +111,19 @@ export class FocusTrapService {
       const style = window.getComputedStyle(el);
       if (style.display === 'none' || style.visibility === 'hidden') {
         return false;
+      }
+
+      // Use checkVisibility() if available (modern browsers)
+      // Falls back to basic visibility checks for older browsers
+      if (typeof (el as any).checkVisibility === 'function') {
+        if (!(el as any).checkVisibility()) {
+          return false;
+        }
+      } else {
+        // Fallback: check if element has dimensions (not hidden by overflow)
+        if (el.offsetWidth === 0 || el.offsetHeight === 0) {
+          return false;
+        }
       }
 
       return true;
