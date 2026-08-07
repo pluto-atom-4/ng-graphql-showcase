@@ -20,9 +20,10 @@ namespace FactoryApp.Tests.GraphQL.Resolvers;
 /// - Error handling and edge cases
 /// - Performance validation (< 100ms execution)
 /// </summary>
+[Collection("Dashboard Resolver Collection")]
 public class DashboardResolverTests : IAsyncLifetime
 {
-    private readonly TestDatabaseFixture _fixture = new();
+    private readonly TestDatabaseFixtureNoSeed _fixture = new();
     private FactoryDbContext _context = null!;
     private BuildQueryType _query = null!;
     private LoggingService _loggingService = null!;
