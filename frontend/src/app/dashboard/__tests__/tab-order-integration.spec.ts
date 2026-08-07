@@ -12,7 +12,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { vi } from 'vitest';
 
 import { FocusTrapService } from '../services/focus-trap.service';
 import {
@@ -210,7 +209,7 @@ export class TabOrderTestComponent {
   isModalOpen = false;
   @ViewChild('modalContent') modalContent: any;
 
-  constructor(private focusTrapService: FocusTrapService) {}
+  constructor() {}
 
   openModal(): void {
     this.isModalOpen = true;
@@ -257,7 +256,6 @@ describe('Tab Order Integration Tests - Phase 2 Blocker #279', () => {
 
     it('should be hidden visually but visible to keyboard users', () => {
       const skipLink = container.querySelector('#skip-link') as HTMLElement;
-      const style = window.getComputedStyle(skipLink);
 
       // Initially should be visually hidden
       expect(skipLink.classList.contains('skip-link')).toBe(true);
@@ -293,7 +291,6 @@ describe('Tab Order Integration Tests - Phase 2 Blocker #279', () => {
       const activityBtn1 = container.querySelector('#activity-btn-1');
       const prevPage = container.querySelector('#prev-page');
 
-      const indices = focusable.map((el) => focusable.indexOf(el));
       const skipIndex = focusable.indexOf(skipLink as any);
       const metricIndex = focusable.indexOf(metricBtn1 as any);
       const tableIndex = focusable.indexOf(tableBtn1 as any);
@@ -338,7 +335,7 @@ describe('Tab Order Integration Tests - Phase 2 Blocker #279', () => {
 
   describe('Modal Focus Trap', () => {
     let focusTrapService: FocusTrapService;
-    let unsubscribeFocusTrap: () => void | null = null;
+    let unsubscribeFocusTrap: (() => void) | null = null;
 
     beforeEach(() => {
       focusTrapService = TestBed.inject(FocusTrapService);
@@ -373,7 +370,6 @@ describe('Tab Order Integration Tests - Phase 2 Blocker #279', () => {
 
       const focusable = getFocusableElements(modalContent);
       const lastElement = focusable[focusable.length - 1];
-      const firstElement = focusable[0];
 
       // Focus last element and press Tab
       focusElement(lastElement);
@@ -425,7 +421,7 @@ describe('Tab Order Integration Tests - Phase 2 Blocker #279', () => {
       expect(modalOverlay).toBeTruthy();
 
       // Simulate Escape key
-      const escapeEvent = dispatchKeyboardEvent(container, 'keydown', 'Escape');
+      dispatchKeyboardEvent(container, 'keydown', 'Escape');
 
       // Modal should be closable (implementation may vary)
       expect(container.querySelector('.modal-overlay')).toBeTruthy();
@@ -476,7 +472,6 @@ describe('Tab Order Integration Tests - Phase 2 Blocker #279', () => {
       const skipLink = container.querySelector('#skip-link') as HTMLElement;
 
       focusElement(skipLink);
-      const style = window.getComputedStyle(skipLink);
 
       // Focus outline should be visible
       expect(skipLink.matches(':focus-visible')).toBe(true);
