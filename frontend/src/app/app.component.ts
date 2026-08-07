@@ -21,7 +21,9 @@ import { RouterOutlet } from '@angular/router';
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded">
       Skip to main content
     </a>
-    <router-outlet></router-outlet>
+    <main id="main" role="main">
+      <router-outlet></router-outlet>
+    </main>
   `,
   styles: [`
     /* Screen reader only: hidden by default, visible on focus */

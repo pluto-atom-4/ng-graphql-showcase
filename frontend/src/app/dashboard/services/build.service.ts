@@ -41,6 +41,7 @@ export interface ActivityDto {
   executionStarted?: string;
   executionCompleted?: string;
   elapsedMilliseconds?: number;
+  errorMessage?: string;
 }
 
 const GET_BUILDS = gql`

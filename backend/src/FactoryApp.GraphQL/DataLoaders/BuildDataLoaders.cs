@@ -112,6 +112,7 @@ public class BuildDataLoaders
         var activities = await _context.Set<WorkflowHistoryRecord>()
             .Where(h => buildIds.Contains(h.BuildId!.Value))
             .AsNoTracking()
+            .OrderByDescending(h => h.RecordedAt)  // DB level ordering
             .Select(h => new ActivityDto
             {
                 Id = h.Id,
@@ -129,10 +130,11 @@ public class BuildDataLoaders
             })
             .ToListAsync(ct);
 
+        ct.ThrowIfCancellationRequested();
         return activities
             .GroupBy(a => a.BuildId)
             .ToDictionary(
                 g => g.Key,
-                g => g.OrderByDescending(a => a.RecordedAt).Take(limit).ToList());
+                g => g.Take(limit).ToList());
     }
 }
