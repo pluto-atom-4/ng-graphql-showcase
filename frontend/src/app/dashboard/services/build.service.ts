@@ -30,6 +30,19 @@ export interface Activity {
   status: 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED';
 }
 
+export interface ActivityDto {
+  id: string;
+  buildId: string;
+  eventType: string;
+  activityName: string;
+  oldStatus: string;
+  newStatus: string;
+  recordedAt: string;
+  executionStarted?: string;
+  executionCompleted?: string;
+  elapsedMilliseconds?: number;
+}
+
 const GET_BUILDS = gql`
   query GetBuilds($skip: Int!, $take: Int!) {
     builds(skip: $skip, take: $take) {
@@ -221,14 +234,61 @@ export class BuildService {
    */
   getBuildActivities(buildId: string, limit = 10): Observable<Activity[]> {
     return this.apollo
-      .query<{ buildActivities: Activity[] }>({
+      .query<{ buildActivities: ActivityDto[] }>({
         query: GET_BUILD_ACTIVITIES,
         variables: { buildId, limit }
       })
       .pipe(
-        map((result) => result.data.buildActivities),
+        map((result) => result.data.buildActivities.map((dto) => this.mapActivityDtoToActivity(dto))),
         shareReplay(1)
       );
+  }
+
+  /**
+   * Map ActivityDto from GraphQL to Activity for timeline display.
+   * Transforms:
+   * - recordedAt → timestamp
+   * - activityName → description
+   * - newStatus → status (with enum transformation)
+   *
+   * @param dto - ActivityDto from GraphQL response
+   * @returns Activity object for timeline component
+   */
+  private mapActivityDtoToActivity(dto: ActivityDto): Activity {
+    return {
+      id: dto.id,
+      timestamp: dto.recordedAt,
+      description: dto.activityName,
+      status: this.transformStatusToEnum(dto.newStatus)
+    };
+  }
+
+  /**
+   * Transform status string to Activity status enum.
+   * Maps workflow/activity statuses to timeline display statuses.
+   *
+   * @param status - Status string from workflow history
+   * @returns Activity status enum value
+   */
+  private transformStatusToEnum(status: string): 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED' {
+    switch (status?.toUpperCase()) {
+      case 'RUNNING':
+      case 'STARTED':
+      case 'EXECUTING':
+        return 'RUNNING';
+      case 'COMPLETE':
+      case 'COMPLETED':
+      case 'SUCCEEDED':
+        return 'COMPLETE';
+      case 'FAILED':
+      case 'FAILED_WITH_ERROR':
+        return 'FAILED';
+      case 'PENDING':
+      case 'CREATED':
+      case 'SUSPENDED':
+      default:
+        return 'PENDING';
+    }
   }
 
   private calculateMetrics(builds: Array<{ id: string; status: string }>): Metrics {

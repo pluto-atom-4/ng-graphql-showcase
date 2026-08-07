@@ -180,6 +180,7 @@ builder.Services
     .AddMutationType<BuildMutationType>()
     .AddSubscriptionType<BuildSubscription>()
     .AddObjectType<BuildType>()
+    .AddType<ActivityType>()
     .AddType<WorkflowHistoryType>()
     .AddInMemorySubscriptions();
 // Note: RateLimitDirective scaffolded in FactoryApp.GraphQL.Directives but NOT registered.
