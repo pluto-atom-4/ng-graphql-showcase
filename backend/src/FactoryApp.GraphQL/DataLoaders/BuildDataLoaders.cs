@@ -102,15 +102,16 @@ public class BuildDataLoaders
     /// Phase 1 (Issue #267): Batch-loads recent activities for builds.
     /// Returns up to 10 most recent workflow history events per build.
     /// Prevents N+1 queries when fetching activities for multiple builds.
+    /// Ordered descending by RecordedAt (newest first).
     /// </summary>
     public async Task<IReadOnlyDictionary<Guid, List<ActivityDto>>> GetRecentActivitiesByBuildId(
         IReadOnlyList<Guid> buildIds,
         int limit = 10,
         CancellationToken ct = default)
-        => await _context.Set<WorkflowHistoryRecord>()
+    {
+        var activities = await _context.Set<WorkflowHistoryRecord>()
             .Where(h => buildIds.Contains(h.BuildId!.Value))
             .AsNoTracking()
-            .OrderByDescending(h => h.RecordedAt)
             .Select(h => new ActivityDto
             {
                 Id = h.Id,
@@ -126,9 +127,12 @@ public class BuildDataLoaders
                 ExecutionCompleted = h.ExecutionCompleted,
                 ElapsedMilliseconds = h.ElapsedMilliseconds
             })
+            .ToListAsync(ct);
+
+        return activities
             .GroupBy(a => a.BuildId)
-            .ToDictionaryAsync(
+            .ToDictionary(
                 g => g.Key,
-                g => g.Take(limit).ToList(),
-                ct);
+                g => g.OrderByDescending(a => a.RecordedAt).Take(limit).ToList());
+    }
 }

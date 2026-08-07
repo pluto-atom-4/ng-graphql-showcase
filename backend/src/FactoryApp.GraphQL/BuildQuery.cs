@@ -180,6 +180,9 @@ public class BuildQueryType
 
             ValidationService.ValidatePaginationParams(limit, offset);
 
+            if (limit > 100)
+                throw new GraphQLException("Limit must be <= 100 for paginated builds");
+
             // Validate sort parameters
             if (sortBy != "createdAt" && sortBy != "status")
                 throw new GraphQLException($"Invalid sortBy: {sortBy}. Must be 'createdAt' or 'status'");
