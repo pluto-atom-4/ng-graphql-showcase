@@ -609,9 +609,6 @@ describe('DashboardPageComponent', () => {
     });
 
     it('should have skip-to-main link for keyboard users', () => {
-      const skipLink = debugElement.nativeElement.querySelector(
-        'a[href="#dashboard"], a[href="#main"], nav a[href*="main"]'
-      );
       // Skip link pattern should be present in the page structure
       // This is a bonus accessibility feature
       expect(true).toBe(true); // Placeholder - skip link is optional in Phase 5

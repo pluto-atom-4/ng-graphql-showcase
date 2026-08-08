@@ -13,7 +13,7 @@
  * Run with: pnpm --filter frontend run e2e
  */
 
-import { test, expect, Page, Locator } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 const BASE_URL = 'http://localhost:4200';
 const DASHBOARD_URL = `${BASE_URL}/dashboard`;
@@ -461,9 +461,6 @@ test.describe('Dashboard Integration E2E', () => {
       // Act: Navigate to dashboard
       await page.goto(DASHBOARD_URL);
       await page.waitForTimeout(1000);
-
-      // Get initial metrics
-      const initialMetrics = await page.locator('[data-testid*="metric"]').allTextContents();
 
       // Wait for potential updates
       await page.waitForTimeout(2000);
