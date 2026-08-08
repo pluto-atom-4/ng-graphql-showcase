@@ -33,7 +33,7 @@ test.describe('Dashboard Integration E2E', () => {
       await page.goto(DASHBOARD_URL);
 
       // Assert: Main dashboard should be visible
-      const mainElement = page.locator('main[role="main"]');
+      const mainElement = page.locator('main#main');
       await expect(mainElement).toBeVisible({ timeout: 5000 });
 
       // Assert: Page title should be visible
@@ -286,7 +286,7 @@ test.describe('Dashboard Integration E2E', () => {
       await page.goto(DASHBOARD_URL);
 
       // Assert: Main element should exist
-      const mainElement = page.locator('main[role="main"]');
+      const mainElement = page.locator('main#main');
       await expect(mainElement).toBeVisible();
 
       // Assert: Sections should have aria-labelledby
@@ -363,7 +363,7 @@ test.describe('Dashboard Integration E2E', () => {
       await page.goto(DASHBOARD_URL);
 
       // Wait for main content to be visible
-      const mainElement = page.locator('main[role="main"]');
+      const mainElement = page.locator('main#main');
       await expect(mainElement).toBeVisible({ timeout: 5000 });
 
       // Measure LCP
@@ -406,7 +406,7 @@ test.describe('Dashboard Integration E2E', () => {
       }
 
       // Assert: Dashboard should still be responsive
-      await expect(page.locator('main[role="main"]')).toBeVisible();
+      await expect(page.locator('main#main')).toBeVisible();
     });
   });
 
@@ -420,7 +420,7 @@ test.describe('Dashboard Integration E2E', () => {
       await page.waitForTimeout(1000);
 
       // Assert: Dashboard should still display (possibly with error message)
-      const mainElement = page.locator('main[role="main"]');
+      const mainElement = page.locator('main#main');
       await expect(mainElement).toBeVisible();
 
       // Re-enable network
@@ -451,7 +451,7 @@ test.describe('Dashboard Integration E2E', () => {
       await page.goto(DASHBOARD_URL);
 
       // Assert: Dashboard should render even if empty
-      const mainElement = page.locator('main[role="main"]');
+      const mainElement = page.locator('main#main');
       await expect(mainElement).toBeVisible({ timeout: 5000 });
     });
   });

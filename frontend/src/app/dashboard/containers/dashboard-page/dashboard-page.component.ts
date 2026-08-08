@@ -75,7 +75,7 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
     MetricsGridComponent,
   ],
   template: `
-    <main role="main" id="dashboard" class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+    <div id="dashboard" role="main" aria-label="Dashboard" class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
       <div class="max-w-screen px-4 md:px-8 lg:max-w-7xl mx-auto">
         <!-- Header -->
         <div class="mb-8 animate-slide-in">
@@ -211,7 +211,7 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
           ></app-activity-timeline>
         </section>
       </div>
-    </main>
+    </div>
   `,
   styles: [`
     :host {

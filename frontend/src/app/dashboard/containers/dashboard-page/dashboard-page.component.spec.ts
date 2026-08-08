@@ -215,10 +215,16 @@ describe('DashboardPageComponent', () => {
   // === Template Rendering ===
 
   describe('Template Rendering', () => {
-    it('should render main element with dashboard id', () => {
+    it('should render div element with dashboard id and main role', () => {
       fixture.detectChanges();
-      const main = debugElement.nativeElement.querySelector('main#dashboard');
-      expect(main).toBeTruthy();
+      const dashboard = debugElement.nativeElement.querySelector('div#dashboard[role="main"]');
+      expect(dashboard).toBeTruthy();
+    });
+
+    it('should not create duplicate main elements', () => {
+      fixture.detectChanges();
+      const mainElements = fixture.nativeElement.querySelectorAll('main');
+      expect(mainElements.length).toBe(0); // Dashboard doesn't create main, app does
     });
 
     it('should render header with title', () => {
@@ -297,10 +303,11 @@ describe('DashboardPageComponent', () => {
   // === Accessibility ===
 
   describe('Accessibility', () => {
-    it('should have main role on root element', () => {
+    it('should have main role on dashboard div element', () => {
       fixture.detectChanges();
-      const main = debugElement.nativeElement.querySelector('main[role="main"]');
-      expect(main).toBeTruthy();
+      const dashboard = debugElement.nativeElement.querySelector('div#dashboard[role="main"]');
+      expect(dashboard).toBeTruthy();
+      expect(dashboard?.getAttribute('aria-label')).toBe('Dashboard');
     });
 
     it('should have semantic heading hierarchy', () => {

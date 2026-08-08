@@ -169,7 +169,7 @@ async function measureWebVitals(page: Page) {
  */
 async function checkAccessibilityLandmarks(page: Page) {
   const landmarks = {
-    main: await page.locator('[role="main"]').count(),
+    main: await page.locator('main#main').count(),
     navigation: await page.locator('[role="navigation"]').count(),
     tablist: await page.locator('[role="tablist"]').count(),
     tabs: await page.locator('[role="tab"]').count(),
@@ -594,13 +594,12 @@ test.describe('Dashboard Load - E2E Tests (Step 2)', () => {
     const hasHeading = await page.locator('h1').count().then((count) => count > 0);
     expect(hasHeading).toBeTruthy();
 
-    // Check for main landmark or main role
+    // Check for main landmark from AppComponent
     const hasMainLandmark = landmarks.main > 0;
-    const hasMainElement = await page.locator('main').count().then((count) => count > 0);
-    const hasMainContent = await page.locator('[role="main"]').count().then((count) => count > 0);
+    const hasMainElement = await page.locator('main#main').count().then((count) => count > 0);
 
-    // Either <main> element or [role="main"] should exist
-    if (!hasMainLandmark && !hasMainElement && !hasMainContent) {
+    // Main element should exist
+    if (!hasMainLandmark && !hasMainElement) {
       console.log('Warning: No main landmark found');
     }
 
