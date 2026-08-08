@@ -200,7 +200,7 @@ public class BuildMutationType
                 NewStatus = status,
                 Timestamp = DateTime.UtcNow
             };
-            await eventSender.SendAsync("BuildStatusUpdated", evt);
+            await eventSender.SendAsync(nameof(BuildStatusChangedEvent), evt);
             loggingService.LogMutationSuccess(nameof(UpdateBuildStatus), id);
             return MapperService.ToBuildPayload(build);
         }
@@ -352,7 +352,7 @@ public class BuildMutationType
 
                 await transaction.CommitAsync();
 
-                await eventSender.SendAsync("TestRunCompleted", new TestRunCompletedEvent
+                await eventSender.SendAsync(nameof(TestRunCompletedEvent), new TestRunCompletedEvent
                 {
                     TestRunId = testRun.Id,
                     BuildId = buildId,
