@@ -56,12 +56,6 @@ export type Build = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export type BuildStatus =
-  | 'COMPLETE'
-  | 'FAILED'
-  | 'PENDING'
-  | 'RUNNING';
-
 /** Build status update from subscription */
 export type BuildStatusUpdate = {
   __typename?: 'BuildStatusUpdate';
@@ -89,7 +83,6 @@ export type Mutation = {
   updateBuildStatus: Build;
 };
 
-
 export type MutationAddPartArgs = {
   buildId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
@@ -97,18 +90,15 @@ export type MutationAddPartArgs = {
   sku: Scalars['String']['input'];
 };
 
-
 export type MutationCreateBuildArgs = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
 
-
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
 };
-
 
 export type MutationSubmitTestRunArgs = {
   buildId: Scalars['ID']['input'];
@@ -116,7 +106,6 @@ export type MutationSubmitTestRunArgs = {
   result?: InputMaybe<Scalars['String']['input']>;
   status: TestStatus;
 };
-
 
 export type MutationUpdateBuildStatusArgs = {
   id: Scalars['ID']['input'];
@@ -167,22 +156,18 @@ export type Query = {
   recentWorkflowHistory: Array<WorkflowHistory>;
 };
 
-
 export type QueryBuildArgs = {
   id: Scalars['UUID']['input'];
 };
-
 
 export type QueryBuildWorkflowHistoryArgs = {
   buildId: Scalars['UUID']['input'];
 };
 
-
 export type QueryBuildsPaginatedArgs = {
   limit: Scalars['Int']['input'];
   offset: Scalars['Int']['input'];
 };
-
 
 export type QueryRecentWorkflowHistoryArgs = {
   days?: InputMaybe<Scalars['Int']['input']>;
@@ -196,11 +181,9 @@ export type Subscription = {
   testRunCompleted: TestRunUpdate;
 };
 
-
 export type SubscriptionBuildStatusUpdatedArgs = {
   buildId: Scalars['UUID']['input'];
 };
-
 
 export type SubscriptionTestRunCompletedArgs = {
   buildId: Scalars['UUID']['input'];
@@ -239,12 +222,6 @@ export type TestRunUpdate = {
   timestamp: Scalars['DateTime']['output'];
 };
 
-export type TestStatus =
-  | 'FAILED'
-  | 'PASSED'
-  | 'PENDING'
-  | 'RUNNING';
-
 /** Workflow history record (event from WorkflowHistoryRecord entity) */
 export type WorkflowHistory = {
   __typename?: 'WorkflowHistory';
@@ -276,10 +253,21 @@ export type WorkflowHistory = {
   workflowInstanceId: Scalars['ID']['output'];
 };
 
+export type BuildStatus =
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'PENDING'
+  | 'RUNNING';
+
+export type TestStatus =
+  | 'FAILED'
+  | 'PASSED'
+  | 'PENDING'
+  | 'RUNNING';
+
 export type GetBuildWorkflowHistoryQueryVariables = Exact<{
   buildId: string;
 }>;
-
 
 export type GetBuildWorkflowHistoryQuery = { buildWorkflowHistory: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> };
 
@@ -287,13 +275,11 @@ export type GetRecentWorkflowHistoryQueryVariables = Exact<{
   days?: number | null | undefined;
 }>;
 
-
 export type GetRecentWorkflowHistoryQuery = { recentWorkflowHistory: Array<{ id: string, workflowInstanceId: string, buildId: string | null, eventType: string, activityName: string, oldStatus: string, newStatus: string, stateSnapshot: string | null, errorMessage: string | null, recordedAt: Date, executionStarted: Date | null, executionCompleted: Date | null, elapsedMilliseconds: number | null }> };
 
 export type GetBuildQueryVariables = Exact<{
   id: string;
 }>;
-
 
 export type GetBuildQuery = { build: { id: string, name: string, description: string | null, status: BuildStatus, createdAt: Date, updatedAt: Date, parts: Array<{ id: string, name: string, sku: string, quantity: number }>, testRuns: Array<{ id: string, status: TestStatus, result: string | null, fileUrl: string | null }> } | null };
 
@@ -302,7 +288,6 @@ export type ListBuildsQueryVariables = Exact<{
   offset: number;
 }>;
 
-
 export type ListBuildsQuery = { buildsPaginated: { totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, items: Array<{ id: string, name: string, status: BuildStatus, createdAt: Date }> } };
 
 export type CreateBuildMutationVariables = Exact<{
@@ -310,14 +295,12 @@ export type CreateBuildMutationVariables = Exact<{
   description?: string | null | undefined;
 }>;
 
-
 export type CreateBuildMutation = { createBuild: { id: string, name: string, status: BuildStatus } };
 
 export type UpdateBuildStatusMutationVariables = Exact<{
   id: string | number;
   status: BuildStatus;
 }>;
-
 
 export type UpdateBuildStatusMutation = { updateBuildStatus: { id: string, status: BuildStatus, updatedAt: Date } };
 
@@ -328,7 +311,6 @@ export type AddPartMutationVariables = Exact<{
   quantity: number;
 }>;
 
-
 export type AddPartMutation = { addPart: { id: string, buildId: string, name: string, sku: string, quantity: number } };
 
 export type SubmitTestRunMutationVariables = Exact<{
@@ -338,20 +320,17 @@ export type SubmitTestRunMutationVariables = Exact<{
   fileUrl?: string | null | undefined;
 }>;
 
-
 export type SubmitTestRunMutation = { submitTestRun: { id: string, status: TestStatus, result: string | null, completedAt: Date | null } };
 
 export type BuildStatusUpdatedSubscriptionVariables = Exact<{
   buildId: string;
 }>;
 
-
 export type BuildStatusUpdatedSubscription = { buildStatusUpdated: { buildId: string, oldStatus: BuildStatus, newStatus: BuildStatus, timestamp: Date } };
 
 export type TestRunCompletedSubscriptionVariables = Exact<{
   buildId: string;
 }>;
-
 
 export type TestRunCompletedSubscription = { testRunCompleted: { testRunId: string, buildId: string, status: TestStatus, timestamp: Date } };
 

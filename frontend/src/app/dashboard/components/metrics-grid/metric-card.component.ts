@@ -43,26 +43,31 @@ interface StatusConfig {
   selector: 'app-metric-card',
   standalone: true,
   template: `
-    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+    <div class="card card-hover cursor-pointer group focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-blue-500" tabindex="0">
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
-        <div class="text-3xl">{{ statusConfig.icon }}</div>
-        <span class="text-gray-500 text-xs font-medium">{{ label }}</span>
+        <div class="text-3xl group-hover:scale-110 transition-transform duration-200">{{ statusConfig.icon }}</div>
+        <span class="text-gray-500 text-xs font-medium uppercase tracking-wide">{{ label }}</span>
       </div>
 
       <!-- Count -->
-      <div class="mb-2">
-        <p class="text-3xl font-bold" [style.color]="statusConfig.color">
+      <div class="mb-4">
+        <p class="text-4xl font-bold transition-all duration-200" [style.color]="statusConfig.color">
           {{ count }}
         </p>
       </div>
 
-      <!-- Status indicator -->
+      <!-- Status indicator bar with animation -->
       <div
-        class="h-1 rounded-full"
-        [style.backgroundColor]="statusConfig.color"
-        [style.width]="getIndicatorWidth()"
-      ></div>
+        class="h-1.5 rounded-full overflow-hidden bg-gray-200"
+      >
+        <div
+          class="h-full rounded-full transition-all duration-500 ease-out"
+          [style.backgroundColor]="statusConfig.color"
+          [style.width]="getIndicatorWidth()"
+          [class.animate-pulse-soft]="count > 0"
+        ></div>
+      </div>
     </div>
   `,
   styles: [`

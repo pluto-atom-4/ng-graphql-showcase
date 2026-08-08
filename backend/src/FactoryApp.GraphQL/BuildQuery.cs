@@ -1,5 +1,6 @@
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.GraphQL.DataLoaders;
 using FactoryApp.GraphQL.DTOs;
 using FactoryApp.GraphQL.Services;
 using HotChocolate;
@@ -106,6 +107,162 @@ public class BuildQueryType
         {
             loggingService.LogQueryError(nameof(GetBuildsAdmin), ex);
             throw new GraphQLException("Failed to fetch admin builds", ex);
+        }
+    }
+
+    /// <summary>
+    /// Phase 1 (Issue #267): Get build metrics for dashboard.
+    /// Returns aggregated counts of builds by status: total, inProgress, completed, failed, pending.
+    /// </summary>
+    public async Task<BuildMetricsDto> GetBuildMetrics(
+        [Service] FactoryDbContext context,
+        [Service] LoggingService loggingService)
+    {
+        var args = new Dictionary<string, object?>();
+
+        try
+        {
+            loggingService.LogQueryStart(nameof(GetBuildMetrics), args);
+
+            var builds = await context.Builds
+                .AsNoTracking()
+                .ToListAsync();
+
+            var total = builds.Count;
+            var inProgress = builds.Count(b => b.Status == BuildStatus.Running);
+            var completed = builds.Count(b => b.Status == BuildStatus.Complete);
+            var failed = builds.Count(b => b.Status == BuildStatus.Failed);
+            var pending = builds.Count(b => b.Status == BuildStatus.Pending);
+
+            return new BuildMetricsDto
+            {
+                Total = total,
+                InProgress = inProgress,
+                Completed = completed,
+                Failed = failed,
+                Pending = pending
+            };
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogQueryError(nameof(GetBuildMetrics), ex);
+            throw new GraphQLException("Failed to fetch build metrics", ex);
+        }
+    }
+
+    /// <summary>
+    /// Phase 1 (Issue #267): Paginated builds query with sorting support.
+    /// Parameters:
+    ///   limit: Number of items per page (default 10, max 100)
+    ///   offset: Number of items to skip (pagination offset)
+    ///   sortBy: Sort field - "createdAt" or "status" (default "createdAt")
+    ///   sortOrder: "asc" or "desc" (default "desc")
+    /// </summary>
+    public async Task<PaginatedBuilds> GetPaginatedBuildsWithSorting(
+        [Service] FactoryDbContext context,
+        [Service] LoggingService loggingService,
+        int limit = 10,
+        int offset = 0,
+        string sortBy = "createdAt",
+        string sortOrder = "desc")
+    {
+        var args = new Dictionary<string, object?>
+        {
+            { "limit", limit },
+            { "offset", offset },
+            { "sortBy", sortBy },
+            { "sortOrder", sortOrder }
+        };
+
+        try
+        {
+            loggingService.LogQueryStart(nameof(GetPaginatedBuildsWithSorting), args);
+
+            ValidationService.ValidatePaginationParams(limit, offset);
+
+            if (limit > 100)
+                throw new GraphQLException("Limit must be <= 100 for paginated builds");
+
+            // Validate sort parameters
+            if (sortBy != "createdAt" && sortBy != "status")
+                throw new GraphQLException($"Invalid sortBy: {sortBy}. Must be 'createdAt' or 'status'");
+
+            if (sortOrder != "asc" && sortOrder != "desc")
+                throw new GraphQLException($"Invalid sortOrder: {sortOrder}. Must be 'asc' or 'desc'");
+
+            var query = context.Builds.AsNoTracking();
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting
+            query = sortBy switch
+            {
+                "status" => sortOrder == "asc"
+                    ? query.OrderBy(x => x.Status)
+                    : query.OrderByDescending(x => x.Status),
+                _ => sortOrder == "asc"
+                    ? query.OrderBy(x => x.CreatedAt)
+                    : query.OrderByDescending(x => x.CreatedAt)
+            };
+
+            var items = await query
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync();
+
+            var hasNextPage = offset + limit < totalCount;
+            var hasPreviousPage = offset > 0;
+
+            return new PaginatedBuilds
+            {
+                Items = items,
+                TotalCount = totalCount,
+                HasNextPage = hasNextPage,
+                HasPreviousPage = hasPreviousPage
+            };
+        }
+        catch (GraphQLException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogQueryError(nameof(GetPaginatedBuildsWithSorting), ex);
+            throw new GraphQLException("Failed to fetch paginated builds with sorting", ex);
+        }
+    }
+
+    /// <summary>
+    /// Phase 1 (Issue #267): Get recent activities for a specific build.
+    /// Returns up to 10 most recent workflow history events for the build.
+    /// </summary>
+    public async Task<IEnumerable<ActivityDto>> GetRecentActivities(
+        Guid buildId,
+        [Service] FactoryDbContext context,
+        [Service] BuildDataLoaders dataLoaders,
+        [Service] LoggingService loggingService,
+        int limit = 10,
+        CancellationToken ct = default)
+    {
+        var args = new Dictionary<string, object?>
+        {
+            { "buildId", buildId },
+            { "limit", limit }
+        };
+
+        try
+        {
+            loggingService.LogQueryStart(nameof(GetRecentActivities), args);
+
+            // Use DataLoader to batch-load activities (prevents N+1)
+            var activities = await dataLoaders.GetRecentActivitiesByBuildId(new[] { buildId }, limit, ct);
+            return activities.TryGetValue(buildId, out var buildActivities)
+                ? buildActivities
+                : new List<ActivityDto>();
+        }
+        catch (Exception ex)
+        {
+            loggingService.LogQueryError(nameof(GetRecentActivities), ex);
+            throw new GraphQLException("Failed to fetch recent activities", ex);
         }
     }
 

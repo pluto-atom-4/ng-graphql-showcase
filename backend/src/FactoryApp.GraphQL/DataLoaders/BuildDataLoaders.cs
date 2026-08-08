@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
+using FactoryApp.GraphQL.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactoryApp.GraphQL.DataLoaders;
@@ -95,5 +96,45 @@ public class BuildDataLoaders
         return await query
             .GroupBy(t => t.BuildId)
             .ToDictionaryAsync(g => g.Key, g => g.ToList(), ct);
+    }
+
+    /// <summary>
+    /// Phase 1 (Issue #267): Batch-loads recent activities for builds.
+    /// Returns up to 10 most recent workflow history events per build.
+    /// Prevents N+1 queries when fetching activities for multiple builds.
+    /// Ordered descending by RecordedAt (newest first).
+    /// </summary>
+    public async Task<IReadOnlyDictionary<Guid, List<ActivityDto>>> GetRecentActivitiesByBuildId(
+        IReadOnlyList<Guid> buildIds,
+        int limit = 10,
+        CancellationToken ct = default)
+    {
+        var activities = await _context.Set<WorkflowHistoryRecord>()
+            .Where(h => buildIds.Contains(h.BuildId!.Value))
+            .AsNoTracking()
+            .OrderByDescending(h => h.RecordedAt)  // DB level ordering
+            .Select(h => new ActivityDto
+            {
+                Id = h.Id,
+                WorkflowInstanceId = h.WorkflowInstanceId,
+                BuildId = h.BuildId!.Value,
+                EventType = h.EventType,
+                ActivityName = h.ActivityName,
+                OldStatus = h.OldStatus,
+                NewStatus = h.NewStatus,
+                ErrorMessage = h.ErrorMessage,
+                RecordedAt = h.RecordedAt,
+                ExecutionStarted = h.ExecutionStarted,
+                ExecutionCompleted = h.ExecutionCompleted,
+                ElapsedMilliseconds = h.ElapsedMilliseconds
+            })
+            .ToListAsync(ct);
+
+        ct.ThrowIfCancellationRequested();
+        return activities
+            .GroupBy(a => a.BuildId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Take(limit).ToList());
     }
 }

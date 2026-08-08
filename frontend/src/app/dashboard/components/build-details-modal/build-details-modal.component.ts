@@ -79,7 +79,7 @@ import { BadgeComponent } from '../../shared/badge/badge.component';
             id="build-name"
             type="text"
             [(ngModel)]="editedBuild.name"
-            class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded text-sm"
             [attr.aria-label]="'Build name'"
           />
         </div>
@@ -118,7 +118,7 @@ import { BadgeComponent } from '../../shared/badge/badge.component';
         <button
           type="button"
           (click)="onCancel()"
-          class="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          class="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           aria-label="Cancel editing"
         >
           Cancel
@@ -126,7 +126,7 @@ import { BadgeComponent } from '../../shared/badge/badge.component';
         <button
           type="button"
           (click)="onSave()"
-          class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors"
           aria-label="Save changes"
         >
           Save

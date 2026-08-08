@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FactoryApp.Domain;
 using FactoryApp.Domain.Entities;
 using FactoryApp.GraphQL.DataLoaders;
+using FactoryApp.GraphQL.DTOs;
 using HotChocolate;
 using Microsoft.AspNetCore.Http;
 
@@ -46,6 +47,20 @@ public class BuildType
         var testRuns = await dataLoaders.GetTestRunsByBuildIdAuthorized(new[] { build.Id }, user, ct);
         return testRuns.TryGetValue(build.Id, out var buildTestRuns) ? buildTestRuns : new List<TestRun>();
     }
+
+    /// <summary>
+    /// Phase 1 (Issue #267): Nested field resolver for recent activities.
+    /// Batch-loads up to 10 most recent workflow history events using DataLoader.
+    /// Prevents N+1 queries when fetching activities for multiple builds.
+    /// </summary>
+    public async Task<ICollection<ActivityDto>> GetActivities(
+        [Parent] Build build,
+        [Service] BuildDataLoaders dataLoaders,
+        CancellationToken ct)
+    {
+        var activities = await dataLoaders.GetRecentActivitiesByBuildId(new[] { build.Id }, 10, ct);
+        return activities.TryGetValue(build.Id, out var buildActivities) ? buildActivities : new List<ActivityDto>();
+    }
 }
 
 public class BuildPayload
@@ -81,5 +96,17 @@ public class BuildPayload
 
         var testRuns = await dataLoaders.GetTestRunsByBuildIdAuthorized(new[] { Id }, user, ct);
         return testRuns.TryGetValue(Id, out var buildTestRuns) ? buildTestRuns : new List<TestRun>();
+    }
+
+    /// <summary>
+    /// Phase 1 (Issue #267): Nested field resolver for recent activities in BuildPayload.
+    /// Batch-loads up to 10 most recent workflow history events.
+    /// </summary>
+    public async Task<List<ActivityDto>> GetActivities(
+        [Service] BuildDataLoaders dataLoaders,
+        CancellationToken ct)
+    {
+        var activities = await dataLoaders.GetRecentActivitiesByBuildId(new[] { Id }, 10, ct);
+        return activities.TryGetValue(Id, out var buildActivities) ? buildActivities : new List<ActivityDto>();
     }
 }

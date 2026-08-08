@@ -79,7 +79,6 @@ describe('BuildDetailsComponent', () => {
 
   it('should display build name in header', () => {
     fixture.componentRef.setInput('build', mockBuild);
-    fixture.componentRef.setInput('onClose', () => {});
     fixture.detectChanges();
 
     const headerElement = fixture.nativeElement.querySelector('h3');
@@ -88,7 +87,6 @@ describe('BuildDetailsComponent', () => {
 
   it('should switch to parts tab and display parts', () => {
     fixture.componentRef.setInput('build', mockBuild);
-    fixture.componentRef.setInput('onClose', () => {});
     fixture.detectChanges();
 
     component.activeTab.set('parts');
@@ -101,7 +99,6 @@ describe('BuildDetailsComponent', () => {
 
   it('should switch to test runs tab and display test results', () => {
     fixture.componentRef.setInput('build', mockBuild);
-    fixture.componentRef.setInput('onClose', () => {});
     fixture.detectChanges();
 
     component.activeTab.set('testRuns');
@@ -114,7 +111,7 @@ describe('BuildDetailsComponent', () => {
   it('should call onClose callback when close button clicked', () => {
     const onCloseSpy = vi.fn();
     fixture.componentRef.setInput('build', mockBuild);
-    fixture.componentRef.setInput('onClose', onCloseSpy);
+    component.close.subscribe(onCloseSpy);
     fixture.detectChanges();
 
     const closeButton = fixture.nativeElement.querySelector('button[class*="btn-circle"]');
@@ -126,7 +123,7 @@ describe('BuildDetailsComponent', () => {
   it('should call onClose callback when backdrop clicked', () => {
     const onCloseSpy = vi.fn();
     fixture.componentRef.setInput('build', mockBuild);
-    fixture.componentRef.setInput('onClose', onCloseSpy);
+    component.close.subscribe(onCloseSpy);
     fixture.detectChanges();
 
     const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
@@ -137,7 +134,6 @@ describe('BuildDetailsComponent', () => {
 
   it('should load workflows for build on input change', () => {
     fixture.componentRef.setInput('build', mockBuild);
-    fixture.componentRef.setInput('onClose', () => {});
     fixture.detectChanges();
 
     expect(getWorkflowsByBuildSpy).toHaveBeenCalledWith('build-123');

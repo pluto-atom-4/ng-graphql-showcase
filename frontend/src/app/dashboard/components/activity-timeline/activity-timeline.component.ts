@@ -46,20 +46,21 @@ export interface Activity {
   imports: [CommonModule, ScrollingModule, BadgeComponent],
   template: `
     <div class="space-y-4" role="list">
-      <div *ngIf="activities.length === 0" class="text-center py-8 text-gray-500">
-        No activities yet
+      <div *ngIf="activities.length === 0" class="empty-state py-8">
+        <div class="empty-state-icon text-4xl">📝</div>
+        <p class="empty-state-text">No activities yet</p>
       </div>
 
       <div *ngIf="activities.length > 0 && activities.length <= 100" class="space-y-4">
         <!-- Non-virtualized rendering for ≤100 items -->
         <div
           *ngFor="let activity of activities; trackBy: trackByActivityId"
-          class="flex gap-4"
+          class="flex gap-2 md:gap-4 animate-slide-in"
           role="listitem"
         >
           <!-- Timeline line -->
           <div class="flex flex-col items-center">
-            <div class="w-3 h-3 rounded-full bg-blue-600 mt-1.5"></div>
+            <div class="w-2.5 md:w-3 h-2.5 md:h-3 rounded-full bg-blue-600 mt-1.5 md:mt-1.5"></div>
             <div
               class="w-0.5 bg-gray-200 flex-1"
               [style.height.rem]="3.5"
@@ -67,9 +68,9 @@ export interface Activity {
           </div>
 
           <!-- Content -->
-          <div class="pb-4">
-            <div class="flex items-center gap-3">
-              <p class="text-sm font-medium text-gray-900">
+          <div class="pb-4 flex-1 min-w-0">
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3 gap-1">
+              <p class="text-xs md:text-sm font-medium text-gray-900 break-words">
                 {{ activity.description }}
               </p>
               <app-badge [status]="activity.status"></app-badge>
@@ -86,12 +87,12 @@ export interface Activity {
         <cdk-virtual-scroll-viewport itemSize="56" class="h-[600px] overflow-y-auto">
           <div
             *cdkVirtualFor="let activity of activities; trackBy: trackByActivityId"
-            class="flex gap-4 py-2"
+            class="flex gap-2 md:gap-4 py-2"
             role="listitem"
           >
             <!-- Timeline line -->
             <div class="flex flex-col items-center">
-              <div class="w-3 h-3 rounded-full bg-blue-600 mt-1.5"></div>
+              <div class="w-2.5 md:w-3 h-2.5 md:h-3 rounded-full bg-blue-600 mt-1.5"></div>
               <div
                 class="w-0.5 bg-gray-200 flex-1"
                 [style.height.rem]="3.5"
@@ -99,9 +100,9 @@ export interface Activity {
             </div>
 
             <!-- Content -->
-            <div class="pb-4">
-              <div class="flex items-center gap-3">
-                <p class="text-sm font-medium text-gray-900">
+            <div class="pb-4 flex-1 min-w-0">
+              <div class="flex flex-col md:flex-row md:items-center md:gap-3 gap-1">
+                <p class="text-xs md:text-sm font-medium text-gray-900 break-words">
                   {{ activity.description }}
                 </p>
                 <app-badge [status]="activity.status"></app-badge>
@@ -145,7 +146,7 @@ export class ActivityTimelineComponent {
     }
   }
 
-  trackByActivityId(index: number, activity: Activity): string {
+  trackByActivityId(_index: number, activity: Activity): string {
     return activity.id;
   }
 }

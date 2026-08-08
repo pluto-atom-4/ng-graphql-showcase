@@ -1,3 +1,40 @@
+/* Import design tokens and accessibility styles */
+@import './styles/tokens.css';
+@import './styles/focus-ring.css';
+
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-gray-900);
+  background-color: var(--color-gray-50);
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+/* Focus-visible for all interactive elements */
+button, a, input, select, textarea, [role="button"], [role="tab"], [tabindex]:not([tabindex="-1"]) {
+  outline: var(--focus-ring-width) solid transparent;
+  outline-offset: var(--focus-ring-offset);
+  transition: outline-color var(--transition-fast);
+}
+
+/* Ensure dark mode text is readable */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1f2937;
+  }
+}

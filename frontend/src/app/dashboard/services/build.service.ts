@@ -30,17 +30,33 @@ export interface Activity {
   status: 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED';
 }
 
+export interface ActivityDto {
+  id: string;
+  buildId: string;
+  eventType: string;
+  activityName: string;
+  oldStatus: string;
+  newStatus: string;
+  recordedAt: string;
+  executionStarted?: string;
+  executionCompleted?: string;
+  elapsedMilliseconds?: number;
+  errorMessage?: string;
+}
+
 const GET_BUILDS = gql`
-  query GetBuilds($skip: Int!, $take: Int!) {
-    builds(skip: $skip, take: $take) {
-      id
-      name
-      status
-      createdAt
-      updatedAt
-    }
-    buildsTotal: builds {
-      id
+  query GetBuildsPaginated($limit: Int!, $offset: Int!) {
+    buildsPaginated(limit: $limit, offset: $offset) {
+      items {
+        id
+        name
+        status
+        createdAt
+        updatedAt
+      }
+      totalCount
+      hasNextPage
+      hasPreviousPage
     }
   }
 `;
@@ -75,12 +91,20 @@ const BUILDS_METRICS_SUBSCRIPTION = gql`
 `;
 
 const GET_BUILD_ACTIVITIES = gql`
-  query GetBuildActivities($buildId: String!, $limit: Int!) {
-    buildActivities(buildId: $buildId, limit: $limit) {
+  query GetBuildWorkflowHistory($buildId: UUID!) {
+    buildWorkflowHistory(buildId: $buildId) {
       id
-      timestamp
-      description
-      status
+      workflowInstanceId
+      buildId
+      eventType
+      activityName
+      oldStatus
+      newStatus
+      recordedAt
+      executionStarted
+      executionCompleted
+      elapsedMilliseconds
+      errorMessage
     }
   }
 `;
@@ -123,25 +147,32 @@ export class BuildService {
   /**
    * Fetch paginated list of builds.
    *
-   * @param skip - Number of items to skip (for pagination)
-   * @param take - Number of items to return
+   * @param offset - Number of items to skip (for pagination)
+   * @param limit - Number of items to return
    * @returns Observable<BuildsResult> with builds array and total count
    *
-   * @caching - Results are cached by `${skip}-${take}` key and shared via shareReplay(1)
+   * @caching - Results are cached by `${offset}-${limit}` key and shared via shareReplay(1)
    */
-  getBuilds(skip: number, take: number): Observable<BuildsResult> {
-    const cacheKey = `${skip}-${take}`;
+  getBuilds(offset: number, limit: number): Observable<BuildsResult> {
+    const cacheKey = `${offset}-${limit}`;
 
     if (!this.buildsCache.has(cacheKey)) {
       const query$ = this.apollo
-        .query<{ builds: Build[]; buildsTotal: { id: string }[] }>({
+        .query<{
+          buildsPaginated: {
+            items: Build[];
+            totalCount: number;
+            hasNextPage: boolean;
+            hasPreviousPage: boolean;
+          };
+        }>({
           query: GET_BUILDS,
-          variables: { skip, take }
+          variables: { offset, limit }
         })
         .pipe(
           map((result) => ({
-            builds: result.data.builds,
-            total: result.data.buildsTotal.length
+            builds: result.data.buildsPaginated.items,
+            total: result.data.buildsPaginated.totalCount
           })),
           shareReplay(1)
         );
@@ -169,7 +200,7 @@ export class BuildService {
       .pipe(
         bufferTime(250),
         filter((updates) => updates.length > 0),
-        mergeMap((updates) => updates.map((u) => u.data.buildStatusChanged))
+        mergeMap((updates) => updates.filter((u) => u.data).map((u) => u.data!.buildStatusChanged))
       );
   }
 
@@ -215,20 +246,71 @@ export class BuildService {
    * Fetch build activities/timeline for a specific build.
    *
    * @param buildId - Build ID to get activities for
-   * @param limit - Maximum number of activities to return. Default: 10
+   * @param limit - Maximum number of activities to return. Default: 10 (applied frontend-side)
    * @returns Observable<Activity[]> with activity records
    * @caching - Result is cached and shared via shareReplay(1)
    */
   getBuildActivities(buildId: string, limit = 10): Observable<Activity[]> {
     return this.apollo
-      .query<{ buildActivities: Activity[] }>({
+      .query<{ buildWorkflowHistory: ActivityDto[] }>({
         query: GET_BUILD_ACTIVITIES,
-        variables: { buildId, limit }
+        variables: { buildId }
       })
       .pipe(
-        map((result) => result.data.buildActivities),
+        map((result) =>
+          result.data.buildWorkflowHistory
+            .map((dto) => this.mapActivityDtoToActivity(dto))
+            .slice(0, limit)
+        ),
         shareReplay(1)
       );
+  }
+
+  /**
+   * Map ActivityDto from GraphQL to Activity for timeline display.
+   * Transforms:
+   * - recordedAt → timestamp
+   * - activityName → description
+   * - newStatus → status (with enum transformation)
+   *
+   * @param dto - ActivityDto from GraphQL response
+   * @returns Activity object for timeline component
+   */
+  private mapActivityDtoToActivity(dto: ActivityDto): Activity {
+    return {
+      id: dto.id,
+      timestamp: dto.recordedAt,
+      description: dto.activityName,
+      status: this.transformStatusToEnum(dto.newStatus)
+    };
+  }
+
+  /**
+   * Transform status string to Activity status enum.
+   * Maps workflow/activity statuses to timeline display statuses.
+   *
+   * @param status - Status string from workflow history
+   * @returns Activity status enum value
+   */
+  private transformStatusToEnum(status: string): 'PENDING' | 'RUNNING' | 'COMPLETE' | 'FAILED' {
+    switch (status?.toUpperCase()) {
+      case 'RUNNING':
+      case 'STARTED':
+      case 'EXECUTING':
+        return 'RUNNING';
+      case 'COMPLETE':
+      case 'COMPLETED':
+      case 'SUCCEEDED':
+        return 'COMPLETE';
+      case 'FAILED':
+      case 'FAILED_WITH_ERROR':
+        return 'FAILED';
+      case 'PENDING':
+      case 'CREATED':
+      case 'SUSPENDED':
+      default:
+        return 'PENDING';
+    }
   }
 
   private calculateMetrics(builds: Array<{ id: string; status: string }>): Metrics {
