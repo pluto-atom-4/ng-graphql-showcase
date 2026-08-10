@@ -109,6 +109,25 @@ const GET_BUILD_ACTIVITIES = gql`
   }
 `;
 
+const GET_RECENT_ACTIVITIES = gql`
+  query GetRecentActivities($days: Int) {
+    recentWorkflowHistory(days: $days) {
+      id
+      workflowInstanceId
+      buildId
+      eventType
+      activityName
+      oldStatus
+      newStatus
+      recordedAt
+      executionStarted
+      executionCompleted
+      elapsedMilliseconds
+      errorMessage
+    }
+  }
+`;
+
 /**
  * BuildService - GraphQL-based build data access with caching and subscriptions.
  *
@@ -262,6 +281,36 @@ export class BuildService {
             .map((dto) => this.mapActivityDtoToActivity(dto))
             .slice(0, limit)
         ),
+        shareReplay(1)
+      );
+  }
+
+  /**
+   * Fetch recent activities across all builds (not filtered by buildId).
+   * Useful for dashboard-wide activity timeline.
+   *
+   * @param days - Number of days of recent activity to fetch (default: 7)
+   * @param limit - Maximum number of activities to return (default: 50)
+   * @returns Observable<Activity[]> emitting array of recent activities
+   *
+   * @example
+   * this.buildService.getRecentActivitiesAll(7, 50).subscribe(activities => {
+   *   this.activities = activities;
+   * });
+   */
+  getRecentActivitiesAll(days = 7, limit = 50): Observable<Activity[]> {
+    return this.apollo
+      .query<{ recentWorkflowHistory: ActivityDto[] }>({
+        query: GET_RECENT_ACTIVITIES,
+        variables: { days }
+      })
+      .pipe(
+        map((result) =>
+          result.data.recentWorkflowHistory
+            .map((dto) => this.mapActivityDtoToActivity(dto))
+            .slice(0, limit)
+        ),
+        catchError(() => of([])),
         shareReplay(1)
       );
   }

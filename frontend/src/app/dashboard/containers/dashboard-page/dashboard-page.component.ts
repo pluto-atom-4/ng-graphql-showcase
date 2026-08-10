@@ -23,6 +23,7 @@ import { StatusBadgeComponent } from '../../components/status-badge/status-badge
 import { PaginationControlsComponent } from '../../components/pagination-controls/pagination-controls.component';
 import { ActivityTimelineComponent } from '../../components/activity-timeline/activity-timeline.component';
 import { MetricsGridComponent } from '../../components/metrics-grid/metrics-grid.component';
+import { TabsComponent, Tab } from '../../components/tabs/tabs.component';
 import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
 
 /**
@@ -73,6 +74,7 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
     PaginationControlsComponent,
     ActivityTimelineComponent,
     MetricsGridComponent,
+    TabsComponent,
   ],
   template: `
     <div id="dashboard" role="main" aria-label="Dashboard" class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
@@ -85,14 +87,33 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
           </p>
         </div>
 
-        <!-- Metrics Grid Section -->
-        <section aria-labelledby="metrics-heading" class="mb-8 md:mb-12">
-          <h2 id="metrics-heading" class="text-xl md:text-2xl font-semibold text-gray-900 mb-4 md:mb-6">
-            Key Metrics
-          </h2>
-          <div *ngIf="metrics$ | async as metrics">
-            <app-metrics-grid [metrics]="metrics"></app-metrics-grid>
-          </div>
+        <!-- Tabs Section (Metrics & Activities) -->
+        <section class="mb-8 md:mb-12">
+          <app-tabs
+            [tabs]="dashboardTabs"
+            [activeIndex]="activeTabIndex"
+            (activeIndexChange)="activeTabIndex = $event"
+          >
+            <!-- Metrics Tab -->
+            <div tab-metrics>
+              <h2 class="text-xl md:text-2xl font-semibold text-gray-900 mb-4 md:mb-6">
+                Key Metrics
+              </h2>
+              <div *ngIf="metrics$ | async as metrics">
+                <app-metrics-grid [metrics]="metrics"></app-metrics-grid>
+              </div>
+            </div>
+
+            <!-- Activities Tab -->
+            <div tab-activities>
+              <h2 class="text-xl md:text-2xl font-semibold text-gray-900 mb-4 md:mb-6">
+                Recent Activities
+              </h2>
+              <app-activity-timeline
+                [activities]="(activities$ | async) || []"
+              ></app-activity-timeline>
+            </div>
+          </app-tabs>
         </section>
 
         <!-- Builds Table Section -->
@@ -196,20 +217,6 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
             (pageChange)="onPageChange($event)"
           ></app-pagination-controls>
         </section>
-
-        <!-- Recent Activities Section (only if buildId) -->
-        <section
-          *ngIf="buildId"
-          aria-labelledby="activities-heading"
-          class="card"
-        >
-          <h2 id="activities-heading" class="text-xl md:text-2xl font-semibold text-gray-900 mb-6">
-            Recent Activities
-          </h2>
-          <app-activity-timeline
-            [activities]="(activities$ | async) || []"
-          ></app-activity-timeline>
-        </section>
       </div>
     </div>
   `,
@@ -273,6 +280,19 @@ export class DashboardPageComponent implements OnInit {
    * Empty array if no buildId.
    */
   activities$!: Observable<Activity[]>;
+
+  /**
+   * Dashboard tabs configuration.
+   */
+  dashboardTabs: Tab[] = [
+    { id: 'metrics', label: 'Key Metrics', index: 0 },
+    { id: 'activities', label: 'Recent Activities', index: 1 }
+  ];
+
+  /**
+   * Currently active tab index.
+   */
+  activeTabIndex = 0;
 
   // === Dependencies ===
   private buildService = inject(BuildService);
@@ -405,14 +425,12 @@ export class DashboardPageComponent implements OnInit {
       shareReplay(1)
     );
 
-    // Activities (only if buildId provided)
-    this.activities$ = this.buildId
-      ? this.buildService
-          .getBuildActivities(this.buildId, DASHBOARD_CONSTANTS.DEFAULT_ACTIVITIES_LIMIT)
-          .pipe(
-            catchError(() => of([])),
-            shareReplay(1)
-          )
-      : of([]);
+    // Activities (global, not filtered by buildId)
+    this.activities$ = this.buildService
+      .getRecentActivitiesAll(7, DASHBOARD_CONSTANTS.DEFAULT_ACTIVITIES_LIMIT)
+      .pipe(
+        catchError(() => of([])),
+        shareReplay(1)
+      );
   }
 }
