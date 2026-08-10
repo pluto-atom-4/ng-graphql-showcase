@@ -1,8 +1,8 @@
 ---
 name: copilot-instructions
 description: Cross-AI guide for GitHub Copilot and Claude Code CLI in full-stack monorepo
-version: 1.1.0
-last_updated: 2026-07-25
+version: 1.2.0
+last_updated: 2026-08-09
 applies_to:
   - "**/*.ts"
   - "**/*.cs"
@@ -13,12 +13,14 @@ applies_to:
 compatibility:
   - github-copilot-cli
   - claude-code
+  - claude-agents
 related_rules:
   - .claude/rules/database-rules.md
   - .claude/rules/backend-patterns.md
   - .claude/rules/frontend-patterns.md
   - .claude/rules/graphql-patterns.md
   - .claude/rules/workflow-integration.md
+  - .claude/rules/accessibility-patterns.md
 categories:
   - architecture
   - type-safety
@@ -28,309 +30,192 @@ categories:
 
 # Copilot Instructions for ng-graphql-playground
 
-**Version:** 1.1.0 | **Last Updated:** 2026-07-25  
-**Applies to**: TypeScript, C#, GraphQL files in backend/ and frontend/  
-**Compatibility**: GitHub Copilot CLI, Claude Code
+**Version:** 1.2.0 | **Last Updated:** 2026-08-09  
+**Type-safe full-stack monorepo** for long-running manufacturing workflows.
 
-This guide helps AI agents work effectively in this full-stack monorepo for managing long-running manufacturing workflows.
+## Project Stack
 
-## Project Overview
+- **Frontend**: Angular 19+ (GraphQL subscriptions)
+- **API**: Hot Chocolate GraphQL (type-safe, auto-emits schema)
+- **Backend**: ASP.NET Core .NET 10 (EF Core + Dapper hybrid)
+- **Workflows**: Elsa v3.5.3 (long-running orchestration)
+- **Database**: SQL Server 2022 (transactional ACID)
 
-**Type-safe full-stack monorepo** with:
+## Build & Test Commands
 
-- **Frontend**: Angular 19+ with Apollo/Urql (GraphQL clients)
-- **API Gateway**: Hot Chocolate GraphQL (ChilliCream)
-- **Backend**: ASP.NET Core (.NET 10)
-- **Workflows**: Elsa Workflows v3 (long-running state machines)
-- **Database**: Microsoft SQL Server
-- **Data Access**: Hybrid EF Core (reads) + Dapper (high-velocity writes)
-
-## Build, Test & Lint Commands
-
-### Backend (.NET)
+### Backend
 
 ```bash
-# Restore dependencies
-dotnet restore backend/src
-
-# Build & auto-emit GraphQL schema
-dotnet build backend/FactoryApp.slnx
-
-# Run database migrations
-cd backend/src/FactoryApp.WebApi
-dotnet ef database update
-
-# Run backend server (watch mode)
-dotnet watch run
-
-# Run all backend tests
-dotnet test backend/src
-
-# Run single test file or specific test
-dotnet test backend/src/FactoryApp.Tests/FactoryApp.Tests.csproj --filter "ClassName=TestClassName"
+dotnet build backend/FactoryApp.slnx          # Emits schema.graphql auto
+dotnet test backend/src                       # Integration tests vs SQL Server
+cd backend/src/FactoryApp.WebApi && dotnet watch run  # Dev server
 ```
 
-### Frontend (Angular)
+### Frontend
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Generate type-safe services from GraphQL schema
-pnpm --filter frontend run codegen
-
-# Start Angular dev server (HMR enabled)
-pnpm --filter frontend run ng serve
-
-# Run all frontend tests
-pnpm --filter frontend run test
-
-# Run single test file
-pnpm --filter frontend run test -- --include='**/component.spec.ts'
-
-# Lint frontend code
-pnpm --filter frontend run lint
+pnpm --filter frontend run codegen            # Regenerate graphql.ts
+pnpm --filter frontend run ng serve           # Dev server (HMR)
+pnpm --filter frontend run test                 # Vitest + Testing Library
 ```
 
 ### Monorepo (Root)
 
 ```bash
-# Start both backend + frontend watchers concurrently
-pnpm dev
-
-# Build both stacks
-pnpm build
-
-# Run all tests (backend + frontend)
-pnpm test
-
-# Lint entire monorepo
-pnpm lint
+pnpm dev                                      # Concurrent backend + frontend watchers
+pnpm build && pnpm test                       # CI/CD validation
 ```
 
-## Architecture Overview
+## Type Safety Pipeline (Automatic Sync)
 
-```
-┌──────────────────────────────────────────────┐
-│         Angular UI (Apollo / Urql)           │  Real-time GraphQL
-└──────────────────────┬───────────────────────┘  subscriptions via
-                       │ ▲                        WebSockets / SSE
-  GraphQL Queries      │ │
-  & Mutations          ▼ │
-┌──────────────────────────────────────────────┐
-│        Hot Chocolate GraphQL Gateway         │  Auto-emits schema.graphql
-│  (Projections, DataLoaders, Subscriptions)   │  on backend build
-└──────────────────────┬───────────────────────┘
-                       │
-         Enforces Type │ Executes Commands
-         Safety        ▼ & Queries
-┌──────────────────────────────────────────────┐
-│        ASP.NET Core Service Layer            │  Domain logic,
-│  (Scoped services, mutation handlers)        │  Elsa integration
-└──────────┬────────────────┬──────────────────┘
-           │                │
-Domain &   │                │ High-frequency
-Elsa State │                │ telemetry
-Tracking   ▼                ▼
-┌──────────────────────┐┌──────────────────────┐
-│   Entity Framework   ││   Dapper Engine      │  Shared
-│   Core Context       ││   (Raw SQL strings)  │  SqlTransaction
-│ (NoTracking reads)   ││   (Batch inserts)    │
-└──────────┬───────────┘└───────┬──────────────┘
-           │                    │
-           └────────┬───────────┘
-                    ▼
-┌──────────────────────────────────────────────┐
-│        Microsoft SQL Server                  │  Transactional
-│  (Domain Tables + Elsa WorkflowInstances)    │  ACID integrity
-└──────────────────────────────────────────────┘
-```
+1. **Backend change**: Modify C# entity in `Domain/`
+2. **Build**: `dotnet build backend/FactoryApp.slnx`
+3. **Schema emitted**: Hot Chocolate auto-writes `schema.graphql`
+4. **Frontend regenerates**: `pnpm codegen` (via file-watcher)
+5. **Type-safe services**: Angular imports from `graphql.ts` (auto-generated)
 
-## Key Conventions
+**Never edit `schema.graphql` or `graphql.ts` manually** — always regenerate via pipeline.
 
-### 1. End-to-End Type Safety Pipeline
+## Key Constraints (PR Blockers)
 
-Type safety is **automatically synchronized** across layers during build:
+| Constraint                 | Action                          | Why                        |
+| -------------------------- | ------------------------------- | -------------------------- |
+| EF Core + Dapper same op   | Share explicit `DbTransaction`  | Deadlock prevention        |
+| GraphQL resolvers          | Return DTOs, never raw entities | Schema versioning          |
+| Query depth                | ≤5 layers; split deeper queries | Hot Chocolate limits       |
+| `*ngFor` loops             | Mandatory `trackBy` function    | 250ms subscription buffers |
+| schema.graphql, graphql.ts | Never edit manually             | Auto-generated pipeline    |
 
-1. Modify a **C# entity** in `backend/src/FactoryApp.Domain/`
-2. Run `dotnet build backend/FactoryApp.slnx`
-3. Hot Chocolate **auto-emits** `backend/src/FactoryApp.WebApi/schema.graphql`
-4. Frontend file-watcher triggers GraphQL Code Generator via `pnpm codegen`
-5. Type-safe Angular services **auto-update** in `frontend/src/app/api/generated/graphql.ts`
+See [.claude/rules/](../.claude/rules/) for enforcement details.
 
-**Never manually edit `schema.graphql` or `graphql.ts`** — these are auto-generated.
+## Architectural Patterns (Domain-Specific)
 
-### 2. The Shared Transaction Rule
-
-When a **single mutation** updates domain state via EF Core **AND** logs bulk metrics via Dapper, they **must** share an explicit ADO.NET transaction to prevent deadlocks:
+### Data Access (Hybrid EF Core + Dapper)
 
 ```csharp
 using var transaction = await context.Database.BeginTransactionAsync();
-var dbConnection = context.Database.GetDbConnection();
-var dbTransaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
-// EF Core operations
-var build = await context.Builds.FindAsync(buildId);
-build.Status = BuildStatus.Complete;
+// EF Core reads with NoTracking projection
+var builds = await context.Builds
+  .AsNoTracking()
+  .ProjectTo<BuildDto>(_mapper.ConfigurationProvider)
+  .ToListAsync();
 
-// Dapper operations (pass transaction: dbTransaction)
+// Dapper high-velocity writes (share transaction)
 await connection.ExecuteAsync(
-    "INSERT INTO TestMetrics (BuildId, Value) VALUES (@BuildId, @Value)",
-    new { BuildId = buildId, Value = 42.5 },
+    "INSERT INTO Telemetry (...) VALUES (@BuildId, @Value)",
+    new { BuildId = buildId, Value = 42 },
     transaction: dbTransaction
 );
 
-await context.SaveChangesAsync();
 await transaction.CommitAsync();
 ```
 
-### 3. Data Access Pattern
+**Transaction rule (CRITICAL)**: EF Core + Dapper in same operation must share explicit `DbTransaction` or factory-floor deadlocks occur.
 
-- **EF Core** (Change-tracked): Domain entity queries, schema migrations, Elsa workflow persistence
-- **Dapper** (No-tracked): High-velocity telemetry ingestion, batch inserts from automated machines
-- **Both** share explicit transactions when coordinating multi-step operations
+### GraphQL (Hot Chocolate)
 
-All GraphQL queries use `QueryTrackingBehavior.NoTracking` for dashboard performance.
+- Use `[UseProjection]` on resolvers to optimize SQL SELECT
+- Use DataLoaders to prevent N+1 queries on child entities
+- Enforce max nesting depth of 5 layers (use separate queries)
+- Return DTOs, never raw EF Core entities
 
-### 4. Hot Chocolate GraphQL Best Practices
+### Angular (High-Frequency Updates)
 
-- Use **`[UseProjection]`** on root query resolvers to auto-translate Angular's GraphQL field selections to optimized SQL `SELECT` columns
-- Use **DataLoaders** for batch child-entity queries (e.g., Build → Parts) to prevent N+1 database hits
-- Enforce **max query depth of 5 layers** — deeply nested queries like `Build { Parts { TestRuns { Logs { Metrics { Details } } } } }` are forbidden
+- All components: `ChangeDetectionStrategy.OnPush`
+- All `*ngFor` loops: explicit `trackBy` function
+- Real-time subscriptions: `bufferTime(250)` to aggregate high-velocity updates
+- Auto-generated queries: import from `graphql.ts` (never edit manually)
 
-### 5. Elsa Workflow v3 Integration
+### Workflows (Elsa v3.5.3)
 
-- Custom C# activities handle long-running manufacturing steps
-- Store **only primitive keys** (Guid, string) in workflow state; fetch fresh domain data on activity execution
-- Version workflows explicitly: allow old versions to complete naturally while routing new builds to the latest version
-- Activities publish events via `ITopicEventSender` → Hot Chocolate broadcasts to Angular via subscriptions
+- Store only primitive keys (Guid, string) in workflow state
+- Fetch fresh domain data at each activity execution
+- Activities are stateless handlers; prefer immutability
+- Use compensation workflows for rollback on failure
 
-### 6. Angular Components
+See `.claude/rules/` for complete enforcement documentation.
 
-- All components use `ChangeDetectionStrategy.OnPush` (required for high-frequency updates)
-- Use explicit `trackBy` functions on all `*ngFor` loops to prevent unnecessary re-renders
-- Real-time subscriptions should use `bufferTime(250)` to batch high-frequency telemetry updates
+## Agent Mode (Claude Code Background Execution)
 
-### 7. No Direct Entity Exposure in GraphQL
+When Claude Code spawns background agents (Tasks, Scheduled Crons, Dynamic Workflows):
 
-Never return raw EF Core entities in GraphQL resolvers. Map to DTOs first:
+1. **Use Plan agent** for multi-file architectural changes
+2. **Use caveman agents** for bounded edits (1-2 files)
+3. **Use general-purpose** for broad searches across codebase
+4. **Use Explore** for read-only analysis with fan-out discovery
 
-```csharp
-// ❌ WRONG
-[GraphQLType]
-public class Build
-{
-    public Guid Id { get; set; }
-    public DbSet<Part> Parts { get; set; }  // Don't expose navigation properties directly
-}
+Agents inherit `.claude/rules/` patterns automatically via CLAUDE.md loading.
 
-// ✅ RIGHT
-public class BuildDto
-{
-    public Guid Id { get; set; }
-    public string Status { get; set; }
-    // ... minimal fields only
-}
-```
+### Pre-Execution Checks (Gate 1: Plan)
 
-This decouples schema evolution from database design.
+- Review task dependencies in `.claude/tasks.md`
+- Verify no contradictions across config files
+- Document multi-file edit dependencies
+- Check for rule violations in proposed changes
 
-## Repository Structure
+### Post-Execution Validation (Gate 2: Verify)
 
-See README.md for directory layout. Key files:
+- ✓ `dotnet build backend/FactoryApp.slnx` passes
+- ✓ `pnpm build && pnpm test` pass (frontend)
+- ✓ No regressions in existing tests
+- ✓ Type-safety: LSP definitions resolve correctly
 
-- `backend/FactoryApp.slnx` — Main .NET solution
-- `backend/src/FactoryApp.Domain/` — EF Core entities + migrations
-- `frontend/src/app/api/generated/graphql.ts` — [AUTO-GENERATED, never edit]
-- `CLAUDE.md`, `DESIGN.md` — Core AI guidance
-
-## IDE Recommendation
-
-**JetBrains Rider 2024.x** is the gold standard:
-
-- Native C# debugging with EF Core inspection
-- Integrated SQL Server profiler (critical for Dapper tuning)
-- Full-stack debugging (backend resolvers + network requests simultaneously)
-- Hot Chocolate schema validation & autocomplete
-- Elsa workflow visualization
-
-## Debugging Quick Reference
-
-| Issue               | Root Cause             | Fix                                            |
-| ------------------- | ---------------------- | ---------------------------------------------- |
-| Frontend type error | Schema not regenerated | `dotnet build` → `pnpm codegen`                |
-| N+1 queries         | Missing DataLoader     | Add `[UseProjection]` to resolver              |
-| Deadlock            | Separate transactions  | Share `DbTransaction` (see Key Conventions #2) |
-| Workflow fails      | Entity stored in state | Store only primitives (Guid, string)           |
-
-## Important Generated Files
-
-| File                                           | Status         | Notes                                                |
-| ---------------------------------------------- | -------------- | ---------------------------------------------------- |
-| `backend/src/FactoryApp.WebApi/schema.graphql` | Auto-generated | Commit to repo; never edit manually                  |
-| `frontend/src/app/api/generated/graphql.ts`    | Auto-generated | Never edit manually                                  |
-| Database migrations                            | Manual         | Store in `backend/src/FactoryApp.Domain/Migrations/` |
-
-## Performance Checklist
-
-- [ ] EF Core context defaults to `QueryTrackingBehavior.NoTracking`
-- [ ] All Hot Chocolate queries with child entities use DataLoaders
-- [ ] GraphQL queries don't nest deeper than 5 layers
-- [ ] Angular subscriptions use `bufferTime(250)` for high-frequency updates
-- [ ] All `*ngFor` loops use `trackBy` functions
-- [ ] SQL Server indexes cover foreign keys and high-query columns (Status, BuildId)
-- [ ] Dapper is used exclusively for telemetry; never for domain queries
-- [ ] Elsa workflow versions are managed; old versions complete naturally
-
-## Development Workflow
-
-1. **Modify** a C# entity or add a GraphQL resolver
-2. **Build**: `dotnet build backend/FactoryApp.slnx`
-3. **Schema updates**: Hot Chocolate auto-emits `schema.graphql`
-4. **Frontend regenerates**: File-watcher triggers `pnpm codegen`
-5. **Types flow automatically** to Angular services
-6. **Angular IDE highlights** errors if queries reference removed fields
+**Block PR completion if either gate fails.**
 
 ## GitHub Copilot Procedures
 
-This repository includes **mandatory procedures** that Copilot must follow for specific tasks:
+### PR Review Workflow (Mandatory)
 
-### PR Review Workflow (Required Reading)
+When reviewing PRs, Copilot must:
 
-When reviewing GitHub PRs, Copilot executes a **three-phase automated workflow** with **mandatory GitHub comment posting**:
+1. Gather PR details and changed files
+2. Analyze against architecture patterns (see `.claude/rules/`)
+3. Post review as GitHub comment (mandatory)
+4. Include verdict, file analysis, and verification checklist
 
-**Location**: `.github/copilot/rules/pr-review-workflow.md`
+**Procedure location**: `.github/copilot/rules/pr-review-workflow.md`
 
-**Key Points**:
+## Debugging Quick Reference
 
-- ✅ Phase 1: Gather PR details and examine changes
-- ✅ Phase 2: Analyze code against architecture patterns
-- ✅ Phase 3: **Post review outcomes as GitHub PR comment** ← MANDATORY
-- 🔗 Comment must reference requirements and include verification checklist
-- 📋 Review must be structured with verdict, file analysis, and quality metrics
+| Issue               | Root Cause                     | Fix                                |
+| ------------------- | ------------------------------ | ---------------------------------- |
+| Frontend type error | schema.graphql not regenerated | `dotnet build` → `pnpm codegen`    |
+| N+1 query perf      | Missing DataLoader             | Add `[UseProjection]` to resolver  |
+| Deadlock            | Separate transactions          | Share `DbTransaction` in operation |
+| Workflow fails      | Complex object in state        | Store only Guid/string primitives  |
 
-**When Reviewing a PR**:
+## Performance Checklist
 
-1. Read the PR description and linked issue
-2. Use `code-review` agent for high-signal analysis
-3. Generate comprehensive assessment document
-4. **Post assessment as GitHub comment** using `gh pr comment` command
-5. Never skip the comment posting step — it ensures team visibility
+- [ ] EF Core: `QueryTrackingBehavior.NoTracking` default
+- [ ] Resolvers: `[UseProjection]` + DataLoaders (no N+1)
+- [ ] GraphQL: max depth 5 layers, split deeper queries
+- [ ] Angular: `ChangeDetectionStrategy.OnPush` + `trackBy`
+- [ ] Subscriptions: `bufferTime(250)` aggregation
+- [ ] SQL: Indexes on FK, Status, CreatedAt columns
+- [ ] Dapper: telemetry only (never domain queries)
 
-For full workflow details, procedures, and examples: See `.github/copilot/rules/pr-review-workflow.md`
+## Repository Structure
 
-### Additional Procedures
+- `backend/FactoryApp.slnx` — Main .NET solution
+- `backend/src/FactoryApp.Domain/` — EF Core entities + migrations
+- `frontend/src/app/api/generated/graphql.ts` — [AUTO-GENERATED]
+- `.claude/rules/` — Enforcement documentation
+- `CLAUDE.md` — Comprehensive AI execution framework
+- `.github/copilot/rules/` — Copilot-specific procedures
 
-Other Copilot procedures are documented in `.github/copilot/`:
+## IDE Recommendation
 
-- `.github/copilot/README.md` — Index of all procedures
-- `.github/copilot/rules/` — Directory of operational rules
+**JetBrains Rider 2024.x** (gold standard):
+
+- Native C# debugging + EF Core inspection
+- SQL Server profiler (Dapper tuning)
+- Full-stack debugging (backend + network simultaneously)
+- Hot Chocolate schema validation & autocomplete
 
 ## Related Documentation
 
-- `README.md` — Project overview and quickstart
-- `CLAUDE.md` — Comprehensive Claude Code guide with CI/CD, testing strategy, and skills
-- `CONTRIBUTING.md` — Development workflow, code standards, testing, and security practices
-- `SECURITY.md` — Vulnerability reporting, security policies, and best practices
-- `docs/research-architecuture-design.md` — Detailed analysis of GraphQL vs REST, EF Core vs Dapper
-- `docs/monorepo-assessment.md` — IDE recommendations, build orchestration, dependency management
+- `README.md` — Quickstart and project overview
+- `CLAUDE.md` — Comprehensive execution framework
+- `CONTRIBUTING.md` — Development workflow and security
+- `.claude/rules/` — Modular architecture enforcement
