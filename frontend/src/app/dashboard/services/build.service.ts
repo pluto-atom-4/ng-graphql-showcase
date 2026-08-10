@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
-import { Observable } from 'rxjs';
-import { map, shareReplay, bufferTime, filter, mergeMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, shareReplay, bufferTime, filter, mergeMap, catchError } from 'rxjs/operators';
 
 export interface Build {
   id: string;
