@@ -58,11 +58,8 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
  * - Virtual scroll for large activity lists (delegated to ActivityTimeline)
  *
  * @example
- * // Basic usage
+ * // Basic usage (displays global metrics, builds list, and all recent activities)
  * <app-dashboard-page></app-dashboard-page>
- *
- * // With optional buildId filter
- * <app-dashboard-page [buildId]="'build-123'"></app-dashboard-page>
  */
 @Component({
   selector: 'app-dashboard-page',
@@ -229,7 +226,9 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
 })
 export class DashboardPageComponent implements OnInit {
   /**
-   * Optional buildId to filter activities by specific build.
+   * Optional buildId input (currently unused).
+   * Activities are always fetched globally via getRecentActivitiesAll()
+   * without per-build filtering. Reserved for future per-build filtering if needed.
    */
   @Input() buildId?: string;
 
