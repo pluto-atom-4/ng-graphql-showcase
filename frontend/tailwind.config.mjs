@@ -1,5 +1,3 @@
-import daisyui from 'daisyui';
-
 export default {
   safelist: [
     { pattern: /^(bg|text|border)-(red|green|yellow|blue|gray|primary|success|warning|error)-(50|100|200|500|600|700)$/ },
@@ -9,7 +7,6 @@ export default {
   ],
   content: [
     './src/**/*.{html,ts}',
-    './node_modules/daisyui/**/*.{js,jsx,ts,tsx,vue}',
   ],
   theme: {
     extend: {
@@ -169,11 +166,4 @@ export default {
       });
     },
   ],
-  daisyui: {
-    themes: ['light'],
-    darkTheme: 'light',
-    styled: false,
-    base: false,
-    utils: false,
-  },
 };

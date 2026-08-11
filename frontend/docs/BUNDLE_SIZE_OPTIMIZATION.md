@@ -265,6 +265,11 @@ ng build --configuration=production --stats-json
 
 ```javascript
 // BEFORE
+import daisyui from 'daisyui';
+content: [
+  './src/**/*.{html,ts}',
+  './node_modules/daisyui/**/*.{js,jsx,ts,tsx,vue}',
+],
 plugins: [daisyui, customComponents]
 daisyui: {
   themes: ['light', 'dark'],
@@ -275,14 +280,12 @@ daisyui: {
 }
 
 // AFTER
+// import daisyui removed
+content: [
+  './src/**/*.{html,ts}',
+],
 plugins: [customComponents]  // daisyui removed
-daisyui: {
-  themes: ['light'],
-  darkTheme: 'light',
-  styled: false,
-  base: false,
-  utils: false,
-}
+// daisyui config object removed entirely
 ```
 
 ### app.routes.ts
