@@ -32,21 +32,23 @@ describe('BadgeComponent', () => {
 
   it('should have base badge class', () => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.badge')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.badge-base')).toBeTruthy();
   });
 
   it('should apply variant class', () => {
     fixture.componentRef.setInput('variant', 'success');
     fixture.detectChanges();
     const classes = component.getClasses();
-    expect(classes).toContain('badge-success');
+    expect(classes).toContain('bg-green-100');
+    expect(classes).toContain('text-green-800');
   });
 
   it('should compute correct CSS classes', () => {
     fixture.componentRef.setInput('variant', 'warning');
     const classes = component.getClasses();
-    expect(classes).toContain('badge');
-    expect(classes).toContain('badge-warning');
+    expect(classes).toContain('badge-base');
+    expect(classes).toContain('bg-yellow-100');
+    expect(classes).toContain('text-yellow-800');
   });
 
   const variants: BadgeVariant[] = [
@@ -60,11 +62,24 @@ describe('BadgeComponent', () => {
     'info',
   ];
 
+  const variantColors: Record<BadgeVariant, [string, string]> = {
+    'primary': ['bg-blue-100', 'text-blue-800'],
+    'secondary': ['bg-gray-100', 'text-gray-800'],
+    'accent': ['bg-purple-100', 'text-purple-800'],
+    'ghost': ['bg-gray-50', 'text-gray-900'],
+    'success': ['bg-green-100', 'text-green-800'],
+    'warning': ['bg-yellow-100', 'text-yellow-800'],
+    'error': ['bg-red-100', 'text-red-800'],
+    'info': ['bg-blue-100', 'text-blue-800'],
+  };
+
   variants.forEach(variant => {
     it(`should render ${variant} variant`, () => {
       fixture.componentRef.setInput('variant', variant);
       const classes = component.getClasses();
-      expect(classes).toContain(`badge-${variant}`);
+      const [bgColor, textColor] = variantColors[variant];
+      expect(classes).toContain(bgColor);
+      expect(classes).toContain(textColor);
     });
   });
 });

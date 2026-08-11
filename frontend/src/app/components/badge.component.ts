@@ -6,7 +6,7 @@ export type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'succe
 /**
  * Status badge component for displaying labels with semantic colors.
  *
- * Displays short text (labels, status indicators, tags) with daisyUI
+ * Displays short text (labels, status indicators, tags) with Tailwind
  * semantic coloring. Commonly used with GraphQL enums (e.g., BuildStatus).
  *
  * **Features**:
@@ -19,7 +19,7 @@ export type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'succe
  * - label: string — Badge text (default: "Badge")
  * - variant: BadgeVariant — Color scheme (default: "primary")
  *
- * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#badges}
+ * **Design System**: {@link frontend/README.md#badges}
  *
  * **Example**:
  * ```typescript
@@ -53,8 +53,22 @@ export class BadgeComponent {
   @Input() variant: BadgeVariant = 'primary';
 
   getClasses(): string {
-    const base = 'badge';
-    const variantClass = `badge-${this.variant}`;
+    const base = 'badge-base';
+    const variantClass = this.getVariantStyles(this.variant);
     return `${base} ${variantClass}`;
+  }
+
+  private getVariantStyles(variant: BadgeVariant): string {
+    const styles: Record<BadgeVariant, string> = {
+      'success': 'bg-green-100 text-green-800',
+      'error': 'bg-red-100 text-red-800',
+      'warning': 'bg-yellow-100 text-yellow-800',
+      'info': 'bg-blue-100 text-blue-800',
+      'primary': 'bg-blue-100 text-blue-800',
+      'secondary': 'bg-gray-100 text-gray-800',
+      'accent': 'bg-purple-100 text-purple-800',
+      'ghost': 'bg-gray-50 text-gray-900',
+    };
+    return styles[variant] || 'bg-gray-100 text-gray-800';
   }
 }

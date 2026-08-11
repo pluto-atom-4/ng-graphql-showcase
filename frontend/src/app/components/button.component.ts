@@ -5,13 +5,13 @@ export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'outl
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 /**
- * Reusable button component built with daisyUI + Angular 19 signals.
+ * Reusable button component built with Tailwind CSS + Angular 19 signals.
  *
  * **Features**:
  * - OnPush change detection (performance optimized)
  * - Signals-based inputs/outputs (reactive API)
  * - Computed disabled state (loading OR disabled input)
- * - Semantic daisyUI classes for variants & sizes
+ * - Semantic Tailwind classes for variants & sizes
  *
  * **Signals**:
  * - @input label: Button text (default: "Button")
@@ -21,7 +21,7 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
  * - @input disabled: Prevent clicks
  * - @output trigger: Emits on click (if not disabled)
  *
- * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#buttons}
+ * **Design System**: {@link frontend/README.md#buttons}
  *
  * **Example**:
  * ```typescript
@@ -51,7 +51,7 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
       (click)="onClickHandler()"
     >
       @if (loading()) {
-        <span class="loading loading-spinner loading-sm"></span>
+        <span class="inline-block w-4 h-4 border-2 border-gray-300 border-t-current rounded-full animate-spin"></span>
       } @else {
         <span>{{ label() }}</span>
       }
@@ -73,12 +73,34 @@ export class ButtonComponent {
   isDisabled = computed(() => this.disabled() || this.loading());
 
   classes = computed(() => {
-    const base = 'btn font-semibold transition-all';
-    const variantClass = `btn-${this.variant()}`;
-    const sizeClass = this.size() === 'md' ? '' : `btn-${this.size()}`;
+    const base = 'button-base font-semibold transition-all';
+    const variantClass = this.getVariantClass(this.variant());
+    const sizeClass = this.getSizeClass(this.size());
+    const disabledClass = this.isDisabled() ? 'button-disabled' : '';
 
-    return [base, variantClass, sizeClass].filter(Boolean).join(' ');
+    return [base, variantClass, sizeClass, disabledClass].filter(Boolean).join(' ');
   });
+
+  private getVariantClass(variant: ButtonVariant): string {
+    const variants: Record<ButtonVariant, string> = {
+      'primary': 'button-primary',
+      'secondary': 'button-secondary',
+      'accent': 'button-primary', // Map accent to primary
+      'ghost': 'button-ghost',
+      'outline': 'button-ghost', // Map outline to ghost
+    };
+    return variants[variant] || 'button-primary';
+  }
+
+  private getSizeClass(size: ButtonSize): string {
+    const sizes: Record<ButtonSize, string> = {
+      'xs': 'px-2 py-1 text-xs',
+      'sm': 'px-3 py-1.5 text-sm',
+      'md': '', // Default size (already in button-base)
+      'lg': 'px-6 py-3 text-lg',
+    };
+    return sizes[size] || '';
+  }
 
   onClickHandler(): void {
     if (!this.isDisabled()) {

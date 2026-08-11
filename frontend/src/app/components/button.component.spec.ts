@@ -36,31 +36,31 @@ describe('ButtonComponent', () => {
 
     it('should apply default variant class (primary)', () => {
       fixture.detectChanges();
-      expect(buttonEl.nativeElement.className).toContain('btn-primary');
+      expect(buttonEl.nativeElement.className).toContain('button-primary');
     });
 
     it('should apply custom variant class', () => {
       fixture.componentRef.setInput('variant', 'secondary');
       fixture.detectChanges();
-      expect(buttonEl.nativeElement.className).toContain('btn-secondary');
+      expect(buttonEl.nativeElement.className).toContain('button-secondary');
     });
 
     it('should apply custom size class', () => {
       fixture.componentRef.setInput('size', 'lg');
       fixture.detectChanges();
-      expect(buttonEl.nativeElement.className).toContain('btn-lg');
+      expect(buttonEl.nativeElement.className).toContain('text-lg');
     });
 
     it('should not apply size class for md (default)', () => {
       fixture.componentRef.setInput('size', 'md');
       fixture.detectChanges();
-      expect(buttonEl.nativeElement.className).not.toContain('btn-md');
+      expect(buttonEl.nativeElement.className).not.toContain('text-md');
     });
 
     it('should show spinner when loading', () => {
       fixture.componentRef.setInput('loading', true);
       fixture.detectChanges();
-      const spinner = buttonEl.nativeElement.querySelector('.loading');
+      const spinner = buttonEl.nativeElement.querySelector('.animate-spin');
       expect(spinner).toBeTruthy();
     });
 
@@ -113,10 +113,10 @@ describe('ButtonComponent', () => {
       fixture.detectChanges();
 
       const classes = component.classes();
-      expect(classes).toContain('btn');
+      expect(classes).toContain('button-base');
       expect(classes).toContain('font-semibold');
-      expect(classes).toContain('btn-accent');
-      expect(classes).toContain('btn-sm');
+      expect(classes).toContain('button-primary');
+      expect(classes).toContain('text-sm');
     });
   });
 
@@ -156,18 +156,31 @@ describe('ButtonComponent', () => {
 
   describe('Variant Types', () => {
     const variants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'ghost', 'outline'];
+    const expectedClasses: Record<ButtonVariant, string> = {
+      'primary': 'button-primary',
+      'secondary': 'button-secondary',
+      'accent': 'button-primary',  // Maps to primary
+      'ghost': 'button-ghost',
+      'outline': 'button-ghost',   // Maps to ghost
+    };
 
     variants.forEach(variant => {
       it(`should render ${variant} variant`, () => {
         fixture.componentRef.setInput('variant', variant);
         fixture.detectChanges();
-        expect(buttonEl.nativeElement.className).toContain(`btn-${variant}`);
+        expect(buttonEl.nativeElement.className).toContain(expectedClasses[variant]);
       });
     });
   });
 
   describe('Size Types', () => {
     const sizes: ButtonSize[] = ['xs', 'sm', 'md', 'lg'];
+    const expectedClasses: Record<ButtonSize, string> = {
+      'xs': 'text-xs',
+      'sm': 'text-sm',
+      'md': 'text-sm', // md is default (no extra size class)
+      'lg': 'text-lg',
+    };
 
     sizes.forEach(size => {
       it(`should render ${size} size`, () => {
@@ -175,9 +188,9 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         if (size !== 'md') {
-          expect(buttonEl.nativeElement.className).toContain(`btn-${size}`);
+          expect(buttonEl.nativeElement.className).toContain(expectedClasses[size]);
         } else {
-          expect(buttonEl.nativeElement.className).not.toContain('btn-md');
+          expect(buttonEl.nativeElement.className).not.toContain('text-md');
         }
       });
     });
@@ -218,8 +231,8 @@ describe('ButtonComponent', () => {
 
       expect(buttonEl.nativeElement.textContent).toContain('Save');
       expect(component.isDisabled()).toBe(false);
-      expect(component.classes()).toContain('btn-primary');
-      expect(component.classes()).toContain('btn-lg');
+      expect(component.classes()).toContain('button-primary');
+      expect(component.classes()).toContain('text-lg');
     });
   });
 });

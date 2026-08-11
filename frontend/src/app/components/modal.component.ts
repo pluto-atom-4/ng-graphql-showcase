@@ -4,7 +4,7 @@ import { Component, input, output, ChangeDetectionStrategy } from '@angular/core
  * Dialog/modal component for confirmations and user interaction.
  *
  * Displays content in a modal dialog with cancel/confirm buttons.
- * Uses HTML5 dialog element with daisyUI styling. Backdrop click
+ * Uses HTML5 dialog element with Tailwind styling. Backdrop click
  * triggers close (handled by form method="dialog" pattern).
  *
  * **Features**:
@@ -12,7 +12,7 @@ import { Component, input, output, ChangeDetectionStrategy } from '@angular/core
  * - Signals-based inputs/outputs (title, isOpen, confirmLabel)
  * - Semantic button layout (Cancel/Confirm)
  * - Flexible content via ng-content
- * - daisyUI modal styling with proper backdrop handling
+ * - Tailwind modal styling with proper backdrop handling
  *
  * **Signals**:
  * - @input title: string (default: "Modal Title")
@@ -21,7 +21,7 @@ import { Component, input, output, ChangeDetectionStrategy } from '@angular/core
  * - @output closeModal: Emits when user clicks Cancel or backdrop
  * - @output confirm: Emits when user clicks Confirm button
  *
- * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#modals}
+ * **Design System**: {@link frontend/README.md#modals}
  *
  * **Example**:
  * ```typescript
@@ -60,22 +60,22 @@ import { Component, input, output, ChangeDetectionStrategy } from '@angular/core
         <div class="modal-action">
           <button
             type="button"
-            class="btn btn-ghost"
+            class="button-base button-secondary"
             (click)="onCloseClick()"
           >
             Cancel
           </button>
           <button
             type="button"
-            class="btn btn-primary"
+            class="button-base button-primary"
             (click)="onConfirmClick()"
           >
             {{ confirmLabel() }}
           </button>
         </div>
       </div>
-      <!-- DaisyUI backdrop handles the background clicks safely here -->
-      <form method="dialog" class="modal-backdrop">
+      <!-- Backdrop handles the background clicks safely here -->
+      <form method="dialog" class="fixed inset-0">
         <button type="button" (click)="onCloseClick()">close</button>
       </form>
     </dialog>
