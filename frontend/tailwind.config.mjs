@@ -113,6 +113,19 @@ export default {
         '.card-hover': {
           '@apply hover:shadow-lg hover:scale-105 transition-transform duration-200': {},
         },
+        '.card-actions': {
+          '@apply flex gap-2 pt-4': {},
+        },
+        // Collapse/details styles
+        '.collapse': {
+          '@apply border border-gray-200 rounded-lg': {},
+        },
+        '.collapse-title': {
+          '@apply cursor-pointer font-medium p-4': {},
+        },
+        '.collapse-content': {
+          '@apply p-4 pt-0': {},
+        },
         // Badge base styles
         '.badge-base': {
           '@apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap': {},
@@ -162,6 +175,19 @@ export default {
         },
         '.error-banner-message': {
           '@apply text-red-700 text-sm': {},
+        },
+        // Modal styles
+        '.modal': {
+          '@apply fixed inset-0 flex items-center justify-center z-50 hidden': {},
+        },
+        '.modal.modal-open': {
+          '@apply bg-black/50 opacity-100 flex': {},
+        },
+        '.modal-box': {
+          '@apply bg-white rounded-lg shadow-lg max-w-2xl max-h-[90vh] overflow-y-auto p-6': {},
+        },
+        '.modal-action': {
+          '@apply flex justify-end gap-3 pt-6 border-t border-gray-200': {},
         },
       });
     },
