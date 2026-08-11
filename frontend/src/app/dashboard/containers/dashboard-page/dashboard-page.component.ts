@@ -32,7 +32,7 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
  * Manages:
  * - Metrics Grid (total, in-progress, completed, failed builds)
  * - Paginated Builds Table with sorting
- * - Recent Activities Timeline (if buildId provided)
+ * - Recent Activities Timeline (all recent activities globally)
  *
  * State Management:
  * - currentPage$ (BehaviorSubject) - User-controlled pagination state
@@ -40,7 +40,7 @@ import { DASHBOARD_CONSTANTS } from './dashboard-page.constants';
  * - builds$ (Observable) - Current page builds (reactive to pagination)
  * - totalBuilds$ (Observable) - Total count
  * - metrics$ (Observable) - Key metrics (cached)
- * - activities$ (Observable) - Recent activities (if buildId)
+ * - activities$ (Observable) - Recent activities (all recent activities globally)
  * - isLoading$ (Observable) - Loading state
  * - error$ (Observable) - Error messages
  *
@@ -276,8 +276,8 @@ export class DashboardPageComponent implements OnInit {
   metrics$!: Observable<Metrics | null>;
 
   /**
-   * Recent activities for current buildId (if provided).
-   * Empty array if no buildId.
+   * Recent activities from the last 7 days (global, all builds).
+   * Fetched via getRecentActivitiesAll() without buildId filtering.
    */
   activities$!: Observable<Activity[]>;
 
