@@ -49,7 +49,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         </div>
 
         <!-- Build Info -->
-        <div class="grid grid-cols-4 gap-4 mb-6 p-4 bg-base-200 rounded">
+        <div class="grid grid-cols-4 gap-4 mb-6 p-4 bg-gray-100 rounded">
           <div>
             <span class="text-xs font-semibold text-gray-500">ID</span>
             <p class="font-mono text-sm">{{ build().id | slice: 0:8 }}</p>
@@ -94,7 +94,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
         </div>
 
         <!-- Tab Content -->
-        <div class="bg-base-100 rounded-lg p-4 min-h-96">
+        <div class="bg-gray-50 rounded-lg p-4 min-h-96">
           @switch (activeTab()) {
             @case ('workflow') {
               <app-workflow-history-viewer [buildId]="build().id" />
@@ -103,7 +103,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
               <div class="space-y-2">
                 @if (build().parts && build().parts.length > 0) {
                   @for (part of build().parts; track part.id) {
-                    <div class="p-3 bg-base-200 rounded">
+                    <div class="p-3 bg-gray-100 rounded">
                       <div class="font-semibold">{{ part.name }}</div>
                       <div class="text-sm text-gray-500">
                         SKU: {{ part.sku }} | Qty: {{ part.quantity }}
@@ -119,7 +119,7 @@ type DetailTab = 'workflow' | 'parts' | 'testRuns';
               <div class="space-y-2">
                 @if (build().testRuns && build().testRuns.length > 0) {
                   @for (run of build().testRuns; track run.id) {
-                    <div class="p-3 bg-base-200 rounded">
+                    <div class="p-3 bg-gray-100 rounded">
                       <div class="flex justify-between items-start">
                         <div>
                           <div class="font-semibold">Test Run {{ run.id | slice: 0:8 }}</div>

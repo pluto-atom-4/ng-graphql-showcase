@@ -15,7 +15,7 @@ import { WorkflowHistory } from '../api/generated/graphql';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="card bg-base-100 shadow">
+    <div class="card bg-gray-50 shadow">
       <div class="card-body">
         <h2 class="card-title text-lg">Workflow History</h2>
 

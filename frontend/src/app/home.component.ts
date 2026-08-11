@@ -27,15 +27,15 @@ interface BuildCard {
   imports: [CommonModule, BuildProgressCardComponent, BuildDetailsComponent, ButtonComponent, CardComponent, BadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-base-100 to-base-200 p-8">
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="mb-8">
-          <h1 class="text-4xl font-bold text-base-content mb-2">
+          <h1 class="text-4xl font-bold text-gray-900 mb-2">
             Manufacturing Workflow Dashboard
           </h1>
           <p class="text-gray-600">
-            Real-time build and test monitoring with daisyUI + GraphQL
+            Real-time build and test monitoring with Tailwind CSS + GraphQL
           </p>
           <div class="mt-4">
             <a href="/dashboard" class="text-blue-600 hover:text-blue-800 underline font-medium">
@@ -57,7 +57,7 @@ interface BuildCard {
         </div>
 
         <!-- Component showcase -->
-        <app-card title="daisyUI Component Library" description="Fully type-safe, ready to use">
+        <app-card title="Component Library" description="Fully type-safe, ready to use">
           <div class="space-y-4">
             <div>
               <h3 class="font-semibold mb-2">Button Variants</h3>
@@ -80,9 +80,9 @@ interface BuildCard {
               </div>
             </div>
 
-            <div class="text-sm text-gray-600 pt-4 border-t border-base-300">
+            <div class="text-sm text-gray-600 pt-4 border-t border-gray-200">
               <p>
-                <strong>Learn more:</strong> See <code class="bg-base-300 px-2 py-1 rounded">docs/daisyui-developer-guide.md</code>
+                <strong>Learn more:</strong> See <code class="bg-gray-200 px-2 py-1 rounded">frontend/README.md</code>
               </p>
             </div>
           </div>
