@@ -2,22 +2,22 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 
 /**
- * Semantic container component built with daisyUI.
+ * Semantic container component built with Tailwind CSS.
  *
  * Wraps content in a card layout with optional title and description.
- * Provides consistent spacing, shadows, and theming via daisyUI.
+ * Provides consistent spacing, shadows, and theming via Tailwind utilities.
  *
  * **Features**:
  * - OnPush change detection (no performance overhead)
  * - Optional title and description headers
  * - ng-content slot for flexible body content
- * - daisyUI card-factory class (rounded corners, shadow, padding)
+ * - Tailwind card class (rounded corners, shadow, border)
  *
  * **Inputs**:
  * - title?: string — Card header title
  * - description?: string — Subtitle/description text
  *
- * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#cards}
+ * **Design System**: {@link frontend/README.md#cards}
  *
  * **Example**:
  * ```typescript
@@ -37,7 +37,7 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
   imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="card-factory">
+    <div class="card">
       <div class="card-body">
         @if (title) {
           <h2 class="card-title">{{ title }}</h2>

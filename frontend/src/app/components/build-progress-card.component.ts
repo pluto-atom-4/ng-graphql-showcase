@@ -11,7 +11,7 @@ import { BuildStatusUpdate } from '../api/generated/graphql';
 /**
  * BuildProgressCard: Real-time manufacturing workflow status display
  *
- * Combines daisyUI UI + GraphQL subscriptions + Angular signals to display
+ * Combines Tailwind CSS UI + GraphQL subscriptions + Angular signals to display
  * real-time build status with high-frequency update buffering (250ms windows).
  *
  * **Architecture**:

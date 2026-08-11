@@ -47,8 +47,8 @@ describe('CardComponent', () => {
   });
 
 
-  it('should have card-factory class', () => {
+  it('should have card class', () => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.card-factory')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.card')).toBeTruthy();
   });
 });

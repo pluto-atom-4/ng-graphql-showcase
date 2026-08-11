@@ -108,7 +108,13 @@ export default {
       addComponents({
         // Card base styles
         '.card': {
-          '@apply bg-white rounded-lg border border-gray-100 shadow-sm p-6': {},
+          '@apply bg-white rounded-lg border border-gray-100 shadow-sm': {},
+        },
+        '.card-body': {
+          '@apply p-6': {},
+        },
+        '.card-title': {
+          '@apply text-lg font-bold text-gray-900 mb-4': {},
         },
         '.card-hover': {
           '@apply hover:shadow-lg hover:scale-105 transition-transform duration-200': {},

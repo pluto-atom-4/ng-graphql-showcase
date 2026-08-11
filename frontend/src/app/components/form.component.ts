@@ -2,9 +2,9 @@ import { Component, input, output, ChangeDetectionStrategy } from '@angular/core
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 
 /**
- * Reactive form wrapper component using daisyUI styling.
+ * Reactive form wrapper component using Tailwind CSS styling.
  *
- * Wraps Angular Reactive Forms with daisyUI semantic styling and
+ * Wraps Angular Reactive Forms with Tailwind CSS semantic styling and
  * consistent button/validation behavior. Provides ng-content slot
  * for flexible form field composition.
  *
@@ -13,14 +13,14 @@ import { ReactiveFormsModule, FormGroup } from '@angular/forms';
  * - Signals-based inputs (formGroup, submitLabel)
  * - Automatic disable on invalid state
  * - Type-safe reactive forms
- * - daisyUI form layout classes
+ * - Tailwind form layout utilities
  *
  * **Signals**:
  * - @input formGroup: FormGroup (required) — The reactive form group
  * - @input submitLabel: string (default: "Submit") — Button text
  * - @output formSubmit: Emits form.value on valid submit
  *
- * **Design System**: {@link docs/FRONTEND-DESIGN-SYSTEM.md#forms}
+ * **Design System**: {@link frontend/README.md#forms}
  *
  * **Example**:
  * ```typescript
@@ -30,13 +30,13 @@ import { ReactiveFormsModule, FormGroup } from '@angular/forms';
  * });
  *
  * <app-form [formGroup]="myForm" submitLabel="Register" (formSubmit)="onSubmit($event)">
- *   <label class="form-factory">
- *     <span class="label-text">Name *</span>
- *     <input type="text" formControlName="name" class="input input-bordered" />
+ *   <label class="block mb-4">
+ *     <span class="block text-sm font-medium text-gray-900 mb-1">Name *</span>
+ *     <input type="text" formControlName="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
  *   </label>
- *   <label class="form-factory">
- *     <span class="label-text">Email *</span>
- *     <input type="email" formControlName="email" class="input input-bordered" />
+ *   <label class="block mb-4">
+ *     <span class="block text-sm font-medium text-gray-900 mb-1">Email *</span>
+ *     <input type="email" formControlName="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
  *   </label>
  * </app-form>
  * ```
