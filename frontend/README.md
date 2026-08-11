@@ -90,6 +90,22 @@ DashboardContainer
     └── Activity[] (*ngFor or virtual scroll >100)
 ```
 
+### Route Architecture (Lazy Loading)
+
+```
+Home Route (Eager)
+├── Loaded on app startup
+└── 538.05 KB (main bundle)
+
+Dashboard Route (Lazy)
+├── Loaded on first navigation
+├── 57.79 KB (separate chunk)
+└── Only downloaded when needed
+
+Total Initial Load: 618.47 KB
+With Dashboard: 676.26 KB (loaded on-demand)
+```
+
 ### Data Flow
 
 ```
@@ -161,11 +177,17 @@ All components:
 
 ## Performance Metrics
 
-### Build Size
+### Build Size (Phase 7B Optimized)
 
-- **Development:** 2.5 MB (unminified)
-- **Production:** 156 KB gzipped (with tree-shaking)
-- **Bundle Analysis:** Run `pnpm analyze`
+| Metric                    | Size                              | Status                   |
+| ------------------------- | --------------------------------- | ------------------------ |
+| **Initial Bundle (Main)** | 538.05 KB raw / 143.49 KB gzipped | ✓ Optimized              |
+| **Styles**                | 43.05 KB raw / 6.02 KB gzipped    | ✓ -85% (removed daisyUI) |
+| **Lazy Dashboard**        | 57.79 KB raw / 14.51 KB gzipped   | ✓ On-demand only         |
+| **Total Initial**         | 618.47 KB raw / 162.03 KB gzipped | **✓ 30.5% reduction**    |
+| **Development**           | 2.5 MB (unminified)               | —                        |
+
+**Optimization Status:** See [BUNDLE_SIZE_OPTIMIZATION.md](./docs/BUNDLE_SIZE_OPTIMIZATION.md) for details
 
 ### Change Detection
 
@@ -395,6 +417,7 @@ A: Use OnPush, trackBy, unsubscribe, shareReplay, bufferTime
 
 | Version | Date       | Changes                                              |
 | ------- | ---------- | ---------------------------------------------------- |
+| 1.1.0   | 2026-08-10 | Phase 7B: Bundle size optimization (-30.5%, 272 KB)  |
 | 1.0.0   | 2026-08-03 | Initial release with Phase 6 documentation & handoff |
 | 0.5.0   | 2026-07-25 | Phase 5: Accessibility enhancements                  |
 | 0.4.0   | 2026-07-10 | Phase 4: Component library                           |
