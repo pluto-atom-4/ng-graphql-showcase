@@ -18,48 +18,51 @@ import { WorkflowHistory } from '../api/generated/graphql';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="timeline timeline-vertical">
-      @for (event of sortedEvents(); track event.id) {
-        <div class="flex flex-col items-center mb-4">
-          <!-- Timeline marker -->
-          <div class="timeline-middle">
-            <div [class]="eventIconClass(event.eventType)">
-              {{ eventIcon(event.eventType) }}
+    <div class="relative">
+      <!-- Timeline connector line -->
+      <div class="absolute left-5 top-8 bottom-0 w-0.5 bg-gray-300"></div>
+
+      <!-- Timeline events -->
+      <div class="relative space-y-4">
+        @for (event of sortedEvents(); track event.id) {
+          <div class="flex gap-4">
+            <!-- Timeline marker -->
+            <div class="flex-shrink-0">
+              <div [class]="eventIconClass(event.eventType)">
+                {{ eventIcon(event.eventType) }}
+              </div>
+            </div>
+
+            <!-- Timeline content -->
+            <div
+              [class]="
+                event.eventType === 'Failed'
+                  ? 'flex-1 border-2 border-red-400 rounded-lg p-3 bg-red-50'
+                  : 'flex-1 border border-gray-200 rounded-lg p-3 bg-gray-50'
+              "
+            >
+              <time class="text-xs font-mono text-gray-600">
+                {{ event.recordedAt | date: 'HH:mm:ss.SSS' }}
+              </time>
+              <div class="font-bold text-gray-900">{{ event.eventType }}</div>
+              <div class="text-sm text-gray-700">{{ event.activityName }}</div>
+              <div class="text-xs text-gray-500">
+                {{ event.oldStatus }} → {{ event.newStatus }}
+              </div>
+              @if (event.elapsedMilliseconds) {
+                <div class="text-xs text-gray-600">
+                  Duration: {{ event.elapsedMilliseconds }}ms
+                </div>
+              }
+              @if (event.errorMessage) {
+                <div class="text-xs text-red-600 mt-1">
+                  ⚠️ {{ event.errorMessage }}
+                </div>
+              }
             </div>
           </div>
-
-          <!-- Timeline content -->
-          <div
-            [class]="
-              event.eventType === 'Failed'
-                ? 'timeline-end border-2 border-error rounded-lg p-3 bg-error/10'
-                : 'timeline-end border-2 border-neutral/20 rounded-lg p-3 bg-base-100'
-            "
-          >
-            <time class="text-xs font-mono">
-              {{ event.recordedAt | date: 'HH:mm:ss.SSS' }}
-            </time>
-            <div class="font-bold">{{ event.eventType }}</div>
-            <div class="text-sm">{{ event.activityName }}</div>
-            <div class="text-xs text-gray-500">
-              {{ event.oldStatus }} → {{ event.newStatus }}
-            </div>
-            @if (event.elapsedMilliseconds) {
-              <div class="text-xs">
-                Duration: {{ event.elapsedMilliseconds }}ms
-              </div>
-            }
-            @if (event.errorMessage) {
-              <div class="text-xs text-error mt-1">
-                ⚠️ {{ event.errorMessage }}
-              </div>
-            }
-          </div>
-
-          <!-- Timeline border -->
-          <hr />
-        </div>
-      }
+        }
+      </div>
     </div>
   `,
 })
@@ -98,14 +101,14 @@ export class WorkflowTimelineComponent {
     switch (eventType) {
       case 'Failed':
       case 'Faulted':
-        return `${baseClass} bg-error text-white`;
+        return `${baseClass} bg-red-600 text-white`;
       case 'Completed':
-        return `${baseClass} bg-success text-white`;
+        return `${baseClass} bg-green-600 text-white`;
       case 'Started':
       case 'ActivityExecuted':
-        return `${baseClass} bg-info text-white`;
+        return `${baseClass} bg-blue-600 text-white`;
       default:
-        return `${baseClass} bg-neutral text-white`;
+        return `${baseClass} bg-gray-600 text-white`;
     }
   }
 }
