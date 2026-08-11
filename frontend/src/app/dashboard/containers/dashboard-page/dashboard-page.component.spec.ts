@@ -61,6 +61,7 @@ describe('DashboardPageComponent', () => {
       ),
       getBuildsMetrics: vi.fn().mockReturnValue(of(mockMetrics)),
       getBuildActivities: vi.fn().mockReturnValue(of(mockActivities)),
+      getRecentActivitiesAll: vi.fn().mockReturnValue(of(mockActivities)),
       subscribeToStatusChange: vi.fn(),
       subscribeToMetrics: vi.fn(),
     };
@@ -153,16 +154,16 @@ describe('DashboardPageComponent', () => {
       expect(metrics).toBeNull();
     });
 
-    it('should initialize activities$ as empty when no buildId', async () => {
+    it('should fetch recent activities when no buildId provided', async () => {
       component.buildId = undefined;
       fixture.detectChanges();
 
       const activities = await firstValueFrom(component.activities$);
-      expect(activities).toEqual([]);
-      expect(buildServiceMock.getBuildActivities).not.toHaveBeenCalled();
+      expect(activities).toEqual(mockActivities);
+      expect(buildServiceMock.getRecentActivitiesAll).toHaveBeenCalled();
     });
 
-    it('should fetch activities when buildId is provided', async () => {
+    it('should fetch recent activities regardless of buildId', async () => {
       const newFixture = TestBed.createComponent(DashboardPageComponent);
       const newComponent = newFixture.componentInstance;
       newComponent.buildId = 'build-123';
@@ -170,8 +171,8 @@ describe('DashboardPageComponent', () => {
 
       const activities = await firstValueFrom(newComponent.activities$);
       expect(activities).toEqual(mockActivities);
-      expect(buildServiceMock.getBuildActivities).toHaveBeenCalledWith(
-        'build-123',
+      expect(buildServiceMock.getRecentActivitiesAll).toHaveBeenCalledWith(
+        7,
         DASHBOARD_CONSTANTS.DEFAULT_ACTIVITIES_LIMIT
       );
     });
@@ -233,12 +234,13 @@ describe('DashboardPageComponent', () => {
       expect(title?.textContent).toContain('Build Dashboard');
     });
 
-    it('should render metrics section with aria-labelledby', () => {
+    it('should render tabs component with metrics and activities tabs', () => {
       fixture.detectChanges();
-      const section = debugElement.nativeElement.querySelector(
-        'section[aria-labelledby="metrics-heading"]'
-      );
-      expect(section).toBeTruthy();
+      const tabs = debugElement.nativeElement.querySelector('app-tabs');
+      expect(tabs).toBeTruthy();
+
+      const tabButtons = debugElement.nativeElement.querySelectorAll('[role="tab"]');
+      expect(tabButtons.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should render builds section with aria-labelledby', () => {
@@ -321,7 +323,14 @@ describe('DashboardPageComponent', () => {
     it('should have aria-labelledby on section elements', () => {
       fixture.detectChanges();
       const sections = debugElement.nativeElement.querySelectorAll('section[aria-labelledby]');
-      expect(sections.length).toBeGreaterThanOrEqual(2);
+      // Builds section should have aria-labelledby
+      expect(sections.length).toBeGreaterThanOrEqual(1);
+
+      // Verify builds section specifically
+      const buildsSection = debugElement.nativeElement.querySelector(
+        'section[aria-labelledby="builds-heading"]'
+      );
+      expect(buildsSection).toBeTruthy();
     });
 
     it('should have table with proper roles', async () => {
@@ -387,14 +396,14 @@ describe('DashboardPageComponent', () => {
       expect(builds).toEqual([]);
     });
 
-    it('should handle buildId with special characters', () => {
+    it('should always fetch recent activities regardless of buildId value', () => {
       const newFixture = TestBed.createComponent(DashboardPageComponent);
       const newComponent = newFixture.componentInstance;
       newComponent.buildId = 'build-123-abc_def';
       newFixture.detectChanges();
 
-      expect(buildServiceMock.getBuildActivities).toHaveBeenCalledWith(
-        'build-123-abc_def',
+      expect(buildServiceMock.getRecentActivitiesAll).toHaveBeenCalledWith(
+        7,
         expect.any(Number)
       );
     });

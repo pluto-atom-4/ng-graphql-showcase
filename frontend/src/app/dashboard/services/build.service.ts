@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
-import { Observable } from 'rxjs';
-import { map, shareReplay, bufferTime, filter, mergeMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, shareReplay, bufferTime, filter, mergeMap, catchError } from 'rxjs/operators';
 
 export interface Build {
   id: string;
@@ -93,6 +93,25 @@ const BUILDS_METRICS_SUBSCRIPTION = gql`
 const GET_BUILD_ACTIVITIES = gql`
   query GetBuildWorkflowHistory($buildId: UUID!) {
     buildWorkflowHistory(buildId: $buildId) {
+      id
+      workflowInstanceId
+      buildId
+      eventType
+      activityName
+      oldStatus
+      newStatus
+      recordedAt
+      executionStarted
+      executionCompleted
+      elapsedMilliseconds
+      errorMessage
+    }
+  }
+`;
+
+const GET_RECENT_ACTIVITIES = gql`
+  query GetRecentActivities($days: Int) {
+    recentWorkflowHistory(days: $days) {
       id
       workflowInstanceId
       buildId
@@ -262,6 +281,36 @@ export class BuildService {
             .map((dto) => this.mapActivityDtoToActivity(dto))
             .slice(0, limit)
         ),
+        shareReplay(1)
+      );
+  }
+
+  /**
+   * Fetch recent activities across all builds (not filtered by buildId).
+   * Useful for dashboard-wide activity timeline.
+   *
+   * @param days - Number of days of recent activity to fetch (default: 7)
+   * @param limit - Maximum number of activities to return (default: 50)
+   * @returns Observable<Activity[]> emitting array of recent activities
+   *
+   * @example
+   * this.buildService.getRecentActivitiesAll(7, 50).subscribe(activities => {
+   *   this.activities = activities;
+   * });
+   */
+  getRecentActivitiesAll(days = 7, limit = 50): Observable<Activity[]> {
+    return this.apollo
+      .query<{ recentWorkflowHistory: ActivityDto[] }>({
+        query: GET_RECENT_ACTIVITIES,
+        variables: { days }
+      })
+      .pipe(
+        map((result) =>
+          result.data.recentWorkflowHistory
+            .map((dto) => this.mapActivityDtoToActivity(dto))
+            .slice(0, limit)
+        ),
+        catchError(() => of([])),
         shareReplay(1)
       );
   }
