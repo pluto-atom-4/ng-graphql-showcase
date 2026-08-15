@@ -153,9 +153,6 @@ importers:
       color-contrast-checker:
         specifier: ^2.0.1
         version: 2.1.0
-      daisyui:
-        specifier: ^5.0.0
-        version: 5.6.18
       eslint:
         specifier: ^9.39.4
         version: 9.39.5(jiti@1.21.7)
@@ -6394,12 +6391,6 @@ packages:
         integrity: sha512-2z+rWdzbbSZv6/rhtvzvqeZQHrBaqgogqt85sqFNbabZOuFbCVFb8kPeEtZjiKkbrm395irpNKiYeFeLiQnFPg==,
       }
     engines: { node: ">=18" }
-
-  daisyui@5.6.18:
-    resolution:
-      {
-        integrity: sha512-6y9rboRQl8fosnusy/5pg11yp+H0LtK3YdtfS4Vf2QVnaYOKasNdYm6hDxeiT6bwZPdl4WRPzVIlIApdo2ssBg==,
-      }
 
   data-uri-to-buffer@4.0.1:
     resolution:
@@ -16400,8 +16391,6 @@ snapshots:
     dependencies:
       "@asamuzakjp/css-color": 3.2.0
       rrweb-cssom: 0.8.0
-
-  daisyui@5.6.18: {}
 
   data-uri-to-buffer@4.0.1: {}
 

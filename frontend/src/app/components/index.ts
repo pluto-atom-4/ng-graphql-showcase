@@ -1,5 +1,5 @@
 /**
- * Centralized export for all daisyUI-based components
+ * Centralized export for all Tailwind CSS-based components
  *
  * Usage:
  * import { ButtonComponent, CardComponent, FormComponent } from '@app/components';

@@ -11,7 +11,7 @@ import { BuildStatusUpdate } from '../api/generated/graphql';
 /**
  * BuildProgressCard: Real-time manufacturing workflow status display
  *
- * Combines daisyUI UI + GraphQL subscriptions + Angular signals to display
+ * Combines Tailwind CSS UI + GraphQL subscriptions + Angular signals to display
  * real-time build status with high-frequency update buffering (250ms windows).
  *
  * **Architecture**:
@@ -47,7 +47,7 @@ import { BuildStatusUpdate } from '../api/generated/graphql';
 
       <!-- Status details -->
       <div class="mb-4">
-        <details class="collapse collapse-arrow bg-base-200">
+        <details class="collapse bg-gray-100">
           <summary class="collapse-title text-sm font-medium">Status Info</summary>
           <div class="collapse-content">
             <div class="text-xs space-y-1">
@@ -60,7 +60,7 @@ import { BuildStatusUpdate } from '../api/generated/graphql';
       </div>
 
       <!-- Action buttons -->
-      <div class="card-actions gap-2 pt-4 border-t border-base-300">
+      <div class="card-actions gap-2 pt-4 border-t border-gray-200">
         <app-button label="Details" variant="primary" size="sm" (trigger)="openDetails()" />
         <app-button label="View Logs" variant="outline" size="sm" (trigger)="viewLogs()" />
         <app-button label="Cancel Build" variant="ghost" size="sm" [disabled]="isComplete()" (trigger)="cancelBuild()" />

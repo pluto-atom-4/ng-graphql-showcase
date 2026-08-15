@@ -65,8 +65,8 @@ test.describe('Tailwind CSS Verification', () => {
     console.log('Sample rules:', tailwindRules.slice(0, 3));
   });
 
-  test('daisyUI component classes are available', async ({ page }) => {
-    const daisiuiRules = await page.evaluate(() => {
+  test('Custom Tailwind component utilities are available', async ({ page }) => {
+    const customUtilities = await page.evaluate(() => {
       const rules: string[] = [];
       const stylesheets = Array.from(document.styleSheets) as CSSStyleSheet[];
 
@@ -76,13 +76,13 @@ test.describe('Tailwind CSS Verification', () => {
             const rule = sheet.cssRules[i] as CSSRule;
             const text = rule.cssText;
 
-            // Look for daisyUI component classes
+            // Look for custom Tailwind component utilities
             if (
-              text.includes('.btn') ||
-              text.includes('.badge') ||
+              text.includes('.button-') ||
+              text.includes('.badge-base') ||
               text.includes('.modal') ||
               text.includes('.card') ||
-              text.includes('.tabs')
+              text.includes('.collapse')
             ) {
               rules.push(text.substring(0, 80));
             }
@@ -95,10 +95,10 @@ test.describe('Tailwind CSS Verification', () => {
       return rules;
     });
 
-    // Should find daisyUI rules
-    expect(daisiuiRules.length).toBeGreaterThan(0);
-    console.log('daisyUI rules found:', daisiuiRules.length);
-    console.log('Sample daisyUI rules:', daisiuiRules.slice(0, 3));
+    // Should find custom Tailwind utility rules
+    expect(customUtilities.length).toBeGreaterThan(0);
+    console.log('Custom Tailwind utilities found:', customUtilities.length);
+    console.log('Sample utilities:', customUtilities.slice(0, 3));
   });
 
   test('body element has Tailwind classes applied', async ({ page }) => {
@@ -186,8 +186,8 @@ test.describe('Tailwind CSS Verification', () => {
     await detailsBtn.click({ timeout: 10000 });
     await page.locator('.modal-box').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Find badges
-    const badges = page.locator('.badge');
+    // Find badges (now use app-badge selector since we render badges as <span> with badge-base class)
+    const badges = page.locator('[class*="badge-base"]');
     const badgeCount = await badges.count();
 
     if (badgeCount > 0) {

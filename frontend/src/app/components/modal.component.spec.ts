@@ -100,7 +100,7 @@ describe('ModalComponent', () => {
       emitted = true;
     });
 
-    const cancelBtn = fixture.nativeElement.querySelector('.btn-ghost');
+    const cancelBtn = fixture.nativeElement.querySelector('.button-secondary');
     cancelBtn.click();
 
     expect(emitted).toBe(true);
@@ -113,7 +113,7 @@ describe('ModalComponent', () => {
       emitted = true;
     });
 
-    const confirmBtn = fixture.nativeElement.querySelector('.btn-primary');
+    const confirmBtn = fixture.nativeElement.querySelector('.button-primary');
     confirmBtn.click();
 
     expect(emitted).toBe(true);
