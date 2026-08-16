@@ -124,8 +124,9 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 | AGENTS.md                         | Agent onboarding + skill discovery               | 1.4.0   | 2026-08-16   | ✅        |
 | SKILLS.md                         | Skill automation + governance                    | 1.2.0   | 2026-08-16   | ✅        |
 | .github/copilot-instructions.md   | GitHub Copilot agent guide                       | 1.3.0   | 2026-08-16   | ✅        |
-| .claude/settings.json             | Global permissions + hooks                       | —       | 2026-08-09   | ✅        |
-| .claude/settings.local.json       | Local overrides (machine-specific)               | —       | 2026-08-15   | ✅        |
+| .claude/settings.json             | Global permissions + hooks                       | —       | 2026-08-16   | ✅        |
+| .claude/settings.local.json       | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
+| .claude/PERMISSIONS-GOVERNANCE.md | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
 | .claude/skills/INDEX.md           | Master skill catalog + metadata schema           | —       | 2026-08-16   | ✅        |
 | .claude/CONTEXT-MANAGEMENT.md     | Token budget + context compression               | —       | 2026-07-19   | Reference |
 | .claude/MULTI_AGENT_GOVERNANCE.md | Multi-agent orchestration rules                  | —       | 2026-08-09   | Reference |
@@ -133,6 +134,59 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 | .claude/rules/                    | Domain-specific architectural patterns (6 files) | —       | 2026-08-01   | Reference |
 
 **Update Frequency**: Primary files (CLAUDE.md, AGENTS.md, SKILLS.md, copilot-instructions.md) reviewed monthly; rules reviewed when architecture changes.
+
+---
+
+## Environment Variables for AI Tool Configuration
+
+**Canonical Source**: `.claude/settings.local.json` (`environment` section)
+
+### Agent-Level Tuning (Task Complexity)
+
+Set before spawning agent or invoking Claude Code CLI:
+
+| Variable                   | Values         | Purpose                                              | Default |
+| -------------------------- | -------------- | ---------------------------------------------------- | ------- |
+| `MAX_THINKING_TOKENS`      | `auto`\|`int`  | Adaptive thinking budget (auto scales per task type) | `auto`  |
+| `CLAUDE_CODE_EFFORT_LEVEL` | `auto`\|`high` | Task complexity hint (guides reasoning depth)        | `auto`  |
+| `CLAUDE_CODE_TIMEOUT`      | `int` (min)    | Agent timeout before checkpoint                      | 30      |
+
+**Examples**:
+
+```bash
+# Architectural task (use maximum reasoning)
+MAX_THINKING_TOKENS=8000 CLAUDE_CODE_EFFORT_LEVEL=high claude
+
+# Quick lint fix (minimize overhead)
+MAX_THINKING_TOKENS=1000 CLAUDE_CODE_EFFORT_LEVEL=auto claude
+
+# Adaptive (recommended for most tasks)
+MAX_THINKING_TOKENS=auto claude
+```
+
+### Development Environment (Static)
+
+Set in `.claude/settings.local.json` `environment` section (automatically applied):
+
+| Variable             | Value                   | Purpose                             |
+| -------------------- | ----------------------- | ----------------------------------- |
+| `DOTNET_ENVIRONMENT` | `Development`           | Local dev (not Production)          |
+| `ASPNETCORE_URLS`    | `http://localhost:5000` | Backend API port                    |
+| `NODE_ENV`           | `development`           | Frontend dev mode (hot reload)      |
+| `DOCKER_BUILDKIT`    | `1`                     | Faster Docker builds (cache layers) |
+
+**Precedence** (highest to lowest):
+
+1. CLI env vars (set before invoking agent): `MAX_THINKING_TOKENS=8000 claude`
+2. `.claude/settings.local.json` environment section
+3. System environment variables
+4. Hard defaults in CLAUDE.md
+
+### Security Notes
+
+- **Never commit secrets** to `.claude/settings.json` or `.claude/settings.local.json`
+- Reference `.env.local` (gitignored) for sensitive values
+- PreToolUse hooks block `export [A-Z_]*=` patterns (prevent env injection)
 
 ---
 
