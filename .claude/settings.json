@@ -14,7 +14,6 @@
       "Glob",
       "Grep",
       "Edit(CLAUDE.md|AGENTS.md|SKILLS.md|.claude/**/*.md|.github/**/*.md|frontend/src/**/*|backend/src/**/*)",
-      "Write(CLAUDE.md|AGENTS.md|SKILLS.md|.claude/**/*.md|.github/**/*.md|frontend/src/**/*|backend/src/**/*)",
       "WebFetch(domain:docs.elsaworkflows.io)",
       "WebFetch(domain:api.github.com)",
       "Skill(codegen-sync)",
