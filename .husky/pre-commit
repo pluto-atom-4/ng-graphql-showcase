@@ -1,7 +1,12 @@
+#!/bin/bash
+# Ensure Node.js environment is available for git hooks
+export PATH="$(npm config get prefix)/bin:$PATH"
+export PATH="./node_modules/.bin:$PATH"
+
 # Step 1: Enforce feature branch workflow (pre-commit-enforce skill)
 SKILL_ROOT="$(git rev-parse --show-toplevel)/.claude/skills/pre-commit-enforce"
 if [ -f "$SKILL_ROOT/src/helpers.sh" ]; then
-  source "$SKILL_ROOT/src/helpers.sh"
+  . "$SKILL_ROOT/src/helpers.sh"
   BRANCH=$(git rev-parse --abbrev-ref HEAD)
   PROTECTED=$(get_protected_branches)
 
