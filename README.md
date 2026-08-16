@@ -109,7 +109,7 @@ This repository uses a **Progressive Disclosure** model for AI agent guidance, m
 
 ```
 root/
-├── CLAUDE.md                  # Core behaviors & guardrails (<200 lines)
+├── CLAUDE.md                  # Core behaviors & guardrails (<40KB resident memory)
 ├── DESIGN.md                  # Visual consistency & UI boundaries (read-on-demand)
 ├── SKILLS.md                  # Procedural workflow automation index
 ├── .claude/
@@ -136,7 +136,7 @@ root/
 
 - Project overview, stack, critical guardrails
 - Quick-start commands + phase-based ordering
-- <200 lines; agents load first
+- Always-loaded; budget: <40KB total (≈10k tokens); avoid derivable content
 
 **Layer 2: Visual & Behavioral Guidance**
 
@@ -159,7 +159,7 @@ root/
 **Layer 5: Orchestration** (`.claude/settings.json`)
 
 - Model tier pinning, permission layers
-- Instruction budget tracking (max 200 lines CLAUDE.md)
+- Instruction budget tracking (CLAUDE.md: <40KB; measure by byte size, not line count)
 - Friction log file reference for maintenance
 
 **Layer 6: Maintenance** (`.claude/friction-log.md`)
