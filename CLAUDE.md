@@ -207,13 +207,13 @@ Set in `.claude/settings.local.json` `environment` section (automatically applie
 
 ## Rules Router (Modular Patterns by Domain)
 
-**Path-specific rules auto-loaded when modifying relevant files** (see [.github/copilot/rules/](./.github/copilot/rules/) in Phase 3):
+**Path-specific rules auto-loaded when modifying relevant files**. Source rules in [.claude/rules/](./.claude/rules/); Copilot-optimized versions in [.github/copilot/rules/](./.github/copilot/rules/):
 
-| Rule File                                                              | Domain       | Key Topics                                                           |
-| ---------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
-| [accessibility-patterns.md](./.claude/rules/accessibility-patterns.md) | Frontend/UX  | WCAG 2.1 Level AA, keyboard nav, ARIA, focus management              |
-| [database-rules.md](./.claude/rules/database-rules.md)                 | Data Layer   | Transactions, real-DB testing, Dapper, EF Core integration           |
-| [backend-patterns.md](./.claude/rules/backend-patterns.md)             | ASP.NET Core | EF Core, DataLoaders, projections, testing strategy                  |
-| [frontend-patterns.md](./.claude/rules/frontend-patterns.md)           | Angular 19   | OnPush detection, trackBy, type-safety pipeline, testing             |
-| [graphql-patterns.md](./.claude/rules/graphql-patterns.md)             | GraphQL      | Query depth (≤5 layers), entity exposure, type-safety, subscriptions |
-| [workflow-integration.md](./.claude/rules/workflow-integration.md)     | Elsa v3.5.3  | Activities, state management, async patterns, Phase 5c status        |
+| Rule File (Source)                                                     | Domain       | Copilot Version                                                                                      | Key Topics                                                           |
+| ---------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [accessibility-patterns.md](./.claude/rules/accessibility-patterns.md) | Frontend/UX  | [.github/copilot/rules/accessibility-patterns.md](./.github/copilot/rules/accessibility-patterns.md) | WCAG 2.1 Level AA, keyboard nav, ARIA, focus management              |
+| [database-rules.md](./.claude/rules/database-rules.md)                 | Data Layer   | [.github/copilot/rules/database-rules.md](./.github/copilot/rules/database-rules.md)                 | Transactions, real-DB testing, Dapper, EF Core integration           |
+| [backend-patterns.md](./.claude/rules/backend-patterns.md)             | ASP.NET Core | [.github/copilot/rules/backend-patterns.md](./.github/copilot/rules/backend-patterns.md)             | EF Core, DataLoaders, projections, testing strategy                  |
+| [frontend-patterns.md](./.claude/rules/frontend-patterns.md)           | Angular 19   | [.github/copilot/rules/frontend-patterns.md](./.github/copilot/rules/frontend-patterns.md)           | OnPush detection, trackBy, type-safety pipeline, testing             |
+| [graphql-patterns.md](./.claude/rules/graphql-patterns.md)             | GraphQL      | [.github/copilot/rules/graphql-patterns.md](./.github/copilot/rules/graphql-patterns.md)             | Query depth (≤5 layers), entity exposure, type-safety, subscriptions |
+| [workflow-integration.md](./.claude/rules/workflow-integration.md)     | Elsa v3.5.3  | [.github/copilot/rules/workflow-integration.md](./.github/copilot/rules/workflow-integration.md)     | Activities, state management, async patterns, Phase 5c status        |

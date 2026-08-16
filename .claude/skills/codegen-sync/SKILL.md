@@ -2,6 +2,10 @@
 name: Codegen Sync
 description: Synchronize GraphQL schema and generate type-safe frontend code
 trigger: "pnpm codegen or after backend schema changes"
+applies_to:
+  - "backend/src/**/*.graphql"
+  - "schema.graphql"
+  - "frontend/src/**/*.graphql"
 atomic: true
 scope: schema.graphql → graphql.ts pipeline
 ---

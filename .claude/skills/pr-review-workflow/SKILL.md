@@ -2,6 +2,9 @@
 name: PR Review Workflow
 description: Automated PR review with code quality, security, and testing checks
 trigger: "/code-review pr-review-workflow"
+applies_to:
+  - "**/.git/refs/heads/**"
+  - "**/.github/workflows/**"
 atomic: true
 scope: single-file or cross-file diff review
 ---

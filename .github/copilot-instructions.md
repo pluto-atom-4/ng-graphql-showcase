@@ -260,6 +260,36 @@ Task 4 (SKILLS.md + graph) — uses INDEX.md from Task 3
 
 ---
 
+## Path-Specific Rule Auto-Loading (Phase 3)
+
+**Copilot can auto-load domain-specific rules based on file paths being edited.**
+
+### How It Works
+
+- Each rule file in [`.github/copilot/rules/`](../copilot/rules/) has `applies_to:` glob patterns
+- When you edit a file matching a pattern, the rule auto-appends to context
+- Skills in `.claude/skills/*/SKILL.md` also have `applies_to:` patterns for auto-detection
+
+### Rule Files Auto-Loaded By Domain
+
+| File Path Edit                                   | Auto-Loaded Rules                               |
+| ------------------------------------------------ | ----------------------------------------------- |
+| `backend/src/**/*.cs`                            | backend-patterns.md, database-rules.md          |
+| `frontend/src/**/*.ts`, `frontend/src/**/*.html` | frontend-patterns.md, accessibility-patterns.md |
+| `**/*.graphql`, `backend/**/*Query*.cs`          | graphql-patterns.md, backend-patterns.md        |
+| `.husky/**`, `.git/hooks/pre-commit`             | pre-commit-enforce skill                        |
+| `backend/src/**/*Workflow*.cs`                   | workflow-integration.md                         |
+
+### Manual Control
+
+- `/rule skip <name>` — Disable rule for this session
+- `/rule force <name>` — Force-load rule (even if path doesn't match)
+- `/rule list` — Show currently loaded rules
+
+**Full documentation**: See [.github/copilot/rules/README.md](../copilot/rules/README.md) for precedence rules, troubleshooting, and tech-stack mapping.
+
+---
+
 ## Debugging Quick Reference
 
 | Issue               | Root Cause                     | Fix                                |

@@ -9,14 +9,14 @@
 
 **Complete mapping of trigger keywords → skill files:**
 
-| Skill Name            | Trigger Keywords                                                           | Compatible With                            | Depends On | Related Skills      | Path                                                                          |
-| --------------------- | -------------------------------------------------------------------------- | ------------------------------------------ | ---------- | ------------------- | ----------------------------------------------------------------------------- |
-| `codegen-sync`        | `codegen`, `schema change`, `graphql regenerate`, `type-safe sync`         | claude-code, github-copilot, claude-agents | —          | migration-generator | [.claude/skills/codegen-sync/SKILL.md](./codegen-sync/SKILL.md)               |
-| `lsp-setup`           | `LSP`, `IDE setup`, `language server`                                      | claude-code, github-copilot                | —          | —                   | [.claude/skills/lsp-setup/SKILL.md](./lsp-setup/SKILL.md)                     |
-| `migration-generator` | `migration`, `DB change`, `EF Core`, `entity change`                       | claude-code, github-copilot, claude-agents | —          | codegen-sync        | [.claude/skills/migration-generator/SKILL.md](./migration-generator/SKILL.md) |
-| `performance-audit`   | `performance audit`, `profile`, `lighthouse`, `bundle size`, `memory leak` | claude-code, claude-agents                 | —          | —                   | [.claude/skills/performance-audit/SKILL.md](./performance-audit/SKILL.md)     |
-| `pr-review-workflow`  | `review PR`, `PR review`, `code review`, `audit branch`                    | claude-code, github-copilot, claude-agents | —          | —                   | [.claude/skills/pr-review-workflow/SKILL.md](./pr-review-workflow/SKILL.md)   |
-| `pre-commit-enforce`  | `pre-commit`, `validation`, `lint check`, `enforce hooks`                  | claude-code                                | —          | —                   | [.claude/skills/pre-commit-enforce/SKILL.md](./pre-commit-enforce/SKILL.md)   |
+| Skill Name            | Trigger Keywords                                                           | Applies To (Auto-Load)                                                | Compatible With                            | Depends On | Related Skills      |
+| --------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------ | ---------- | ------------------- |
+| `codegen-sync`        | `codegen`, `schema change`, `graphql regenerate`, `type-safe sync`         | `backend/src/**/*.graphql`, `schema.graphql`, `frontend/**/*.graphql` | claude-code, github-copilot, claude-agents | —          | migration-generator |
+| `lsp-setup`           | `LSP`, `IDE setup`, `language server`                                      | `.vscode/**`, `.idea/**`, `tsconfig.json`                             | claude-code, github-copilot                | —          | —                   |
+| `migration-generator` | `migration`, `DB change`, `EF Core`, `entity change`                       | `backend/src/**/*.cs`, `backend/**/*Migration*.cs`                    | claude-code, github-copilot, claude-agents | —          | codegen-sync        |
+| `performance-audit`   | `performance audit`, `profile`, `lighthouse`, `bundle size`, `memory leak` | `frontend/src/**/*.ts`, `frontend/src/**/*.html`                      | claude-code, claude-agents                 | —          | —                   |
+| `pr-review-workflow`  | `review PR`, `PR review`, `code review`, `audit branch`                    | `**/.git/refs/heads/**`, `**/.github/workflows/**`                    | claude-code, github-copilot, claude-agents | —          | —                   |
+| `pre-commit-enforce`  | `pre-commit`, `validation`, `lint check`, `enforce hooks`                  | `.husky/**`, `.git/hooks/pre-commit`                                  | claude-code                                | —          | —                   |
 
 ---
 
