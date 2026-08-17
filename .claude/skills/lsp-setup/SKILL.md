@@ -1,11 +1,22 @@
 ---
 description: Enable code intelligence (go-to-definition, find-references, hover, type info) for any programming language by installing and configuring an LSP server for Copilot CLI. Detects the OS, installs the right server, and generates the JSON configuration (user-level or repo-level). Use when you need deeper code understanding and no LSP server is configured, or when the user asks to set up, install, or configure an LSP server.
+name: lsp-setup
+trigger:
+  - "LSP"
+  - "IDE setup"
+  - "language server"
+  - "enable code intelligence"
+  - "go-to-definition"
 metadata:
   github-path: skills/lsp-setup
   github-ref: refs/heads/main
   github-repo: https://github.com/github/awesome-copilot
   github-tree-sha: 6d96e7a0ae4fa8b34e6415564661ce0d5c365dfa
-name: lsp-setup
+applies_to:
+  - ".vscode/**"
+  - ".idea/**"
+  - "tsconfig.json"
+  - "**/csharp-language-server.json"
 ---
 
 # LSP Setup for GitHub Copilot CLI

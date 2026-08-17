@@ -1,8 +1,8 @@
 ---
 name: copilot-instructions
 description: Cross-AI guide for GitHub Copilot and Claude Code CLI in full-stack monorepo
-version: 1.2.0
-last_updated: 2026-08-09
+version: 1.3.0
+last_updated: 2026-08-16
 applies_to:
   - "**/*.ts"
   - "**/*.cs"
@@ -30,7 +30,7 @@ categories:
 
 # Copilot Instructions for ng-graphql-playground
 
-**Version:** 1.2.0 | **Last Updated:** 2026-08-09  
+**Version:** 1.3.0 | **Last Updated:** 2026-08-16  
 **Type-safe full-stack monorepo** for long-running manufacturing workflows.
 
 ## Project Stack
@@ -175,6 +175,120 @@ When reviewing PRs, Copilot must:
 4. Include verdict, file analysis, and verification checklist
 
 **Procedure location**: `.github/copilot/rules/pr-review-workflow.md`
+
+## WRAP Approach (Issue-to-PR Workflow)
+
+Optimal AI-assisted development follows **Write, Refine, Atomic, Pair** pattern to minimize token waste and maximize code quality.
+
+### Write Issues with Clarity
+
+**Format**: `[Issue Title] — [1-line problem statement] — [Acceptance Criteria: A, B, C]`
+
+Unambiguous acceptance criteria are testable and prevent rework:
+
+- ❌ Bad: "Improve TypeScript type checking" (vague, immeasurable)
+- ✅ Good: "Fix type error in `BuildService.ts:42` where `parts` array returns `unknown[]` instead of `Part[]`" (specific, actionable)
+
+**Real example from Phase 5**:
+
+```markdown
+**Issue**: Reduce Lighthouse CLS (Cumulative Layout Shift) below 0.1
+
+**Acceptance Criteria**:
+
+- [ ] Reduce CLS to <0.1 on desktop (Lighthouse audit)
+- [ ] Verify no layout shifts when builds list updates via subscription
+- [ ] Performance test: 250ms subscription buffer handles 10+ builds/sec
+```
+
+### Refine Instructions with Specificity
+
+Convert vague requests into precise technical requirements:
+
+- Input: "Make the app faster"
+- Refined: "Reduce bundle size from 485KB to <350KB by removing unused @angular packages from frontend build"
+- Metrics: Webpack Bundle Analyzer report, `pnpm build --stats` output
+
+**Why specificity reduces token waste**:
+
+- Agent understands exact success criteria → fewer iterations
+- Specific metrics prevent "good enough" implementations
+- Reproducible results enable Phase-to-Phase comparison
+
+**Real examples from this repo**:
+
+1. Phase 4 (Tailwind migration): "Replace daisyUI buttons with Tailwind utilities, maintain 44×44px touch targets"
+2. Phase 5 (OnPush): "Convert 42 components to ChangeDetectionStrategy.OnPush, verify zero performance regressions"
+3. Phase 5c (Elsa workflows): "Implement BuildProcessWorkflow state machine with 5 activities, validate against factory-floor requirements"
+
+### Atomic Tasks with Explicit Dependencies
+
+**Definition**: Task is "atomic" if it can be completed in <1 hour and doesn't block other concurrent tasks.
+
+**Dependency graph example** (Phase 1 of this issue):
+
+```
+Task 1 (CLAUDE.md v3.3.0)
+   ↓
+Task 2 (copilot-instructions.md v1.3.0) — depends on Task 1 references
+   ↓
+Task 3 (AGENTS.md + INDEX.md) — creates .claude/skills/INDEX.md
+   ↓
+Task 4 (SKILLS.md + graph) — uses INDEX.md from Task 3
+```
+
+**Atomic task guidelines**:
+
+- Single file modification preferred
+- Multi-file OK if <5 files and tight coupling
+- Document blockers (e.g., "blocks Phase 2 permissions work")
+- Estimate effort conservatively (add 20% buffer)
+
+### Pair with Agent Orchestration Rules
+
+**Match task pattern → recommended agent/skill**:
+
+| Task Pattern              | Recommended Agent         | Trigger Keyword                  | Example                                         |
+| ------------------------- | ------------------------- | -------------------------------- | ----------------------------------------------- |
+| Multi-file architecture   | Plan agent                | "design this", "architect"       | "Design Phase 2 permissions layer"              |
+| 1-2 file edit (bounded)   | caveman:cavecrew-builder  | "fix typo", "refactor", "rename" | "Rename `BuildId` → `BuildPK` in 2 files"       |
+| Read-only code search     | Explore agent             | "find", "locate", "search"       | "Locate all uses of deprecated `@Injectable()`" |
+| PR review (diff analysis) | caveman:cavecrew-reviewer | "review PR", "audit branch"      | "Review branch for security issues"             |
+| General task              | claude (general-purpose)  | "help me", "implement"           | "Implement error-handling middleware"           |
+
+**Orchestration rule**: Agents inherit `.claude/rules/` patterns automatically. No manual rule loading required.
+
+---
+
+## Path-Specific Rule Auto-Loading (Phase 3)
+
+**Copilot can auto-load domain-specific rules based on file paths being edited.**
+
+### How It Works
+
+- Each rule file in [`.github/copilot/rules/`](../copilot/rules/) has `applies_to:` glob patterns
+- When you edit a file matching a pattern, the rule auto-appends to context
+- Skills in `.claude/skills/*/SKILL.md` also have `applies_to:` patterns for auto-detection
+
+### Rule Files Auto-Loaded By Domain
+
+| File Path Edit                                   | Auto-Loaded Rules                               |
+| ------------------------------------------------ | ----------------------------------------------- |
+| `backend/src/**/*.cs`                            | backend-patterns.md, database-rules.md          |
+| `frontend/src/**/*.ts`, `frontend/src/**/*.html` | frontend-patterns.md, accessibility-patterns.md |
+| `**/*.graphql`, `backend/**/*Query*.cs`          | graphql-patterns.md, backend-patterns.md        |
+| `.husky/**`, `.git/hooks/pre-commit`             | pre-commit-enforce skill                        |
+| `backend/src/**/*Workflow*.cs`                   | workflow-integration.md                         |
+
+### Manual Control
+
+- `/rule skip <name>` — Disable rule for this session
+- `/rule force <name>` — Force-load rule (even if path doesn't match)
+- `/rule list` — Show currently loaded rules
+
+**Full documentation**: See [.github/copilot/rules/README.md](../copilot/rules/README.md) for precedence rules, troubleshooting, and tech-stack mapping.
+
+---
 
 ## Debugging Quick Reference
 

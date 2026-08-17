@@ -2,6 +2,10 @@
 name: Migration Generator
 description: Generate and apply EF Core migrations safely with validation
 trigger: "/migrate <name>"
+applies_to:
+  - "backend/src/**/*.cs"
+  - "backend/**/*Migration*.cs"
+  - "backend/**/*.csproj"
 atomic: true
 scope: database schema changes only
 ---

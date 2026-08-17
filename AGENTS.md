@@ -1,6 +1,6 @@
 # AGENTS.md — Autonomous Agent Onboarding
 
-**Version:** 1.3.0 | **Last Updated:** 2026-07-19
+**Version:** 1.4.0 | **Last Updated:** 2026-08-16
 
 ## Project Overview
 
@@ -81,6 +81,93 @@ pnpm docker:clean               # Remove volumes
 ```
 User mentions keyword → Harness checks trigger: list → Auto-invoke matching skill
 (Example: user says "codegen" → triggers codegen-sync automatically)
+```
+
+---
+
+## Skills Metadata Schema
+
+**YAML Frontmatter Standard** for all `.claude/skills/<name>/SKILL.md` files:
+
+```yaml
+---
+name: skill-name # Kebab-case, matches directory name
+description: One-line purpose # What this skill accomplishes
+version: X.Y.Z # Semantic versioning (independent of SKILLS.md)
+last_updated: YYYY-MM-DD # ISO 8601 date
+trigger: # Auto-discovery keywords
+  - keyword1
+  - keyword2
+  - "longer phrase"
+applies_to: # Optional: file pattern globs
+  - "**/*.ts"
+  - "backend/**"
+dependencies: # Optional: prerequisite skills
+  - skill-name-1
+  - skill-name-2
+related_skills: # Optional: suggested complementary skills
+  - skill-name-1
+compatible_with: # Tool compatibility
+  - claude-code
+  - github-copilot
+  - claude-agents
+---
+```
+
+**Schema Details**:
+
+| Field             | Required | Type   | Example                                     | Notes                                                            |
+| ----------------- | -------- | ------ | ------------------------------------------- | ---------------------------------------------------------------- |
+| `name`            | ✅       | string | `codegen-sync`                              | Kebab-case; must match directory name exactly                    |
+| `description`     | ✅       | string | "Regenerate graphql.ts from schema.graphql" | One-line summary; no markup                                      |
+| `version`         | ✅       | string | `1.0.0`                                     | Semantic versioning; independent of SKILLS.md version            |
+| `last_updated`    | ✅       | date   | `2026-08-16`                                | ISO 8601; updated when skill changes                             |
+| `trigger`         | ✅       | array  | `["codegen", "schema change"]`              | Keywords to activate skill auto-discovery                        |
+| `applies_to`      | ❌       | array  | `["**/*.ts"]`                               | Glob patterns; used for path-specific rule auto-append (Phase 3) |
+| `dependencies`    | ❌       | array  | `["lsp-setup"]`                             | Skills that must run before this one                             |
+| `related_skills`  | ❌       | array  | `["migration-generator"]`                   | Skills to suggest alongside this one                             |
+| `compatible_with` | ✅       | array  | `["claude-code", "github-copilot"]`         | Tool compatibility matrix                                        |
+
+**Auto-Discovery Rules**:
+
+1. **Keyword Scanning**: Harness scans all `.claude/skills/*/SKILL.md` files for YAML frontmatter on initialization
+2. **Trigger Matching**: When user input contains any keyword from `trigger:` array, skill is auto-suggested/invoked
+3. **Registry Building**: Master registry built in `.claude/skills/INDEX.md` (skill name → trigger keywords mapping)
+4. **Case Insensitivity**: Keyword matching is case-insensitive ("codegen" matches "Codegen", "CODEGEN")
+5. **Longest-Match Priority**: If multiple skills match, harness selects skill with longest trigger phrase match
+
+**Example: codegen-sync Metadata**
+
+```yaml
+---
+name: codegen-sync
+description: Regenerate graphql.ts from schema.graphql after backend schema changes
+version: 1.0.1
+last_updated: 2026-08-09
+trigger:
+  - codegen
+  - schema change
+  - graphql regenerate
+  - "type-safe sync"
+applies_to:
+  - "backend/**/*.cs"
+  - "**/*.graphql"
+dependencies: []
+related_skills:
+  - migration-generator
+compatible_with:
+  - claude-code
+  - github-copilot
+  - claude-agents
+---
+```
+
+**Existing Skills Conformance**: All 6 skills in `.claude/skills/` conform to this schema; verify with:
+
+```bash
+find .claude/skills/*/SKILL.md -type f | while read f; do
+  head -20 "$f" | grep -q "^---" && echo "✅ $f" || echo "❌ $f missing frontmatter"
+done
 ```
 
 ---

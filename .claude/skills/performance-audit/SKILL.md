@@ -9,6 +9,10 @@ trigger:
     "bundle size",
     "change detection",
   ]
+applies_to:
+  - "frontend/src/**/*.ts"
+  - "frontend/src/**/*.html"
+  - "frontend/src/**/*.scss"
 atomic: false
 scope: frontend/src → profiling reports
 ---

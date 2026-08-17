@@ -2,7 +2,25 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "respectGitignore": true,
   "permissions": {
-    "allow": ["Bash(npm *)", "Bash(dotnet *)", "Read", "Edit", "Write"],
+    "allow": [
+      "Bash(npm *)",
+      "Bash(dotnet *)",
+      "Bash(pnpm *)",
+      "Bash(pnpm codegen)",
+      "Bash(pnpm test)",
+      "Bash(pnpm build)",
+      "Bash(pnpm lint)",
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit(CLAUDE.md|AGENTS.md|SKILLS.md|.claude/**/*.md|.github/**/*.md|frontend/src/**/*|backend/src/**/*)",
+      "WebFetch(domain:docs.elsaworkflows.io)",
+      "WebFetch(domain:api.github.com)",
+      "Skill(codegen-sync)",
+      "Skill(migration-generator)",
+      "Skill(pr-review-workflow)",
+      "Skill(performance-audit)"
+    ],
     "defaultMode": "default"
   },
   "model": "claude-haiku-4-5-20251001",
@@ -28,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cmd=$(jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE 'rm -rf|git reset --hard|git push --force|git clean -fd'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Destructive command blocked. Requires explicit user confirmation. Run with: ! <command>\"}}'; fi"
+            "command": "cmd=$(jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE 'sudo|rm -rf /|curl.*(password|secret|token)|git reset --hard|git push --force|git clean -fd'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"High-risk command blocked. Requires explicit override. Run with: ! <command>\"}}'; fi"
           }
         ]
       },
@@ -43,6 +61,15 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); exit_code=$(jq -r '.tool_response.exitCode // \"0\"'); [ -n \"$cmd\" ] && echo \"$(date -Iseconds)|Bash|$cmd|allowed|$exit_code\" >> .claude/tool-invocations.log"
+          }
+        ]
+      },
       {
         "matcher": "Write|Edit",
         "hooks": [
