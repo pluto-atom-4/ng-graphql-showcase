@@ -1,7 +1,7 @@
 # CLAUDE.md — AI Execution Framework
 
-**Version:** 3.3.0 | **Last Updated:** 2026-08-16  
-**Canonical:** [AGENTS.md](./AGENTS.md) | **Rules:** [.claude/rules/](./.claude/rules/) | **Skills Index:** [.claude/skills/INDEX.md](./.claude/skills/INDEX.md)
+**Version:** 3.4.0 | **Last Updated:** 2026-08-22  
+**Canonical Sources:** [AGENTS.md](./AGENTS.md) (agent schema) | [SKILLS.md](./SKILLS.md) (skill discovery) | [.claude/rules/](./.claude/rules/) (patterns) | [.claude/skills/INDEX.md](./.claude/skills/INDEX.md) (skill metadata)
 
 ---
 
@@ -81,29 +81,9 @@ See [.claude/TWO-GATE-SYSTEM.md](./.claude/TWO-GATE-SYSTEM.md) for detailed gate
 
 ---
 
-## Skill Discovery & Auto-Invocation
+## Skill Discovery
 
-**Location**: `.claude/skills/` | **Master Index**: [.claude/skills/INDEX.md](./.claude/skills/INDEX.md)
-
-**Skills Catalog** (Trigger keywords auto-discovered from YAML frontmatter):
-
-| Skill                 | Trigger Keywords                                 | Use Case                                                 |
-| --------------------- | ------------------------------------------------ | -------------------------------------------------------- |
-| `codegen-sync`        | `codegen`, `schema change`, `graphql regenerate` | Backend schema changes → frontend type-safe regeneration |
-| `lsp-setup`           | `LSP`, `IDE setup`, `language server`            | Configure code intelligence (IDE extensions)             |
-| `migration-generator` | `migration`, `DB change`, `EF Core`              | Create + validate Entity Framework Core migrations       |
-| `performance-audit`   | `performance audit`, `profile`, `lighthouse`     | Lighthouse + bundle analysis profiling                   |
-| `pr-review-workflow`  | `review PR`, `PR review`, `code review`          | Automated PR review (quality, security, tests)           |
-| `pre-commit-enforce`  | `pre-commit`, `validation`, `lint check`         | Pre-commit hook validation (format + type check)         |
-
-**Auto-Discovery Mechanism**:
-
-1. **Skill Registration**: Each skill has `.claude/skills/<name>/SKILL.md` with YAML frontmatter
-2. **Keyword Scanning**: Harness scans `trigger:` array in frontmatter → builds keyword registry
-3. **User Invocation**: Type skill name or trigger keyword → harness locates + executes skill
-4. **Skill Parameters**: Optional configuration in `.claude/settings.json` `skillOverrides` section
-
-**Adding New Skills**: Create `.claude/skills/<name>/SKILL.md` with YAML schema (see [.claude/skills/INDEX.md](./.claude/skills/INDEX.md#schema) for template).
+See [SKILLS.md](./SKILLS.md) for canonical skill discovery mechanism, auto-invocation workflow, and metadata schema. Trigger keywords auto-discovered from `.claude/skills/<name>/SKILL.md` YAML frontmatter.
 
 ---
 
@@ -120,10 +100,10 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 
 | File                              | Purpose                                          | Version | Last Updated | Canonical |
 | --------------------------------- | ------------------------------------------------ | ------- | ------------ | --------- |
-| CLAUDE.md                         | AI execution framework + best practices          | 3.3.0   | 2026-08-16   | ✅        |
-| AGENTS.md                         | Agent onboarding + skill discovery               | 1.4.0   | 2026-08-16   | ✅        |
-| SKILLS.md                         | Skill automation + governance                    | 1.2.0   | 2026-08-16   | ✅        |
-| .github/copilot-instructions.md   | GitHub Copilot agent guide                       | 1.3.0   | 2026-08-16   | ✅        |
+| CLAUDE.md                         | AI execution framework + best practices          | 3.4.0   | 2026-08-22   | ✅        |
+| AGENTS.md                         | Agent schema + collaboration rules               | 1.5.0   | 2026-08-22   | ✅        |
+| SKILLS.md                         | Canonical skill discovery + governance           | 1.3.0   | 2026-08-22   | ✅        |
+| .github/copilot-instructions.md   | GitHub Copilot optimized rules (streamlined)     | 1.4.0   | 2026-08-22   | ✅        |
 | .claude/settings.json             | Global permissions + hooks                       | —       | 2026-08-16   | ✅        |
 | .claude/settings.local.json       | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
 | .claude/PERMISSIONS-GOVERNANCE.md | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
@@ -202,18 +182,3 @@ Set in `.claude/settings.local.json` `environment` section (automatically applie
 ## Tools & Prerequisites
 
 **.NET 10+** | **Node.js 18+, pnpm 8+** | **Docker** (SQL Server) | **dotnet-ef global** | **Rider 2024.x or VS Code**
-
----
-
-## Rules Router (Modular Patterns by Domain)
-
-**Path-specific rules auto-loaded when modifying relevant files**. Source rules in [.claude/rules/](./.claude/rules/); Copilot-optimized versions in [.github/copilot/rules/](./.github/copilot/rules/):
-
-| Rule File (Source)                                                     | Domain       | Copilot Version                                                                                      | Key Topics                                                           |
-| ---------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| [accessibility-patterns.md](./.claude/rules/accessibility-patterns.md) | Frontend/UX  | [.github/copilot/rules/accessibility-patterns.md](./.github/copilot/rules/accessibility-patterns.md) | WCAG 2.1 Level AA, keyboard nav, ARIA, focus management              |
-| [database-rules.md](./.claude/rules/database-rules.md)                 | Data Layer   | [.github/copilot/rules/database-rules.md](./.github/copilot/rules/database-rules.md)                 | Transactions, real-DB testing, Dapper, EF Core integration           |
-| [backend-patterns.md](./.claude/rules/backend-patterns.md)             | ASP.NET Core | [.github/copilot/rules/backend-patterns.md](./.github/copilot/rules/backend-patterns.md)             | EF Core, DataLoaders, projections, testing strategy                  |
-| [frontend-patterns.md](./.claude/rules/frontend-patterns.md)           | Angular 19   | [.github/copilot/rules/frontend-patterns.md](./.github/copilot/rules/frontend-patterns.md)           | OnPush detection, trackBy, type-safety pipeline, testing             |
-| [graphql-patterns.md](./.claude/rules/graphql-patterns.md)             | GraphQL      | [.github/copilot/rules/graphql-patterns.md](./.github/copilot/rules/graphql-patterns.md)             | Query depth (≤5 layers), entity exposure, type-safety, subscriptions |
-| [workflow-integration.md](./.claude/rules/workflow-integration.md)     | Elsa v3.5.3  | [.github/copilot/rules/workflow-integration.md](./.github/copilot/rules/workflow-integration.md)     | Activities, state management, async patterns, Phase 5c status        |

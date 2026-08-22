@@ -39,6 +39,15 @@
     "**/node_modules/**/CLAUDE.md",
     "**/vendor/**/CLAUDE.md"
   ],
+  "env": {
+    "DOTNET_ENVIRONMENT": "Development",
+    "ASPNETCORE_URLS": "http://localhost:5000",
+    "NODE_ENV": "development",
+    "DOCKER_BUILDKIT": "1",
+    "MAX_THINKING_TOKENS": "auto",
+    "CLAUDE_CODE_EFFORT_LEVEL": "medium",
+    "CLAUDE_CODE_TIMEOUT": "30"
+  },
   "hooks": {
     "PreToolUse": [
       {
