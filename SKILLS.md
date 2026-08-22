@@ -1,10 +1,86 @@
-# SKILLS.md
+# SKILLS.md — Canonical Skill Discovery & Automation
 
-**Version:** 1.2.0 | **Last Updated:** 2026-08-16
+**Version:** 1.3.0 | **Last Updated:** 2026-08-22
 
 Procedural workflow automation macros. Each skill is a deterministic playbook for routine tasks.
 
+**Location**: `.claude/skills/` | **Discovery**: Auto-invoked via YAML frontmatter `trigger:` keywords | **Master Registry**: [.claude/skills/INDEX.md](./.claude/skills/INDEX.md)
+
 **Use**: Reference when you need Claude to execute a specific procedure (PR review, migration generation, codegen sync, etc.)
+
+---
+
+## Skill Discovery Mechanism
+
+### Auto-Invocation Workflow
+
+When user input contains any trigger keyword, harness:
+
+1. **Scans**: Reads `.claude/skills/*/SKILL.md` YAML frontmatter on initialization
+2. **Matches**: Compares user input against `trigger:` arrays (case-insensitive)
+3. **Invokes**: Auto-selects skill matching longest trigger phrase
+4. **Executes**: Runs skill with optional parameters
+
+**Example**: User says "codegen" → harness finds `trigger: ["codegen", "schema change", ...]` → invokes `codegen-sync` automatically
+
+### YAML Metadata Schema
+
+**Standard for all `.claude/skills/<name>/SKILL.md` files**:
+
+```yaml
+---
+name: skill-name # Kebab-case, matches directory name
+description: One-line purpose # What this skill accomplishes
+version: X.Y.Z # Semantic versioning (independent of SKILLS.md)
+last_updated: YYYY-MM-DD # ISO 8601 date
+trigger: # Auto-discovery keywords
+  - keyword1
+  - keyword2
+  - "longer phrase"
+applies_to: # Optional: file pattern globs
+  - "**/*.ts"
+  - "backend/**"
+dependencies: # Optional: prerequisite skills
+  - skill-name-1
+  - skill-name-2
+related_skills: # Optional: suggested complementary skills
+  - skill-name-1
+compatible_with: # Tool compatibility
+  - claude-code
+  - github-copilot
+  - claude-agents
+---
+```
+
+**Field Reference**:
+
+| Field             | Required | Type   | Example                                     | Notes                                                  |
+| ----------------- | -------- | ------ | ------------------------------------------- | ------------------------------------------------------ |
+| `name`            | ✅       | string | `codegen-sync`                              | Kebab-case; must match directory name exactly          |
+| `description`     | ✅       | string | "Regenerate graphql.ts from schema.graphql" | One-line summary; no markup                            |
+| `version`         | ✅       | string | `1.0.0`                                     | Semantic versioning; independent of SKILLS.md version  |
+| `last_updated`    | ✅       | date   | `2026-08-16`                                | ISO 8601; updated when skill changes                   |
+| `trigger`         | ✅       | array  | `["codegen", "schema change"]`              | Keywords to activate skill auto-discovery              |
+| `applies_to`      | ❌       | array  | `["**/*.ts"]`                               | Glob patterns; used for path-specific rule auto-append |
+| `dependencies`    | ❌       | array  | `["lsp-setup"]`                             | Skills that must run before this one                   |
+| `related_skills`  | ❌       | array  | `["migration-generator"]`                   | Skills to suggest alongside this one                   |
+| `compatible_with` | ✅       | array  | `["claude-code", "github-copilot"]`         | Tool compatibility matrix                              |
+
+**Auto-Discovery Rules**:
+
+1. **Keyword Scanning**: Harness scans all `.claude/skills/*/SKILL.md` files for YAML frontmatter on initialization
+2. **Trigger Matching**: User input containing any keyword from `trigger:` array → skill auto-suggested/invoked
+3. **Registry Building**: Master registry built in `.claude/skills/INDEX.md` (skill name → trigger keywords mapping)
+4. **Case Insensitivity**: Keyword matching is case-insensitive ("codegen" matches "Codegen", "CODEGEN")
+5. **Longest-Match Priority**: Multiple matches → harness selects skill with longest trigger phrase
+
+**Conformance Check**: All 6 skills in `.claude/skills/` conform to schema:
+
+```bash
+find .claude/skills/*/SKILL.md -type f | while read f; do
+  head -20 "$f" | grep -q "^---" && echo "✅ $f" || echo "❌ $f missing frontmatter"
+done
+```
 
 ---
 

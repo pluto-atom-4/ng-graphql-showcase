@@ -1,6 +1,6 @@
 # AGENTS.md — Autonomous Agent Onboarding
 
-**Version:** 1.4.0 | **Last Updated:** 2026-08-16
+**Version:** 1.5.0 | **Last Updated:** 2026-08-22
 
 ## Project Overview
 
@@ -46,129 +46,9 @@ pnpm docker:clean               # Remove volumes
 
 ---
 
-## Skill Discovery & Directory
+## Skill Discovery & Auto-Invocation
 
-**Location**: `.claude/skills/` | **Load Method**: Lazy via YAML frontmatter metadata
-
-### Discoverable Skills (Alphabetical)
-
-| Skill                   | YAML Trigger                                                             | When to Use                                   | Scope                                         | Path                                          |
-| ----------------------- | ------------------------------------------------------------------------ | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| **codegen-sync**        | `trigger: ["codegen", "schema change"]`                                  | After `dotnet build` emits new schema.graphql | Regenerate graphql.ts types (type-safety)     | `.claude/skills/codegen-sync/SKILL.md`        |
-| **lsp-setup**           | `trigger: ["LSP", "IDE setup", "language server"]`                       | First-time IDE config or debugger issues      | Code intelligence setup (Go-to-def, refs)     | `.claude/skills/lsp-setup/SKILL.md`           |
-| **migration-generator** | `trigger: ["migration", "DB change", "EF Core"]`                         | Backend schema/entity model changes           | Auto-create + validate EF Core migrations     | `.claude/skills/migration-generator/SKILL.md` |
-| **performance-audit**   | `trigger: ["performance audit", "profile", "lighthouse", "bundle size"]` | Frontend optimization & metrics collection    | Lighthouse, bundle analyzer, change detection | `.claude/skills/performance-audit/SKILL.md`   |
-| **pr-review-workflow**  | `trigger: ["review PR", "PR review", "code review"]`                     | Before merging to main                        | Quality + security + test verification        | `.claude/skills/pr-review-workflow/SKILL.md`  |
-
-### Adding New Skills
-
-1. Create `.claude/skills/<name>/SKILL.md` with YAML frontmatter:
-   ```yaml
-   ---
-   name: my-skill
-   description: What this skill does
-   trigger: ["keyword1", "keyword2"]
-   scope: "which agents can invoke"
-   ---
-   [Skill body]
-   ```
-2. Keywords in `trigger:` are auto-discovered
-3. Link from `.claude/skills/INDEX.md` (cross-reference)
-4. Test via skill picker when triggered
-
-### Discovery Flow
-
-```
-User mentions keyword → Harness checks trigger: list → Auto-invoke matching skill
-(Example: user says "codegen" → triggers codegen-sync automatically)
-```
-
----
-
-## Skills Metadata Schema
-
-**YAML Frontmatter Standard** for all `.claude/skills/<name>/SKILL.md` files:
-
-```yaml
----
-name: skill-name # Kebab-case, matches directory name
-description: One-line purpose # What this skill accomplishes
-version: X.Y.Z # Semantic versioning (independent of SKILLS.md)
-last_updated: YYYY-MM-DD # ISO 8601 date
-trigger: # Auto-discovery keywords
-  - keyword1
-  - keyword2
-  - "longer phrase"
-applies_to: # Optional: file pattern globs
-  - "**/*.ts"
-  - "backend/**"
-dependencies: # Optional: prerequisite skills
-  - skill-name-1
-  - skill-name-2
-related_skills: # Optional: suggested complementary skills
-  - skill-name-1
-compatible_with: # Tool compatibility
-  - claude-code
-  - github-copilot
-  - claude-agents
----
-```
-
-**Schema Details**:
-
-| Field             | Required | Type   | Example                                     | Notes                                                            |
-| ----------------- | -------- | ------ | ------------------------------------------- | ---------------------------------------------------------------- |
-| `name`            | ✅       | string | `codegen-sync`                              | Kebab-case; must match directory name exactly                    |
-| `description`     | ✅       | string | "Regenerate graphql.ts from schema.graphql" | One-line summary; no markup                                      |
-| `version`         | ✅       | string | `1.0.0`                                     | Semantic versioning; independent of SKILLS.md version            |
-| `last_updated`    | ✅       | date   | `2026-08-16`                                | ISO 8601; updated when skill changes                             |
-| `trigger`         | ✅       | array  | `["codegen", "schema change"]`              | Keywords to activate skill auto-discovery                        |
-| `applies_to`      | ❌       | array  | `["**/*.ts"]`                               | Glob patterns; used for path-specific rule auto-append (Phase 3) |
-| `dependencies`    | ❌       | array  | `["lsp-setup"]`                             | Skills that must run before this one                             |
-| `related_skills`  | ❌       | array  | `["migration-generator"]`                   | Skills to suggest alongside this one                             |
-| `compatible_with` | ✅       | array  | `["claude-code", "github-copilot"]`         | Tool compatibility matrix                                        |
-
-**Auto-Discovery Rules**:
-
-1. **Keyword Scanning**: Harness scans all `.claude/skills/*/SKILL.md` files for YAML frontmatter on initialization
-2. **Trigger Matching**: When user input contains any keyword from `trigger:` array, skill is auto-suggested/invoked
-3. **Registry Building**: Master registry built in `.claude/skills/INDEX.md` (skill name → trigger keywords mapping)
-4. **Case Insensitivity**: Keyword matching is case-insensitive ("codegen" matches "Codegen", "CODEGEN")
-5. **Longest-Match Priority**: If multiple skills match, harness selects skill with longest trigger phrase match
-
-**Example: codegen-sync Metadata**
-
-```yaml
----
-name: codegen-sync
-description: Regenerate graphql.ts from schema.graphql after backend schema changes
-version: 1.0.1
-last_updated: 2026-08-09
-trigger:
-  - codegen
-  - schema change
-  - graphql regenerate
-  - "type-safe sync"
-applies_to:
-  - "backend/**/*.cs"
-  - "**/*.graphql"
-dependencies: []
-related_skills:
-  - migration-generator
-compatible_with:
-  - claude-code
-  - github-copilot
-  - claude-agents
----
-```
-
-**Existing Skills Conformance**: All 6 skills in `.claude/skills/` conform to this schema; verify with:
-
-```bash
-find .claude/skills/*/SKILL.md -type f | while read f; do
-  head -20 "$f" | grep -q "^---" && echo "✅ $f" || echo "❌ $f missing frontmatter"
-done
-```
+See [SKILLS.md](./SKILLS.md) for canonical skill discovery mechanism, YAML metadata schema, auto-invocation workflow, and keyword matching algorithm. All 6 skills conform to this schema.
 
 ---
 
