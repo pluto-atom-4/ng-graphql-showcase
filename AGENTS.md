@@ -245,7 +245,9 @@ For complex tasks spanning planning → coding → testing, see `.claude/MULTI_A
 - **Bound Permissions** — Network access, file-system scope restrictions per role
 - **Escalation Triggers** — When to halt + yield control back to human
 
-Agents enforce constraints via `.claude/settings.json` configuration (model overrides, permission layers, orchestration rules).
+**Executable roles:** Coder (`.claude/agents/coder.md`) and Reviewer (`.claude/agents/reviewer.md`), both pinned to `model: haiku` (Haiku 4.5). Architect remains a documentation-only convention until its agent file exists.
+
+Tool access and model are enforced by the agent file's YAML frontmatter (`tools:`, `model:`). Write-path and Bash limits are prompt-level conventions backed by the PreToolUse hooks in `.claude/settings.json` — there is no per-role `writeScope` setting.
 
 ---
 

@@ -108,6 +108,8 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 | .claude/settings.local.json       | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
 | .claude/PERMISSIONS-GOVERNANCE.md | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
 | .claude/skills/INDEX.md           | Master skill catalog + metadata schema           | —       | 2026-08-16   | ✅        |
+| .claude/agents/coder.md           | Coder role agent (model: haiku)                  | 1.0.0   | 2026-08-30   | ✅        |
+| .claude/agents/reviewer.md        | Reviewer role agent (model: haiku)               | 1.0.0   | 2026-08-30   | ✅        |
 | .claude/CONTEXT-MANAGEMENT.md     | Token budget + context compression               | —       | 2026-07-19   | Reference |
 | .claude/MULTI_AGENT_GOVERNANCE.md | Multi-agent orchestration rules                  | —       | 2026-08-09   | Reference |
 | .claude/TWO-GATE-SYSTEM.md        | Evidence-based execution gates                   | —       | 2026-08-01   | Reference |
