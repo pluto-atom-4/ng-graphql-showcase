@@ -245,9 +245,11 @@ For complex tasks spanning planning → coding → testing, see `.claude/MULTI_A
 - **Bound Permissions** — Network access, file-system scope restrictions per role
 - **Escalation Triggers** — When to halt + yield control back to human
 
-**Executable roles:** Coder (`.claude/agents/coder.md`) and Reviewer (`.claude/agents/reviewer.md`), both pinned to `model: haiku` (Haiku 4.5). Architect remains a documentation-only convention until its agent file exists.
+**Executable roles:** all three. Architect (`.claude/agents/architect.md`) plans; Coder (`.claude/agents/coder.md`, `model: haiku`) implements; Reviewer (`.claude/agents/reviewer.md`, `model: haiku`) verifies. The Architect sets `model: inherit`, binding it to the session model — change the session and its planning depth follows. Coder and Reviewer are pinned and do not. `inherit` is deliberate rather than an omitted key: omitting `model:` would let `CLAUDE_CODE_SUBAGENT_MODEL` take precedence over the session, which is not the intent.
 
 Tool access and model are enforced by the agent file's YAML frontmatter (`tools:`, `model:`). Write-path and Bash limits are prompt-level conventions backed by the PreToolUse hooks in `.claude/settings.json` — there is no per-role `writeScope` setting.
+
+The Architect alone reaches the network and GitHub: allowlisted `WebFetch`, plus the `github` MCP server in `.mcp.json` for commit, issue, and PR reads. Its one outward write is `add_issue_comment`, for blocking questions the human must answer — merge, push, branch, and issue-write tools are withheld by omission. Requires `GITHUB_MCP_PAT` in the environment; see `.claude/MULTI_AGENT_GOVERNANCE.md` §3 for the token scope.
 
 ---
 
