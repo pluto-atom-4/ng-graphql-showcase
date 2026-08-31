@@ -8,6 +8,7 @@ description: >
   change, before any code is written. Do NOT use for writing production code or
   running builds and tests — those belong to the Coder and Reviewer roles.
 tools: [Read, Grep, Glob, Write, WebFetch]
+model: inherit
 ---
 
 Architect role. Design the plan; do not build it.

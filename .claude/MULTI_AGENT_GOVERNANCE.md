@@ -10,7 +10,7 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 
 ### Architect/Planner Agent
 
-**Definition:** `.claude/agents/architect.md` | **Model:** default — no `model:` key, inherits the session
+**Definition:** `.claude/agents/architect.md` | **Model:** `inherit` — binds to the session model
 
 **Responsibilities:**
 
@@ -190,11 +190,11 @@ Per the Claude Code documentation, settings permissions apply to a subagent's to
 
 ### File System Boundaries
 
-| Agent     | Read | Write                      | Scope               | Model                      |
-| --------- | ---- | -------------------------- | ------------------- | -------------------------- |
-| Architect | All  | tasks.md, agent_state.json | Planning only       | default (inherits session) |
-| Coder     | All  | src/, backend/, frontend/  | Implementation only | `haiku`                    |
-| Reviewer  | All  | .test.ts, .spec.ts         | Testing only        | `haiku`                    |
+| Agent     | Read | Write                      | Scope               | Model                     |
+| --------- | ---- | -------------------------- | ------------------- | ------------------------- |
+| Architect | All  | tasks.md, agent_state.json | Planning only       | `inherit` (session model) |
+| Coder     | All  | src/, backend/, frontend/  | Implementation only | `haiku`                   |
+| Reviewer  | All  | .test.ts, .spec.ts         | Testing only        | `haiku`                   |
 
 **Enforcement:** `writeScope` is **not** a settings key and is not machine-enforced. Tool access comes from the `tools:` frontmatter in `.claude/agents/<role>.md`; path limits are instructions in the agent prompt body plus the PreToolUse hooks in `.claude/settings.json`.
 
@@ -271,13 +271,15 @@ model: haiku
 
 **Current roster:**
 
-| File                          | Role      | Model                     | Status        |
-| ----------------------------- | --------- | ------------------------- | ------------- |
-| `.claude/agents/coder.md`     | Coder     | `haiku`                   | ✅ Executable |
-| `.claude/agents/reviewer.md`  | Reviewer  | `haiku`                   | ✅ Executable |
-| `.claude/agents/architect.md` | Architect | default — no `model:` key | ✅ Executable |
+| File                          | Role      | Model     | Status        |
+| ----------------------------- | --------- | --------- | ------------- |
+| `.claude/agents/coder.md`     | Coder     | `haiku`   | ✅ Executable |
+| `.claude/agents/reviewer.md`  | Reviewer  | `haiku`   | ✅ Executable |
+| `.claude/agents/architect.md` | Architect | `inherit` | ✅ Executable |
 
-Model precedence, highest first: `model` param on the spawn call → agent frontmatter `model:` → configured default subagent model (unset here) → inherit parent (`claude-opus-5` per `.claude/settings.json:26`).
+Model precedence, highest first: `model` param on the spawn call → agent frontmatter `model:` → `CLAUDE_CODE_SUBAGENT_MODEL` env var (unset here) → the main conversation's model (`claude-opus-5` per `.claude/settings.json:26`).
+
+`model: inherit` is not the same as omitting the key. `inherit` binds explicitly to the main conversation's model, skipping the env var; omitting `model:` runs the normal resolution order, so `CLAUDE_CODE_SUBAGENT_MODEL` would win if anyone set it. The Architect sets `inherit` deliberately — its planning depth should track the session, not an environment variable.
 
 ### Compliance Checks
 

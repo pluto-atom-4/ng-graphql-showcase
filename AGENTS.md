@@ -245,7 +245,7 @@ For complex tasks spanning planning → coding → testing, see `.claude/MULTI_A
 - **Bound Permissions** — Network access, file-system scope restrictions per role
 - **Escalation Triggers** — When to halt + yield control back to human
 
-**Executable roles:** all three. Architect (`.claude/agents/architect.md`) plans; Coder (`.claude/agents/coder.md`, `model: haiku`) implements; Reviewer (`.claude/agents/reviewer.md`, `model: haiku`) verifies. The Architect carries no `model:` key, so it runs on the session default — change the session model and its planning depth follows. Coder and Reviewer are pinned and do not.
+**Executable roles:** all three. Architect (`.claude/agents/architect.md`) plans; Coder (`.claude/agents/coder.md`, `model: haiku`) implements; Reviewer (`.claude/agents/reviewer.md`, `model: haiku`) verifies. The Architect sets `model: inherit`, binding it to the session model — change the session and its planning depth follows. Coder and Reviewer are pinned and do not. `inherit` is deliberate rather than an omitted key: omitting `model:` would let `CLAUDE_CODE_SUBAGENT_MODEL` take precedence over the session, which is not the intent.
 
 Tool access and model are enforced by the agent file's YAML frontmatter (`tools:`, `model:`). Write-path and Bash limits are prompt-level conventions backed by the PreToolUse hooks in `.claude/settings.json` — there is no per-role `writeScope` setting.
 
