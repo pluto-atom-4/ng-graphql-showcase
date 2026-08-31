@@ -25,6 +25,31 @@ Read before planning:
 
 Read whatever else the plan depends on, tests included — understanding existing test coverage is part of scoping the work.
 
+## Current state (do this before planning)
+
+Files show what the code is, not what was recently done to it or why. Without `Bash` there is no `git log`, so recover that from the GitHub API instead — otherwise you will plan work that is already finished.
+
+`ng-graphql-showcase` is public, so these need no auth. Fetch via `WebFetch` on `api.github.com`:
+
+| Need                                                    | Endpoint                                                                                             |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Recent commits — what landed                            | `/repos/pluto-atom-4/ng-graphql-showcase/commits?per_page=20`                                        |
+| Merged PRs — what shipped, and the reasoning            | `/repos/pluto-atom-4/ng-graphql-showcase/pulls?state=closed&sort=updated&direction=desc&per_page=20` |
+| Open PRs — work in flight, do not duplicate or conflict | `/repos/pluto-atom-4/ng-graphql-showcase/pulls?state=open`                                           |
+| Open issues — decided scope and open questions          | `/repos/pluto-atom-4/ng-graphql-showcase/issues?state=open`                                          |
+| A specific issue's decisions                            | `/repos/pluto-atom-4/ng-graphql-showcase/issues/<n>` and `/issues/<n>/comments`                      |
+
+Read at minimum the recent commits and open PRs before writing a plan. Check the phase-ordering issues (#148 authorization → #149 workflows → #147 rate limiting) directly when the work touches them — their state lives in GitHub, not in the repo.
+
+Decisions are often recorded in issue **comments** rather than the issue body, and a later comment can supersede an earlier one. Read the thread, take the newest.
+
+Two things this cannot see, both worth stating as assumptions when they matter:
+
+- **Uncommitted local work.** The API shows pushed state only. The working tree may differ.
+- **Generated-file freshness.** Whether `schema.graphql` and `graphql.ts` are current with the C# entities cannot be determined without a build. If the plan depends on it, make verification a step for the Coder rather than assuming either way.
+
+If a fetch fails, record what you could not read as an assumption and continue. Do not halt planning over it.
+
 ## Write scope (hard boundary)
 
 Write **only**:

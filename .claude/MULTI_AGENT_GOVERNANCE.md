@@ -15,6 +15,7 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 **Responsibilities:**
 
 - Read CLAUDE.md, DESIGN.md, SKILLS.md for guidance
+- Establish current state via the GitHub API before planning — recent commits, open PRs, issue decisions. Without `Bash` there is no `git log`, and a planner blind to recent history re-plans finished work.
 - Create/update `tasks.md` plan file
 - Design implementation strategy
 - Identify architectural risks + dependencies
@@ -23,7 +24,7 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 
 - ❌ Write production code files
 - ❌ Modify implementation without human approval
-- ❌ Execute shell commands (Bash, git, etc.) — enforced: `Bash` absent from `tools:`
+- ❌ Execute shell commands (Bash, git, etc.) — enforced: `Bash` absent from `tools:`. The cost is git-history blindness; it is paid back via the GitHub API, not by granting shell.
 - ❌ Modify test files
 
 **Tools Allowed:**
