@@ -35,6 +35,8 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 
 ### Coder Agent
 
+**Definition:** `.claude/agents/coder.md` | **Model:** `haiku` (Haiku 4.5)
+
 **Responsibilities:**
 
 - Read tasks.md implementation steps
@@ -60,6 +62,8 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 ---
 
 ### Reviewer/Tester Agent
+
+**Definition:** `.claude/agents/reviewer.md` | **Model:** `haiku` (Haiku 4.5)
 
 **Responsibilities:**
 
@@ -164,13 +168,13 @@ Before spawning next agent:
 
 ### File System Boundaries
 
-| Agent     | Read | Write                      | Scope               |
-| --------- | ---- | -------------------------- | ------------------- |
-| Architect | All  | tasks.md, agent_state.json | Planning only       |
-| Coder     | All  | src/, backend/, frontend/  | Implementation only |
-| Reviewer  | All  | .test.ts, .spec.ts         | Testing only        |
+| Agent     | Read | Write                      | Scope               | Model                      |
+| --------- | ---- | -------------------------- | ------------------- | -------------------------- |
+| Architect | All  | tasks.md, agent_state.json | Planning only       | inherits (`claude-opus-5`) |
+| Coder     | All  | src/, backend/, frontend/  | Implementation only | `haiku`                    |
+| Reviewer  | All  | .test.ts, .spec.ts         | Testing only        | `haiku`                    |
 
-**Enforcement:** `.claude/settings.json` specifies per-role "writeScope" restrictions.
+**Enforcement:** `writeScope` is **not** a settings key and is not machine-enforced. Tool access comes from the `tools:` frontmatter in `.claude/agents/<role>.md`; path limits are instructions in the agent prompt body plus the PreToolUse hooks in `.claude/settings.json`.
 
 ### Bash Command Boundaries
 
@@ -218,46 +222,50 @@ Suggested Fix: Run from FactoryApp.WebApi directory
 
 ## 5. Configuration Enforcement
 
-### `.claude/settings.json` Integration
+### `.claude/agents/<role>.md` Definitions
 
-```json
-{
-  "agentOrchestration": {
-    "maxConsecutiveErrors": 3,
-    "stateFile": ".claude/agent_state.json",
-    "errorLog": ".claude/errors.log",
-    "roleDefinitions": {
-      "architect": {
-        "tools": ["Read", "Plan"],
-        "writeScope": ["tasks.md", ".claude/agent_state.json"],
-        "networkAccess": true,
-        "canExecuteBash": false
-      },
-      "coder": {
-        "tools": ["Read", "Edit", "Write", "Bash"],
-        "writeScope": ["src/", "backend/", "frontend/"],
-        "networkAccess": false,
-        "bashRestrictions": ["-c git push", "-c git rebase"]
-      },
-      "reviewer": {
-        "tools": ["Read", "Bash"],
-        "writeScope": [".test.ts", ".spec.ts"],
-        "networkAccess": false,
-        "bashRestrictions": ["-c git push", "-c git reset"]
-      }
-    }
-  }
-}
+Roles are defined as agent files, not as a settings key. There is no `agentOrchestration` field in the Claude Code settings schema; an earlier version of this document described one that never existed.
+
+Each role file carries YAML frontmatter:
+
+```yaml
+---
+name: coder
+description: >
+  Implementation agent for the Coder role. Reads tasks.md, writes production
+  code under src/, backend/, frontend/, runs builds, commits on a feature branch.
+tools: [Read, Edit, Write, Grep, Glob, Bash]
+model: haiku
+---
 ```
+
+| Field         | Enforced by                    | Notes                                                      |
+| ------------- | ------------------------------ | ---------------------------------------------------------- |
+| `tools`       | Harness (hard)                 | Agent cannot call a tool outside this list                 |
+| `model`       | Harness (hard)                 | Overrides session model; omit to inherit from parent       |
+| Write paths   | Prompt body + PreToolUse hooks | Soft — frontmatter has no `writeScope` equivalent          |
+| Bash commands | Prompt body + PreToolUse hooks | Soft — `.claude/settings.json:55-64` blocks high-risk only |
+
+**Current roster:**
+
+| File                         | Role      | Model   | Status                             |
+| ---------------------------- | --------- | ------- | ---------------------------------- |
+| `.claude/agents/coder.md`    | Coder     | `haiku` | ✅ Executable                      |
+| `.claude/agents/reviewer.md` | Reviewer  | `haiku` | ✅ Executable                      |
+| _(none)_                     | Architect | —       | Documentation only — not spawnable |
+
+Model precedence, highest first: `model` param on the spawn call → agent frontmatter `model:` → configured default subagent model (unset here) → inherit parent (`claude-opus-5` per `.claude/settings.json:26`).
 
 ### Compliance Checks
 
 Before each agent operation:
 
 1. Verify agent role matches task type
-2. Check file path against writeScope
+2. Check file path against the write scope in the agent's prompt body
 3. Validate Bash command against restrictions
 4. Read `.claude/agent_state.json` for context recovery
+
+Steps 2 and 3 are conventions the agent follows, not gates the harness applies. Only the PreToolUse hooks in `.claude/settings.json` deny at the tool-call boundary.
 
 ---
 
