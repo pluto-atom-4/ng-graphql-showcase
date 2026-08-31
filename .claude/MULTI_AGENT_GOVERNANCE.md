@@ -31,6 +31,8 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 
 - Read, Grep, Glob (all files, tests included)
 - WebFetch (allowlisted domains only — see §3)
+- `mcp__github__list_commits`, `issue_read`, `pull_request_read` — structured current-state reads
+- `mcp__github__add_issue_comment` — the role's only outward write; blocking questions only (see §3)
 - Write (tasks.md, .claude/agent_state.json only — convention, not machine-enforced)
 
 An earlier revision forbade _reading_ test files while also granting "Read (all files)". The prohibition is dropped: existing test coverage is legitimate input to scoping, and `tools:` has no read-denylist to express it with. Only modification is forbidden.
@@ -163,7 +165,8 @@ Before spawning next agent:
 **Only Architect/Planner Agent can:**
 
 - Fetch external API documentation (`WebFetch`, allowlisted domains only)
-- Query GitHub for issue/PR context
+- Query GitHub for commit, issue, and PR context (`github` MCP server)
+- Post a blocking question to an issue or PR (`add_issue_comment`) — its only outward write
 
 **All other agents:**
 
@@ -188,6 +191,27 @@ Allowed `WebFetch` domains (`.claude/settings.json`):
 Per the Claude Code documentation, settings permissions apply to a subagent's tool calls exactly as they do to the main session — subagents are not evaluated separately. The allowlist is therefore a real boundary on the Architect, not an honour-system convention, and a fetch outside it is denied.
 
 **Unreachable source:** the Architect records it in `tasks.md` as an explicit assumption — the URL, and what was assumed without it — then continues. It does not halt for a single lookup.
+
+### GitHub MCP Server
+
+Configured in `.mcp.json` as a remote HTTP server (`https://api.githubcopilot.com/mcp/`). The Architect is the only role granted it.
+
+Two independent layers bound what it can do, because one is not enough:
+
+| Layer          | Mechanism                           | Effect                                                                         |
+| -------------- | ----------------------------------- | ------------------------------------------------------------------------------ |
+| Tool allowlist | `tools:` names four exact MCP tools | A tool not named is unreachable — including any the upstream server adds later |
+| Token scope    | Fine-grained PAT                    | Even a reachable tool fails if the token cannot perform it                     |
+
+Granted: `list_commits`, `issue_read`, `pull_request_read` (reads), and `add_issue_comment` (the single write).
+
+Withheld by omission: `merge_pull_request`, `push_files`, `create_branch`, `issue_write` — no merging, pushing, branch creation, or closing and editing issues. Because `tools:` is an allowlist rather than a denylist, a destructive tool added upstream is not silently inherited.
+
+**Commenting is for blocking questions only** — ambiguity that stops the plan, a constraint conflict, an assumption needing confirmation before the Coder acts. Not status updates, not the plan itself, not approvals or sign-offs. The Architect asks, then halts and yields; it does not post and carry on as though answered.
+
+Rationale: the escalation duty in §1 was unreachable in practice. A question raised only in `tasks.md` has no audience — nobody is subscribed to a file. A comment on the issue reaches the human who has to answer it.
+
+**Token setup.** `.mcp.json` reads `${GITHUB_MCP_PAT}` from the environment; the file is committed, the token never is. Use a fine-grained PAT scoped to this repository alone, with `Issues: Read and write` and `Pull requests: Read and write`, and `Contents` at read-only or none. Contents write would re-open the push path that withholding `Bash` closed. Keep the value in `.env.local` (gitignored) or the shell environment.
 
 ### File System Boundaries
 
@@ -262,13 +286,14 @@ model: haiku
 ---
 ```
 
-| Field         | Enforced by                    | Notes                                                              |
-| ------------- | ------------------------------ | ------------------------------------------------------------------ |
-| `tools`       | Harness (hard)                 | Agent cannot call a tool outside this list                         |
-| `model`       | Harness (hard)                 | Overrides session model; omit to inherit from parent               |
-| Write paths   | Prompt body + PreToolUse hooks | Soft — frontmatter has no `writeScope` equivalent                  |
-| Bash commands | Prompt body + PreToolUse hooks | Soft — `.claude/settings.json:55-64` blocks high-risk only         |
-| Fetch domains | `permissions.allow` (hard)     | Settings permissions apply to subagents, not just the main session |
+| Field         | Enforced by                           | Notes                                                              |
+| ------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `tools`       | Harness (hard)                        | Agent cannot call a tool outside this list                         |
+| `model`       | Harness (hard)                        | Overrides session model; omit to inherit from parent               |
+| Write paths   | Prompt body + PreToolUse hooks        | Soft — frontmatter has no `writeScope` equivalent                  |
+| Bash commands | Prompt body + PreToolUse hooks        | Soft — `.claude/settings.json:55-64` blocks high-risk only         |
+| Fetch domains | `permissions.allow` (hard)            | Settings permissions apply to subagents, not just the main session |
+| MCP tools     | `tools:` allowlist + PAT scope (hard) | Unnamed tools unreachable; token scope backstops the ones that are |
 
 **Current roster:**
 

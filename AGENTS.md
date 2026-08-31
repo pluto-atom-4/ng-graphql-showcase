@@ -249,6 +249,8 @@ For complex tasks spanning planning → coding → testing, see `.claude/MULTI_A
 
 Tool access and model are enforced by the agent file's YAML frontmatter (`tools:`, `model:`). Write-path and Bash limits are prompt-level conventions backed by the PreToolUse hooks in `.claude/settings.json` — there is no per-role `writeScope` setting.
 
+The Architect alone reaches the network and GitHub: allowlisted `WebFetch`, plus the `github` MCP server in `.mcp.json` for commit, issue, and PR reads. Its one outward write is `add_issue_comment`, for blocking questions the human must answer — merge, push, branch, and issue-write tools are withheld by omission. Requires `GITHUB_MCP_PAT` in the environment; see `.claude/MULTI_AGENT_GOVERNANCE.md` §3 for the token scope.
+
 ---
 
 ## Related Documentation
