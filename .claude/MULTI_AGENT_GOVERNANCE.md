@@ -211,7 +211,18 @@ Withheld by omission: `merge_pull_request`, `push_files`, `create_branch`, `issu
 
 Rationale: the escalation duty in §1 was unreachable in practice. A question raised only in `tasks.md` has no audience — nobody is subscribed to a file. A comment on the issue reaches the human who has to answer it.
 
-**Token setup.** `.mcp.json` reads `${GITHUB_MCP_PAT}` from the environment; the file is committed, the token never is. Use a fine-grained PAT scoped to this repository alone, with `Issues: Read and write` and `Pull requests: Read and write`, and `Contents` at read-only or none. Contents write would re-open the push path that withholding `Bash` closed. Keep the value in `.env.local` (gitignored) or the shell environment.
+**Token setup.** `.mcp.json` reads `${GITHUB_MCP_PAT}` from the environment; the file is committed, the token never is. Use a fine-grained PAT scoped to this repository alone, with `Issues: Read and write` and `Pull requests: Read and write`, and `Contents` at read-only or none. Contents write would re-open the push path that withholding `Bash` closed.
+
+The value must be in the **process environment** of the shell that launches Claude Code. `${VAR}` expansion does not read `.env.local` — putting it there alone leaves the server unauthenticated, and `claude mcp list` reports `Missing environment variables: GITHUB_MCP_PAT`. Either export it from your shell profile, or source the file from there:
+
+```bash
+# ~/.zshrc — .env.local stays gitignored, the token stays out of the repo
+set -a; [ -f /path/to/ng-graphql-playground/.env.local ] && . /path/to/ng-graphql-playground/.env.local; set +a
+```
+
+Do not put the token in `.claude/settings.local.json`. It is gitignored, but the `env` block is not a secret store, and the repo's own security rule forbids secrets in settings files.
+
+**First run needs approval.** A project `.mcp.json` server starts as `⏸ Pending approval`. Launch `claude` interactively once and approve it; `claude mcp list` then reports health instead.
 
 ### File System Boundaries
 
