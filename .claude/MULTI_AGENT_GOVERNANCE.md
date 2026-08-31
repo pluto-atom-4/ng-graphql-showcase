@@ -10,6 +10,8 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 
 ### Architect/Planner Agent
 
+**Definition:** `.claude/agents/architect.md` | **Model:** default — no `model:` key, inherits the session
+
 **Responsibilities:**
 
 - Read CLAUDE.md, DESIGN.md, SKILLS.md for guidance
@@ -21,13 +23,15 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 
 - ❌ Write production code files
 - ❌ Modify implementation without human approval
-- ❌ Execute shell commands (Bash, git, etc.)
-- ❌ Read/modify test files
+- ❌ Execute shell commands (Bash, git, etc.) — enforced: `Bash` absent from `tools:`
+- ❌ Modify test files
 
 **Tools Allowed:**
 
-- Read (all files)
-- Write (tasks.md, .claude/agent_state.json only)
+- Read, Grep, Glob (all files, tests included)
+- Write (tasks.md, .claude/agent_state.json only — convention, not machine-enforced)
+
+An earlier revision forbade _reading_ test files while also granting "Read (all files)". The prohibition is dropped: existing test coverage is legitimate input to scoping, and `tools:` has no read-denylist to express it with. Only modification is forbidden.
 
 **Escalation:** If planning exceeds 200 lines or identifies blockers → halt and report to human
 
@@ -166,11 +170,13 @@ Before spawning next agent:
 
 **Rationale:** Prevent agents from hallucinating or fetching stale API specs mid-implementation.
 
+**Status:** Half-implemented. Coder and Reviewer have no network tools, so the exclusivity holds. The Architect does not yet have `WebFetch` or `WebSearch` either — the scope of its grant is unresolved, since `.claude/settings.json` allowlists two `WebFetch` domains (`docs.elsaworkflows.io`, `api.github.com`) and no `WebSearch`. Tracked as decision 2 of issue #298. Until then, all three roles work from cached docs.
+
 ### File System Boundaries
 
 | Agent     | Read | Write                      | Scope               | Model                      |
 | --------- | ---- | -------------------------- | ------------------- | -------------------------- |
-| Architect | All  | tasks.md, agent_state.json | Planning only       | inherits (`claude-opus-5`) |
+| Architect | All  | tasks.md, agent_state.json | Planning only       | default (inherits session) |
 | Coder     | All  | src/, backend/, frontend/  | Implementation only | `haiku`                    |
 | Reviewer  | All  | .test.ts, .spec.ts         | Testing only        | `haiku`                    |
 
@@ -248,11 +254,11 @@ model: haiku
 
 **Current roster:**
 
-| File                         | Role      | Model   | Status                             |
-| ---------------------------- | --------- | ------- | ---------------------------------- |
-| `.claude/agents/coder.md`    | Coder     | `haiku` | ✅ Executable                      |
-| `.claude/agents/reviewer.md` | Reviewer  | `haiku` | ✅ Executable                      |
-| _(none)_                     | Architect | —       | Documentation only — not spawnable |
+| File                          | Role      | Model                     | Status        |
+| ----------------------------- | --------- | ------------------------- | ------------- |
+| `.claude/agents/coder.md`     | Coder     | `haiku`                   | ✅ Executable |
+| `.claude/agents/reviewer.md`  | Reviewer  | `haiku`                   | ✅ Executable |
+| `.claude/agents/architect.md` | Architect | default — no `model:` key | ✅ Executable |
 
 Model precedence, highest first: `model` param on the spawn call → agent frontmatter `model:` → configured default subagent model (unset here) → inherit parent (`claude-opus-5` per `.claude/settings.json:26`).
 
