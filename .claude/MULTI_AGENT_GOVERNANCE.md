@@ -29,6 +29,7 @@ Do not let agents pick personas. Assign tasks to specific agent types.
 **Tools Allowed:**
 
 - Read, Grep, Glob (all files, tests included)
+- WebFetch (allowlisted domains only — see §3)
 - Write (tasks.md, .claude/agent_state.json only — convention, not machine-enforced)
 
 An earlier revision forbade _reading_ test files while also granting "Read (all files)". The prohibition is dropped: existing test coverage is legitimate input to scoping, and `tools:` has no read-denylist to express it with. Only modification is forbidden.
@@ -158,11 +159,10 @@ Before spawning next agent:
 
 ### Network Access
 
-**Only Planner Agent can:**
+**Only Architect/Planner Agent can:**
 
-- Fetch external API documentation
+- Fetch external API documentation (`WebFetch`, allowlisted domains only)
 - Query GitHub for issue/PR context
-- Access web resources for research
 
 **All other agents:**
 
@@ -170,7 +170,23 @@ Before spawning next agent:
 
 **Rationale:** Prevent agents from hallucinating or fetching stale API specs mid-implementation.
 
-**Status:** Half-implemented. Coder and Reviewer have no network tools, so the exclusivity holds. The Architect does not yet have `WebFetch` or `WebSearch` either — the scope of its grant is unresolved, since `.claude/settings.json` allowlists two `WebFetch` domains (`docs.elsaworkflows.io`, `api.github.com`) and no `WebSearch`. Tracked as decision 2 of issue #298. Until then, all three roles work from cached docs.
+**Status:** Implemented. The Architect holds `WebFetch` in its `tools:` list; Coder and Reviewer hold no network tools, so the exclusivity is enforced by the harness on both sides.
+
+`WebSearch` is granted to no role. The Architect fetches URLs it already knows; open-ended search is not domain-scoped and would weaken the allowlist as a boundary.
+
+Allowed `WebFetch` domains (`.claude/settings.json`):
+
+| Domain                  | Covers                    |
+| ----------------------- | ------------------------- |
+| `docs.elsaworkflows.io` | Elsa Workflows v3         |
+| `api.github.com`        | Issue and PR context      |
+| `angular.dev`           | Angular                   |
+| `chillicream.com`       | Hot Chocolate GraphQL     |
+| `learn.microsoft.com`   | .NET, EF Core, SQL Server |
+
+Per the Claude Code documentation, settings permissions apply to a subagent's tool calls exactly as they do to the main session — subagents are not evaluated separately. The allowlist is therefore a real boundary on the Architect, not an honour-system convention, and a fetch outside it is denied.
+
+**Unreachable source:** the Architect records it in `tasks.md` as an explicit assumption — the URL, and what was assumed without it — then continues. It does not halt for a single lookup.
 
 ### File System Boundaries
 
@@ -245,12 +261,13 @@ model: haiku
 ---
 ```
 
-| Field         | Enforced by                    | Notes                                                      |
-| ------------- | ------------------------------ | ---------------------------------------------------------- |
-| `tools`       | Harness (hard)                 | Agent cannot call a tool outside this list                 |
-| `model`       | Harness (hard)                 | Overrides session model; omit to inherit from parent       |
-| Write paths   | Prompt body + PreToolUse hooks | Soft — frontmatter has no `writeScope` equivalent          |
-| Bash commands | Prompt body + PreToolUse hooks | Soft — `.claude/settings.json:55-64` blocks high-risk only |
+| Field         | Enforced by                    | Notes                                                              |
+| ------------- | ------------------------------ | ------------------------------------------------------------------ |
+| `tools`       | Harness (hard)                 | Agent cannot call a tool outside this list                         |
+| `model`       | Harness (hard)                 | Overrides session model; omit to inherit from parent               |
+| Write paths   | Prompt body + PreToolUse hooks | Soft — frontmatter has no `writeScope` equivalent                  |
+| Bash commands | Prompt body + PreToolUse hooks | Soft — `.claude/settings.json:55-64` blocks high-risk only         |
+| Fetch domains | `permissions.allow` (hard)     | Settings permissions apply to subagents, not just the main session |
 
 **Current roster:**
 

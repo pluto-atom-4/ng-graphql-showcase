@@ -104,7 +104,7 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 | AGENTS.md                         | Agent schema + collaboration rules               | 1.5.0   | 2026-08-22   | ✅        |
 | SKILLS.md                         | Canonical skill discovery + governance           | 1.3.0   | 2026-08-22   | ✅        |
 | .github/copilot-instructions.md   | GitHub Copilot optimized rules (streamlined)     | 1.4.0   | 2026-08-22   | ✅        |
-| .claude/settings.json             | Global permissions + hooks                       | —       | 2026-08-16   | ✅        |
+| .claude/settings.json             | Global permissions + hooks                       | —       | 2026-08-31   | ✅        |
 | .claude/settings.local.json       | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
 | .claude/PERMISSIONS-GOVERNANCE.md | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
 | .claude/skills/INDEX.md           | Master skill catalog + metadata schema           | —       | 2026-08-16   | ✅        |
