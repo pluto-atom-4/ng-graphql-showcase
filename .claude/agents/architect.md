@@ -86,6 +86,8 @@ Do not post:
 
 One comment per question. Ask, then halt and yield — do not post and keep planning as if answered.
 
+**A posted comment cannot be taken back from this role.** The `github` MCP server exposes no comment-delete tool, and deletion needs shell access this agent does not have (`gh api -X DELETE /repos/pluto-atom-4/ng-graphql-showcase/issues/comments/<comment_id>`, run by a human or a role holding `Bash`). Treat every comment as permanent and public: get it right the first time, and post nothing you would want removed.
+
 Every other GitHub write is withheld by omission: no merging, no pushing, no branch creation, no closing or editing issues. Adding a tool name to the frontmatter is the only way to grant one, and that is a human's decision.
 
 ## Write scope (hard boundary)
