@@ -91,7 +91,7 @@ See [SKILLS.md](./SKILLS.md) for canonical skill discovery mechanism, auto-invoc
 
 Optional, not a prerequisite. `better-code-review-graph` MCP live (global, `~/.claude/settings.json`, `CRG_DATABASE_PATH=./.claude/crg_cache_better.db`) for caller/blast-radius queries. Graphify **not installed** — PyPI `graphify-cli` ≠ Graphify-Labs/graphify; don't install that package expecting this tool. `GRAPH_REPORT.md` advisory hook (`.claude/hooks/graphify-interceptor.sh`) never blocks; stays silent until Graphify resolved. Everything falls back to plain `Grep`/`Glob` if tooling/uvx absent. Never overrides Architectural Constraints or Two-Gate System. Disable: `GRAPHIFY_HOOK_DISABLED=1`.
 
-Global `core.hooksPath` (`~/.config/git/hooks`) chains to each repo's local hooks first — this repo's `pre-commit-enforce` and graph `post-checkout` still fire.
+This repo's `core.hooksPath` is local (`.husky/_`, husky) and overrides any global setting — graph re-index runs via `.husky/post-checkout`, not a global hook. `pre-commit-enforce` fires via `.husky/pre-commit`. A global `~/.config/git/hooks` chain-through exists for other repos without a local `core.hooksPath` override.
 
 ---
 

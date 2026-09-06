@@ -113,5 +113,7 @@ first when present; **never blocks** the underlying call. No-ops entirely if
   (e.g. `.claude/settings.local.json` → `env`), or remove the `Grep|Glob`
   matcher block from `.claude/settings.json` → `hooks.PreToolUse`.
 - Reads only a local, pre-built `GRAPH_REPORT.md` — makes no network calls
-  itself. The network-touching step (`graphify update .`) runs separately in
-  the git `post-checkout` hook, not here.
+  itself. `.husky/post-checkout` re-indexes `better-code-review-graph` on
+  branch switch (this repo's `core.hooksPath` is `.husky/_`, not a global
+  hook). `graphify update .` would run there too once Graphify is installed
+  — currently held (see CLAUDE.md § Graph Intelligence & Routing Engine).
