@@ -8,7 +8,7 @@
 # any global core.hooksPath — this file, not .git/hooks/post-checkout, is
 # the real dispatch point for this repo.
 if command -v better-code-review-graph >/dev/null 2>&1; then
-  CRG_DATABASE_PATH="./.claude/crg_cache_better.db" better-code-review-graph graph build >/dev/null 2>&1 \
+  better-code-review-graph graph build >/dev/null 2>&1 \
     || echo "[post-checkout] better-code-review-graph build failed (non-fatal)" >&2
 fi
 

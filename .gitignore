@@ -68,4 +68,4 @@ flaw-symptom.md
 # Graph tooling (issue #300)
 GRAPH_REPORT.md
 graphify-out/
-.claude/crg_cache*.db*
+.code-review-graph/
