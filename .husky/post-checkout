@@ -1,0 +1,15 @@
+#!/bin/bash
+# Graph tooling re-index on branch switch (issue #300).
+#
+# Optional tooling — no-ops entirely if better-code-review-graph isn't
+# installed (CLAUDE.md lists it as optional, not a hard prerequisite).
+#
+# This repo's core.hooksPath is .husky/_ (see .husky/_/h), which overrides
+# any global core.hooksPath — this file, not .git/hooks/post-checkout, is
+# the real dispatch point for this repo.
+if command -v better-code-review-graph >/dev/null 2>&1; then
+  better-code-review-graph graph build >/dev/null 2>&1 \
+    || echo "[post-checkout] better-code-review-graph build failed (non-fatal)" >&2
+fi
+
+exit 0

@@ -73,6 +73,15 @@
             "command": "fp=$(jq -r '.tool_input.file_path'); case \"$fp\" in *schema.graphql|*graphql.ts) echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Auto-generated file. Regenerate via: dotnet build (backend) or pnpm codegen (frontend)\"}}';; esac"
           }
         ]
+      },
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"${GRAPHIFY_HOOK_DISABLED:-0}\" = \"1\" ] || .claude/hooks/graphify-interceptor.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
