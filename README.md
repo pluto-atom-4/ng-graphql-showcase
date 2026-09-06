@@ -185,6 +185,10 @@ root/
 ✅ Unified across Claude Code + Cursor (`.ai/` symlinks)  
 ✅ Friction-based maintenance prevents token bloat over time
 
+### Graph Tooling (Issue #300)
+
+`better-code-review-graph` — AST/blast-radius MCP server, global, `uv tool install`-based, optional. Advisory `Grep`/`Glob` hook never blocks. Graphify (macro overview) not installed — PyPI `graphify-cli` is a different, unrelated tool; skipped pending correct install path. Fallback: plain `Grep`/`Glob`, always. See `CLAUDE.md` § Graph Intelligence & Routing Engine.
+
 ---
 
 ## 🚀 Quickstart Local Environment

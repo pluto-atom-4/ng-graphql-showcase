@@ -87,6 +87,14 @@ See [SKILLS.md](./SKILLS.md) for canonical skill discovery mechanism, auto-invoc
 
 ---
 
+## Graph Intelligence & Routing Engine (Issue #300)
+
+Optional, not a prerequisite. `better-code-review-graph` MCP live (global, `~/.claude/settings.json`, `CRG_DATABASE_PATH=./.claude/crg_cache_better.db`) for caller/blast-radius queries. Graphify **not installed** — PyPI `graphify-cli` ≠ Graphify-Labs/graphify; don't install that package expecting this tool. `GRAPH_REPORT.md` advisory hook (`.claude/hooks/graphify-interceptor.sh`) never blocks; stays silent until Graphify resolved. Everything falls back to plain `Grep`/`Glob` if tooling/uvx absent. Never overrides Architectural Constraints or Two-Gate System. Disable: `GRAPHIFY_HOOK_DISABLED=1`.
+
+Global `core.hooksPath` (`~/.config/git/hooks`) chains to each repo's local hooks first — this repo's `pre-commit-enforce` and graph `post-checkout` still fire.
+
+---
+
 ## Performance Metrics & Auditing
 
 **Phase 5 Complete**: OnPush 100% (≤30ms), TrackBy 100%, Lighthouse 87/81, no memory leaks.  
@@ -98,24 +106,25 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 
 **AI Tool Configuration** (version-controlled, canonical source of truth):
 
-| File                              | Purpose                                          | Version | Last Updated | Canonical |
-| --------------------------------- | ------------------------------------------------ | ------- | ------------ | --------- |
-| CLAUDE.md                         | AI execution framework + best practices          | 3.4.0   | 2026-08-22   | ✅        |
-| AGENTS.md                         | Agent schema + collaboration rules               | 1.5.0   | 2026-08-22   | ✅        |
-| SKILLS.md                         | Canonical skill discovery + governance           | 1.3.0   | 2026-08-22   | ✅        |
-| .github/copilot-instructions.md   | GitHub Copilot optimized rules (streamlined)     | 1.4.0   | 2026-08-22   | ✅        |
-| .claude/settings.json             | Global permissions + hooks                       | —       | 2026-08-31   | ✅        |
-| .claude/settings.local.json       | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
-| .claude/PERMISSIONS-GOVERNANCE.md | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
-| .claude/skills/INDEX.md           | Master skill catalog + metadata schema           | —       | 2026-08-16   | ✅        |
-| .claude/agents/architect.md       | Architect role agent (model: inherit)            | 1.0.0   | 2026-08-31   | ✅        |
-| .mcp.json                         | GitHub MCP server (Architect only; PAT from env) | —       | 2026-08-31   | ✅        |
-| .claude/agents/coder.md           | Coder role agent (model: haiku)                  | 1.0.0   | 2026-08-30   | ✅        |
-| .claude/agents/reviewer.md        | Reviewer role agent (model: haiku)               | 1.0.0   | 2026-08-30   | ✅        |
-| .claude/CONTEXT-MANAGEMENT.md     | Token budget + context compression               | —       | 2026-07-19   | Reference |
-| .claude/MULTI_AGENT_GOVERNANCE.md | Multi-agent orchestration rules                  | —       | 2026-08-09   | Reference |
-| .claude/TWO-GATE-SYSTEM.md        | Evidence-based execution gates                   | —       | 2026-08-01   | Reference |
-| .claude/rules/                    | Domain-specific architectural patterns (6 files) | —       | 2026-08-01   | Reference |
+| File                                  | Purpose                                          | Version | Last Updated | Canonical |
+| ------------------------------------- | ------------------------------------------------ | ------- | ------------ | --------- |
+| CLAUDE.md                             | AI execution framework + best practices          | 3.4.0   | 2026-08-22   | ✅        |
+| AGENTS.md                             | Agent schema + collaboration rules               | 1.5.0   | 2026-08-22   | ✅        |
+| SKILLS.md                             | Canonical skill discovery + governance           | 1.3.0   | 2026-08-22   | ✅        |
+| .github/copilot-instructions.md       | GitHub Copilot optimized rules (streamlined)     | 1.4.0   | 2026-08-22   | ✅        |
+| .claude/settings.json                 | Global permissions + hooks                       | —       | 2026-08-31   | ✅        |
+| .claude/settings.local.json           | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
+| .claude/PERMISSIONS-GOVERNANCE.md     | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
+| .claude/skills/INDEX.md               | Master skill catalog + metadata schema           | —       | 2026-08-16   | ✅        |
+| .claude/agents/architect.md           | Architect role agent (model: inherit)            | 1.0.0   | 2026-08-31   | ✅        |
+| .mcp.json                             | GitHub MCP server (Architect only; PAT from env) | —       | 2026-08-31   | ✅        |
+| .claude/agents/coder.md               | Coder role agent (model: haiku)                  | 1.0.0   | 2026-08-30   | ✅        |
+| .claude/agents/reviewer.md            | Reviewer role agent (model: haiku)               | 1.0.0   | 2026-08-30   | ✅        |
+| .claude/CONTEXT-MANAGEMENT.md         | Token budget + context compression               | —       | 2026-07-19   | Reference |
+| .claude/MULTI_AGENT_GOVERNANCE.md     | Multi-agent orchestration rules                  | —       | 2026-08-09   | Reference |
+| .claude/TWO-GATE-SYSTEM.md            | Evidence-based execution gates                   | —       | 2026-08-01   | Reference |
+| .claude/rules/                        | Domain-specific architectural patterns (6 files) | —       | 2026-08-01   | Reference |
+| .claude/hooks/graphify-interceptor.sh | Advisory Grep/Glob hook (issue #300)             | —       | 2026-09-06   | Reference |
 
 **Update Frequency**: Primary files (CLAUDE.md, AGENTS.md, SKILLS.md, copilot-instructions.md) reviewed monthly; rules reviewed when architecture changes.
 

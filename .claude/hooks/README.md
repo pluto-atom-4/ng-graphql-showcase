@@ -102,3 +102,16 @@ See `.claude/settings.json` for hook definitions. Hooks are specified in:
 Edit `.claude/settings.json` → `hooks` section. Changes take effect immediately on next tool use.
 
 **Never commit hook rules that require external APIs** — keep hooks local-only (no network calls).
+
+### graphify-interceptor.sh (Grep/Glob advisory, issue #300)
+
+Advisory-only PreToolUse hook on `Grep|Glob`. Suggests reading `GRAPH_REPORT.md`
+first when present; **never blocks** the underlying call. No-ops entirely if
+`uvx` isn't installed (graph tooling is optional, not a hard prerequisite).
+
+- **Disable/rollback**: set `GRAPHIFY_HOOK_DISABLED=1` in your environment
+  (e.g. `.claude/settings.local.json` → `env`), or remove the `Grep|Glob`
+  matcher block from `.claude/settings.json` → `hooks.PreToolUse`.
+- Reads only a local, pre-built `GRAPH_REPORT.md` — makes no network calls
+  itself. The network-touching step (`graphify update .`) runs separately in
+  the git `post-checkout` hook, not here.

@@ -64,3 +64,8 @@ gh-issue-draft*.md*
 feat-idea.md
 flaw-symptom.md
 /updates.json
+
+# Graph tooling (issue #300)
+GRAPH_REPORT.md
+graphify-out/
+.claude/crg_cache*.db*
