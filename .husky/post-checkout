@@ -1,15 +1,57 @@
-#!/bin/bash
-# Graph tooling re-index on branch switch (issue #300).
+#!/bin/sh
+# Graph re-index on branch switch (issue #303).
 #
-# Optional tooling — no-ops entirely if better-code-review-graph isn't
-# installed (CLAUDE.md lists it as optional, not a hard prerequisite).
+# Optional tooling — no-ops entirely if code-review-graph / graphify are not
+# installed. Never fails a checkout: always exits 0.
 #
-# This repo's core.hooksPath is .husky/_ (see .husky/_/h), which overrides
-# any global core.hooksPath — this file, not .git/hooks/post-checkout, is
-# the real dispatch point for this repo.
-if command -v better-code-review-graph >/dev/null 2>&1; then
-  better-code-review-graph graph build >/dev/null 2>&1 \
-    || echo "[post-checkout] better-code-review-graph build failed (non-fatal)" >&2
+# This repo's core.hooksPath is .husky/_ (see .husky/_/h), which overrides any
+# global core.hooksPath — this file, not .git/hooks/post-checkout, is the real
+# dispatch point for this repo.
+#
+# Husky invokes hooks as `sh -e "$s" "$@"`, so the shebang above is advisory and
+# errexit is ON. Guards must be written as `if ...; then exit 0; fi`: a bare
+# `[ test ] && exit 0` returns 1 on the common (false) path and errexit would
+# abort the hook with "husky - post-checkout script failed (code 1)".
+#
+# Opt out with GRAPH_HOOKS_DISABLED=1.
+
+PREV_HEAD=$1
+NEW_HEAD=$2
+IS_BRANCH_CHECKOUT=$3
+
+# Only run on true branch switches, not file-level checkouts.
+if [ "$IS_BRANCH_CHECKOUT" != "1" ]; then
+  exit 0
+fi
+
+# A no-op checkout (e.g. `git checkout -b` with no start point) reports a branch
+# switch but leaves the tree unchanged — nothing to re-index.
+if [ "$PREV_HEAD" = "$NEW_HEAD" ]; then
+  exit 0
+fi
+
+if [ "${GRAPH_HOOKS_DISABLED:-0}" = "1" ]; then
+  exit 0
+fi
+
+# Phase 1: structural AST / call graph (code-review-graph).
+# `update` is the incremental re-parse; `build` is the full rebuild and is left
+# to be run by hand after a large structural refactor.
+if command -v code-review-graph >/dev/null 2>&1; then
+  code-review-graph update >/dev/null 2>&1 \
+    || echo "[post-checkout] code-review-graph update failed (non-fatal)" >&2
+fi
+
+# Phase 2: macro / multi-modal map (graphify). Only refresh an existing graph —
+# the first build is an explicit opt-in (`graphify update .`), so a fresh clone
+# never pays for an unexpected full index on its first branch switch.
+#
+# PYTHONHASHSEED is pinned because networkx's louvain clustering iterates
+# string-keyed sets whose order is randomized per process, which makes
+# graphify-out churn between otherwise identical runs.
+if command -v graphify >/dev/null 2>&1 && [ -d graphify-out ]; then
+  PYTHONHASHSEED=0 graphify update . >/dev/null 2>&1 \
+    || echo "[post-checkout] graphify update failed (non-fatal)" >&2
 fi
 
 exit 0

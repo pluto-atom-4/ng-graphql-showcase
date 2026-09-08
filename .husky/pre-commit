@@ -45,5 +45,15 @@ if [ -f "$BUNDLE_CHECK" ]; then
   }
 fi
 
-# Step 3: Run linting (lint-staged)
+# Step 3: Graph re-index + advisory risk review (issue #303)
+# ADVISORY ONLY — never blocks a commit. Runs before lint-staged so that
+# lint-staged stays the last command and keeps owning the hook's exit status.
+# Optional tooling: no-ops if code-review-graph is not installed.
+# Opt out with GRAPH_HOOKS_DISABLED=1.
+if [ "${GRAPH_HOOKS_DISABLED:-0}" != "1" ] && command -v code-review-graph >/dev/null 2>&1; then
+  code-review-graph update >/dev/null 2>&1 || true
+  code-review-graph detect-changes --brief || true
+fi
+
+# Step 4: Run linting (lint-staged)
 pnpm lint-staged
