@@ -22,7 +22,23 @@
       "Skill(codegen-sync)",
       "Skill(migration-generator)",
       "Skill(pr-review-workflow)",
-      "Skill(performance-audit)"
+      "Skill(performance-audit)",
+      "Bash(code-review-graph status:*)",
+      "Bash(code-review-graph update:*)",
+      "Bash(code-review-graph query:*)",
+      "Bash(code-review-graph impact:*)",
+      "Bash(code-review-graph detect-changes:*)",
+      "Bash(code-review-graph architecture:*)",
+      "Bash(code-review-graph dead-code:*)",
+      "Bash(code-review-graph large-functions:*)",
+      "Bash(graphify update:*)",
+      "Bash(graphify query:*)",
+      "Bash(graphify explain:*)",
+      "Bash(graphify affected:*)",
+      "Bash(graphify path:*)",
+      "Bash(graphify god-nodes:*)",
+      "mcp__code-review-graph__*",
+      "mcp__graphify__*"
     ],
     "defaultMode": "default"
   },
@@ -118,6 +134,25 @@
           {
             "type": "command",
             "command": "fp=$(jq -r '.tool_response.filePath // .tool_input.file_path'); case \"$fp\" in .claude/*|.github/*) echo \"$(date -Iseconds) Changed: $fp\" >> .claude/friction-log.md;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"${GRAPH_HOOKS_DISABLED:-0}\" = \"1\" ] || { command -v code-review-graph >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph update --skip-flows >/dev/null 2>&1; } || true"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v code-review-graph >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph status 2>/dev/null || true"
           }
         ]
       }

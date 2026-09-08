@@ -1,6 +1,6 @@
 # CLAUDE.md — AI Execution Framework
 
-**Version:** 3.4.0 | **Last Updated:** 2026-08-22  
+**Version:** 3.5.0 | **Last Updated:** 2026-09-07  
 **Canonical Sources:** [AGENTS.md](./AGENTS.md) (agent schema) | [SKILLS.md](./SKILLS.md) (skill discovery) | [.claude/rules/](./.claude/rules/) (patterns) | [.claude/skills/INDEX.md](./.claude/skills/INDEX.md) (skill metadata)
 
 ---
@@ -87,11 +87,48 @@ See [SKILLS.md](./SKILLS.md) for canonical skill discovery mechanism, auto-invoc
 
 ---
 
-## Graph Intelligence & Routing Engine (Issue #300)
+## Graph Intelligence & Routing Engine (Issues #300, #303)
 
-Optional, not a prerequisite. `better-code-review-graph` MCP live (global, `~/.claude/settings.json`) for caller/blast-radius queries. DB auto-lives at `<repo>/.code-review-graph/graph.db` (tool-managed, self-gitignored); no env var needed. Must run from inside a git repo — it hard-crashes outside one. Graphify **not installed** — PyPI `graphify-cli` ≠ Graphify-Labs/graphify; don't install that package expecting this tool. `GRAPH_REPORT.md` advisory hook (`.claude/hooks/graphify-interceptor.sh`) never blocks; stays silent until Graphify resolved. Everything falls back to plain `Grep`/`Glob` if tooling/uvx absent. Never overrides Architectural Constraints or Two-Gate System. Disable: `GRAPHIFY_HOOK_DISABLED=1`.
+Optional, not a prerequisite. Two graph engines, both registered as project MCP servers in [.mcp.json](./.mcp.json):
 
-This repo's `core.hooksPath` is local (`.husky/_`, husky) and overrides any global setting — graph re-index runs via `.husky/post-checkout`, not a global hook. `pre-commit-enforce` fires via `.husky/pre-commit`. A global `~/.config/git/hooks` chain-through exists for other repos without a local `core.hooksPath` override.
+| Engine                                                | Binary                    | Scope                                  | Store                                                          |
+| ----------------------------------------------------- | ------------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| `code-review-graph` v2.3.8 (PyPI `code-review-graph`) | `code-review-graph serve` | Micro: AST, call graph, blast radius   | `<repo>/.code-review-graph/graph.db` (SQLite, self-gitignored) |
+| `graphify` v0.9.56 (PyPI `graphifyy`)                 | `graphify-mcp`            | Macro: architecture, docs, communities | `graphify-out/graph.json` + `GRAPH_REPORT.md`                  |
+
+Both auto-locate their store from the git root — no env var needed. `code-review-graph` must run inside a git repo; it hard-crashes outside one. Relocate its DB only via `--data-dir` / `CRG_DATA_DIR` (there is **no** `CRG_DATABASE_PATH` env var). Neither engine overrides Architectural Constraints or the Two-Gate System.
+
+### Routing Matrix
+
+Match prompt intent before wide `Grep`/`Glob`:
+
+| Intent                                                                                   | Engine                | Entry points                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Explain the design", "where is feature X", architecture overview, docs/schema questions | **graphify**          | `graphify-out/GRAPH_REPORT.md`, `graphify query "…"`, `explain`, `affected`, `god-nodes`; MCP: `query_graph`, `get_node`, `get_neighbors`, `get_community`, `god_nodes`, `graph_stats`, `shortest_path` |
+| "What breaks if I change X", "find callers of Y", refactor blast radius, low-level bugs  | **code-review-graph** | `impact --files <paths>`, `query callers_of\|callees_of\|imports_of\|tests_for <target>`, `detect-changes --brief`, `architecture`, `dead-code`, `large-functions`                                      |
+
+### Orchestration Rules
+
+1. **Sequential escalation (macro → micro)**: read `GRAPH_REPORT.md` to fix the component boundary, then switch to `code-review-graph` for call paths inside it. Never start at the call graph.
+2. **Single engine per loop**: never query both engines in one reasoning loop. If `code-review-graph` finds no AST structure, abort to a narrow `Grep` — do not ask graphify for call trees.
+3. **Stale cache**: `PostToolUse` runs `code-review-graph update --skip-flows` after every Edit/Write. After a large structural refactor run `code-review-graph build` by hand.
+4. **Fallback tree**: MCP empty/errors → local markdown + READMEs → narrow surgical `Grep` → ask the user before any repo-wide scan.
+
+### Hook Wiring
+
+| Hook                          | Location                                | Behavior                                                                                                                                                 |
+| ----------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SessionStart`                | `.claude/settings.json`                 | `code-review-graph status` — graph stats on session open                                                                                                 |
+| `PostToolUse` (`Write\|Edit`) | `.claude/settings.json`                 | `code-review-graph update --skip-flows` — incremental re-index                                                                                           |
+| `PreToolUse` (`Grep\|Glob`)   | `.claude/hooks/graphify-interceptor.sh` | **Advisory only, never blocks** — suggests `GRAPH_REPORT.md` first                                                                                       |
+| `post-checkout`               | `.husky/post-checkout`                  | Branch switch → `code-review-graph update` + `graphify update .` (only if `graphify-out/` exists)                                                        |
+| `pre-commit`                  | `.husky/pre-commit`                     | Step 3: `code-review-graph detect-changes --brief` — **advisory, never blocks**. Steps 1/2/4 (`pre-commit-enforce`, bundle check, lint-staged) unchanged |
+
+This repo's `core.hooksPath` is local (`.husky/_`, husky) and overrides any global setting — graph re-index runs via `.husky/post-checkout`, **not** a global hook, and `.git/hooks/*` is skipped entirely. Husky dispatches as `sh -e`, so hook bodies are POSIX-safe and never end a guard on a bare `[ … ] && exit 0`. A global `~/.config/git/hooks` chain-through exists for other repos without a local `core.hooksPath` override.
+
+Everything degrades to plain `Grep`/`Glob` if the tooling is absent. Disable: `GRAPH_HOOKS_DISABLED=1` (git hooks + `PostToolUse` re-index), `GRAPHIFY_HOOK_DISABLED=1` (`Grep`/`Glob` advisory).
+
+Rebuild by hand: `code-review-graph build && graphify update .`
 
 ---
 
@@ -106,25 +143,25 @@ Use `performance-audit` skill for profiling or see **[AGENTS.md](./AGENTS.md#pha
 
 **AI Tool Configuration** (version-controlled, canonical source of truth):
 
-| File                                  | Purpose                                          | Version | Last Updated | Canonical |
-| ------------------------------------- | ------------------------------------------------ | ------- | ------------ | --------- |
-| CLAUDE.md                             | AI execution framework + best practices          | 3.4.0   | 2026-08-22   | ✅        |
-| AGENTS.md                             | Agent schema + collaboration rules               | 1.5.0   | 2026-08-22   | ✅        |
-| SKILLS.md                             | Canonical skill discovery + governance           | 1.3.0   | 2026-08-22   | ✅        |
-| .github/copilot-instructions.md       | GitHub Copilot optimized rules (streamlined)     | 1.4.0   | 2026-08-22   | ✅        |
-| .claude/settings.json                 | Global permissions + hooks                       | —       | 2026-08-31   | ✅        |
-| .claude/settings.local.json           | Local overrides (machine-specific)               | —       | 2026-08-16   | ✅        |
-| .claude/PERMISSIONS-GOVERNANCE.md     | Permission tiers + audit trail strategy          | 1.0.0   | 2026-08-16   | ✅        |
-| .claude/skills/INDEX.md               | Master skill catalog + metadata schema           | —       | 2026-08-16   | ✅        |
-| .claude/agents/architect.md           | Architect role agent (model: inherit)            | 1.0.0   | 2026-08-31   | ✅        |
-| .mcp.json                             | GitHub MCP server (Architect only; PAT from env) | —       | 2026-08-31   | ✅        |
-| .claude/agents/coder.md               | Coder role agent (model: haiku)                  | 1.0.0   | 2026-08-30   | ✅        |
-| .claude/agents/reviewer.md            | Reviewer role agent (model: haiku)               | 1.0.0   | 2026-08-30   | ✅        |
-| .claude/CONTEXT-MANAGEMENT.md         | Token budget + context compression               | —       | 2026-07-19   | Reference |
-| .claude/MULTI_AGENT_GOVERNANCE.md     | Multi-agent orchestration rules                  | —       | 2026-08-09   | Reference |
-| .claude/TWO-GATE-SYSTEM.md            | Evidence-based execution gates                   | —       | 2026-08-01   | Reference |
-| .claude/rules/                        | Domain-specific architectural patterns (6 files) | —       | 2026-08-01   | Reference |
-| .claude/hooks/graphify-interceptor.sh | Advisory Grep/Glob hook (issue #300)             | —       | 2026-09-06   | Reference |
+| File                                  | Purpose                                                         | Version | Last Updated | Canonical |
+| ------------------------------------- | --------------------------------------------------------------- | ------- | ------------ | --------- |
+| CLAUDE.md                             | AI execution framework + best practices                         | 3.5.0   | 2026-09-07   | ✅        |
+| AGENTS.md                             | Agent schema + collaboration rules                              | 1.5.0   | 2026-08-22   | ✅        |
+| SKILLS.md                             | Canonical skill discovery + governance                          | 1.3.0   | 2026-08-22   | ✅        |
+| .github/copilot-instructions.md       | GitHub Copilot optimized rules (streamlined)                    | 1.4.0   | 2026-08-22   | ✅        |
+| .claude/settings.json                 | Global permissions + hooks                                      | —       | 2026-09-07   | ✅        |
+| .claude/settings.local.json           | Local overrides (machine-specific)                              | —       | 2026-08-16   | ✅        |
+| .claude/PERMISSIONS-GOVERNANCE.md     | Permission tiers + audit trail strategy                         | 1.0.0   | 2026-08-16   | ✅        |
+| .claude/skills/INDEX.md               | Master skill catalog + metadata schema                          | —       | 2026-08-16   | ✅        |
+| .claude/agents/architect.md           | Architect role agent (model: inherit)                           | 1.0.0   | 2026-08-31   | ✅        |
+| .mcp.json                             | MCP servers: github (PAT from env), code-review-graph, graphify | —       | 2026-09-07   | ✅        |
+| .claude/agents/coder.md               | Coder role agent (model: haiku)                                 | 1.0.0   | 2026-08-30   | ✅        |
+| .claude/agents/reviewer.md            | Reviewer role agent (model: haiku)                              | 1.0.0   | 2026-08-30   | ✅        |
+| .claude/CONTEXT-MANAGEMENT.md         | Token budget + context compression                              | —       | 2026-07-19   | Reference |
+| .claude/MULTI_AGENT_GOVERNANCE.md     | Multi-agent orchestration rules                                 | —       | 2026-08-09   | Reference |
+| .claude/TWO-GATE-SYSTEM.md            | Evidence-based execution gates                                  | —       | 2026-08-01   | Reference |
+| .claude/rules/                        | Domain-specific architectural patterns (6 files)                | —       | 2026-08-01   | Reference |
+| .claude/hooks/graphify-interceptor.sh | Advisory Grep/Glob hook (issues #300, #303)                     | —       | 2026-09-07   | Reference |
 
 **Update Frequency**: Primary files (CLAUDE.md, AGENTS.md, SKILLS.md, copilot-instructions.md) reviewed monthly; rules reviewed when architecture changes.
 
