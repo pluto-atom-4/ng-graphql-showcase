@@ -130,13 +130,15 @@ describe('BadgeComponent', () => {
     // Browser converts #dcfce7 to rgb(220, 252, 231), but test env may return hex
     const bgColorResult = computedStyle.backgroundColor;
     expect(
-      bgColorResult === 'rgb(220, 252, 231)' || bgColorResult === '#dcfce7'
-    ).toBe(true, `Expected rgb(220, 252, 231) or #dcfce7 but got ${bgColorResult}`);
+      bgColorResult === 'rgb(220, 252, 231)' || bgColorResult === '#dcfce7',
+      `Expected rgb(220, 252, 231) or #dcfce7 but got ${bgColorResult}`
+    ).toBe(true);
 
     const textColorResult = computedStyle.color;
     expect(
-      textColorResult === 'rgb(22, 101, 52)' || textColorResult === '#166534'
-    ).toBe(true, `Expected rgb(22, 101, 52) or #166534 but got ${textColorResult}`);
+      textColorResult === 'rgb(22, 101, 52)' || textColorResult === '#166534',
+      `Expected rgb(22, 101, 52) or #166534 but got ${textColorResult}`
+    ).toBe(true);
   });
 
   it('should be standalone component', () => {

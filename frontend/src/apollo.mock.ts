@@ -2,7 +2,7 @@
 // This file is used via vitest.config.ts alias when running tests
 
 // Import RxJS for real observables
-import { of } from 'rxjs';
+import { of, OperatorFunction } from 'rxjs';
 
 export class Query<T = any, V = any> {
   document: any;
@@ -19,7 +19,12 @@ export class Subscription<T = any, V = any> {
   constructor(apollo?: any) {}
 }
 
+// Mock Apollo class for testing
 export class Apollo {
+  Query = Query;
+  Mutation = Mutation;
+  Subscription = Subscription;
+
   subscribe() {
     return {
       pipe: () => ({
@@ -31,25 +36,21 @@ export class Apollo {
   watchQuery<T = any, V = any>(options: any) {
     // Return object with valueChanges observable property
     const mockResult = {
-      data: {
-        builds: [],
-        // Default empty data - tests can extend this
-      }
+      builds: [],
+      // Default empty data - tests can extend this
     } as T;
 
-    const valueChanges$ = of(mockResult);
+    // Wrap the result in a data property to match Apollo's response shape
+    const wrappedResult = { data: mockResult };
+    const valueChanges$ = of(wrappedResult);
 
     return {
       valueChanges: valueChanges$,
-      pipe: (...operators: any) => {
-        return valueChanges$.pipe(...(operators as any));
+      pipe: (...operators: OperatorFunction<unknown, unknown>[]) => {
+        return (valueChanges$ as any).pipe(...(operators as any));
       }
     };
   }
-
-  Query = Query;
-  Mutation = Mutation;
-  Subscription = Subscription;
 }
 
 export function gql(strings: TemplateStringsArray) {

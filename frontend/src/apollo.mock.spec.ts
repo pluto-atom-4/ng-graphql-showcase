@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Apollo, gql } from 'apollo-angular';
+import { Apollo, gql } from './apollo.mock';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
