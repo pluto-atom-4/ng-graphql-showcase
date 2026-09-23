@@ -91,7 +91,7 @@ export class ModalService {
   close<T = any>(id: string, result?: T): void {
     const ref = this.modals.get(id);
     if (ref) {
-      (ref.result$ as Subject<T>).next(result);
+      (ref.result$ as Subject<T | undefined>).next(result);
       (ref.result$ as Subject<T>).complete();
       this.modals.delete(id);
     }

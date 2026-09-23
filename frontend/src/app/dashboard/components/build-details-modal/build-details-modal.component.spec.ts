@@ -185,7 +185,7 @@ describe('BuildDetailsModalComponent', () => {
 
     it('should have aria-label for Cancel button', () => {
       fixture.detectChanges();
-      const buttons = fixture.nativeElement.querySelectorAll('button');
+      const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button');
       const cancelButton = Array.from(buttons).find((btn: any) => btn.textContent.includes('Cancel'));
 
       if (cancelButton) {
@@ -195,7 +195,7 @@ describe('BuildDetailsModalComponent', () => {
 
     it('should have aria-label for Save button', () => {
       fixture.detectChanges();
-      const buttons = fixture.nativeElement.querySelectorAll('button');
+      const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button');
       const saveButton = Array.from(buttons).find((btn: any) => btn.textContent.includes('Save'));
 
       if (saveButton) {
