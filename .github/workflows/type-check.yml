@@ -6,6 +6,10 @@ on:
       - "frontend/**/*.ts"
       - "frontend/tsconfig.json"
       - "frontend/package.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".npmrc"
       - ".github/workflows/type-check.yml"
   push:
     branches:
@@ -14,6 +18,10 @@ on:
       - "frontend/**/*.ts"
       - "frontend/tsconfig.json"
       - "frontend/package.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".npmrc"
       - ".github/workflows/type-check.yml"
 
 jobs:
@@ -24,16 +32,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "22"
           cache: "pnpm"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: "8"
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
