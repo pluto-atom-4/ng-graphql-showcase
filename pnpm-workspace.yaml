@@ -5,6 +5,8 @@ allowBuilds:
   esbuild: true
   lmdb: true
   msgpackr-extract: true
+  # Chromium download not needed; a11y audits use a system Chromium or PUPPETEER_EXECUTABLE_PATH
+  puppeteer: false
 overrides:
   "glob@<11": ">=11.0.0"
   "uuid@<9": ">=9.0.0"
