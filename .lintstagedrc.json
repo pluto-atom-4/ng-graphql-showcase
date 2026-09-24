@@ -1,4 +1,5 @@
 {
   "*.md": ["prettier --write"],
-  "*.{json,yaml,yml}": ["prettier --write"]
+  "*.{json,yaml,yml}": ["prettier --write"],
+  "frontend/**/*.ts": ["pnpm --filter frontend run type-check"]
 }
