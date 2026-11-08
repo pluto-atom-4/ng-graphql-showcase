@@ -83,6 +83,16 @@ Never lower a threshold, skip a test, or mark a failing run as passing.
 
 Before yielding, write `.claude/agent_state.json` with: `timestamp`, `parentAgent`, `currentTask`, `completedSteps`, `nextStep`, `nextAgent`, `uncommittedChanges`, `blockers`, `escalationNeeded`.
 
+## Comment review
+
+Report comment bloat as `nit`. Report only; never edit production comments (write scope stays test files). Keep only WHY, WHY-NOT, HOW-TO-USE, or hazard comments (hidden constraint, ordering, workaround with link).
+
+- Flag: comments that narrate or restate code, repeat signatures or types, banner or `#region` dividers, commented-out code, change history, blocks over 3 lines.
+- Flag: TSDoc/JSDoc type repetition (`@param {string}`), `///` `<param>`/`<returns>` that only repeat names or types, docs on private members. Public API keeps a one-line summary.
+- Flag: GraphQL/resolver or EF/Dapper comments that describe what the call does instead of why this path (shared `DbTransaction`, DTO mapping, depth limit).
+- Flag: new comments on code the diff did not otherwise change.
+- Fix text: "delete" or a one-line WHY rewrite.
+
 ## Output
 
 One line per finding: `path:line: <severity>: <problem>. <fix>.` Most severe first. Then the Gate 2 table — command, exit code, pass/fail. No praise, no scope creep. If nothing failed, say so plainly with the exit codes as evidence.
